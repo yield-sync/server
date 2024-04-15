@@ -29,7 +29,7 @@ dBConnection.connect(
 	{
 		if (error)
 		{
-			console.log(error);
+			throw new Error(error.message);
 		}
 
 		console.log("Successfully connected to MySQL DB");
@@ -37,11 +37,7 @@ dBConnection.connect(
 );
 
 
-const app: express.Express = express().use(bodyParser.json()).use(
-	bodyParser.urlencoded({
-		extended: false
-	})
-).use(
+const app: express.Express = express().use(bodyParser.json()).use(bodyParser.urlencoded({ extended: false })).use(
 	cors()
 ).use(
 	express.static(__dirname + "/static")
@@ -63,14 +59,14 @@ const app: express.Express = express().use(bodyParser.json()).use(
 	"/api",
 	routeApi()
 ).use(
-	"/api/user",
-	routeApiUser(dBConnection)
-).use(
 	"/api/portfolio",
 	routeApiPortfolio(dBConnection)
 ).use(
 	"/api/portfolio-asset",
 	routeApiPortfolioAsset(dBConnection)
+).use(
+	"/api/user",
+	routeApiUser(dBConnection)
 );
 
 
@@ -83,9 +79,7 @@ if (config.nodeENV == "production")
 		"*",
 		(req: express.Request, res: express.Response) =>
 		{
-			res.sendFile(
-				path.resolve(__dirname, "client", "dist", "index.html")
-			);
+			res.sendFile(path.resolve(__dirname, "client", "dist", "index.html"));
 		}
 	);
 }
@@ -95,6 +89,6 @@ http.createServer(app).listen(
 	config.port,
 	() =>
 	{
-		console.log(`Server Running on Port: ${config.port}`);
+		console.log(`Server Running on Port: ${config.port}`)
 	}
 );
