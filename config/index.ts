@@ -1,0 +1,28 @@
+// [require]
+require("dotenv").config();
+
+
+export default
+{
+	// [heroku]
+	nodeENV: process.env.NODE_ENV || "development",
+	port: process.env.PORT || 5000,
+
+	// [app]
+	app: {
+		// [base-url]
+		baseURL: {
+			client: process.env.APP__BASE_URL || "http://localhost:8080",
+			server: process.env.APP__BASE_URL || "http://localhost:5000",
+		},
+
+		database: {
+			host: process.env.SERVER__DATABASE__HOST,
+			user: process.env.SERVER__DATABASE__USER,
+			password: process.env.SERVER__DATABASE__PASSWORD,
+		},
+
+		// [secret]
+		secretKey: process.env.APP__SECRET_KEY || "secret",
+	},
+};
