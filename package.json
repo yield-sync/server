@@ -12,7 +12,7 @@
     "predev": "npm run build",
     "prestart": "npm run build",
     "start": "cross-env NODE_ENV=production node dist/index.js",
-    "test": "jest --runInBand --verbose",
+    "test": "jest --verbose",
     "initialize-db": "npm run build && node dist/sql/production.js"
   },
   "jest": {
