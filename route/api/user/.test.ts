@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import express from "express";
 import mysql from "mysql";
 import request from "supertest";
+import { promisify } from "util";
 
 import routeApi from "../index";
 import routeApiUser from "./index";
@@ -15,6 +16,7 @@ const jwt = require("jsonwebtoken");
 const DB_NAME: string = "mock_db_user";
 const ERROR_PASSWORD: string = "Password Must be ASCII, longer than 8 characters, and contain a special character";
 
+let dBQuery;
 let app: express.Express;
 let dBConnection: mysql.Connection;
 
@@ -63,6 +65,9 @@ afterAll(() =>
 
 beforeEach(async () =>
 {
+	// Promisify dbConnection.query for easier use with async/await
+	dBQuery = promisify(dBConnection.query).bind(dBConnection);
+
 	// Drop the database
 	dropDB(DB_NAME, dBConnection);
 
@@ -92,13 +97,9 @@ describe("ROUTE: /api/user", () =>
 
 			expect(response.error.text).toBe("Invalid email");
 
-			dBConnection.query(
-				"SELECT * FROM user;",
-				async (error, results) =>
-				{
-					expect(results.length).toBe(0);
-				}
-			);
+			const results = await dBQuery("SELECT * FROM user;");
+
+			expect(results.length).toBe(0);
 		});
 
 		test("Should NOT allow creating a user with short password..",
@@ -118,13 +119,9 @@ describe("ROUTE: /api/user", () =>
 
 			expect(response.error.text).toBe(ERROR_PASSWORD);
 
-			dBConnection.query(
-				"SELECT * FROM user;",
-				async (error, results) =>
-				{
-					expect(results.length).toBe(0);
-				}
-			);
+			const results = await dBQuery("SELECT * FROM user;");
+
+			expect(results.length).toBe(0);
 		});
 
 		test("Should NOT allow password without special characters..", async () =>
@@ -143,13 +140,9 @@ describe("ROUTE: /api/user", () =>
 
 			expect(response.error.text).toBe(ERROR_PASSWORD);
 
-			dBConnection.query(
-				"SELECT * FROM user;",
-				async (error, results) =>
-				{
-					expect(results.length).toBe(0);
-				}
-			);
+			const results = await dBQuery("SELECT * FROM user;");
+
+			expect(results.length).toBe(0);
 		});
 
 		test("Should NOT allow creating a user with non-ASCII password..", async () =>
@@ -170,13 +163,9 @@ describe("ROUTE: /api/user", () =>
 
 			expect(res.error.text).toBe(ERROR_PASSWORD);
 
-			dBConnection.query(
-				"SELECT * FROM user;",
-				async (error, results) =>
-				{
-					expect(results.length).toBe(0);
-				}
-			);
+			const results = await dBQuery("SELECT * FROM user;");
+
+			expect(results.length).toBe(0);
 		});
 
 		test("Should allow creating a user..", async () =>
@@ -193,21 +182,12 @@ describe("ROUTE: /api/user", () =>
 
 			expect(response.statusCode).toBe(201);
 
-			dBConnection.query(
-				"SELECT * FROM user;",
-				async (error, results) =>
-				{
-					if (error)
-					{
-						throw new Error(error.stack);
-					}
+			const results = await dBQuery("SELECT * FROM user;");
 
-					expect(results[0].email).toBe(email);
+			expect(results[0].email).toBe(email);
 
-					// Should NOT not be the literal password but rather the hash of it
-					expect(results[0].password).not.toBe(password);
-				}
-			);
+			// Should NOT not be the literal password but rather the hash of it
+			expect(results[0].password).not.toBe(password);
 		});
 
 		test("Should only allow UNIQUE emails..", async () =>
@@ -234,19 +214,9 @@ describe("ROUTE: /api/user", () =>
 
 			expect(response.text).toBe("This email is already being used.");
 
-			dBConnection.query(
-				"SELECT * FROM user;",
-				async (error, results) =>
-				{
-					if (error)
-					{
-						throw new Error(error.stack);
+			const results = await dBQuery("SELECT * FROM user;");
 
-					}
-
-					expect(results.length).toBe(1);
-				}
-			);
+			expect(results.length).toBe(1);
 		});
 
 		test("Should be able to decode password..", async () =>
@@ -263,19 +233,12 @@ describe("ROUTE: /api/user", () =>
 				}
 			});
 
-			dBConnection.query(
-				"SELECT * FROM user WHERE email = ?;",
-				[
-					email,
-				],
-				async (error, results) =>
-				{
-					// Shoud only work with the valid password
-					expect(bcrypt.compareSync(password, results[0].password)).toBe(true);
+			const results = await dBQuery("SELECT * FROM user WHERE email = ?;", [email]);
 
-					expect(bcrypt.compareSync(invalidPassword, results[0].password)).toBe(false);
-				}
-			);
+			// Shoud only work with the valid password
+			expect(bcrypt.compareSync(password, results[0].password)).toBe(true);
+
+			expect(bcrypt.compareSync(invalidPassword, results[0].password)).toBe(false);
 		});
 	});
 
@@ -308,33 +271,22 @@ describe("ROUTE: /api/user", () =>
 
 			expect(typeof TOKEN).toBe("string");
 
-			dBConnection.query(
-				"SELECT * FROM user WHERE email = ?;",
-				[
-					email,
-				],
-				async (error, results) =>
-				{
-					// Verify the jwt token recieved
-					jwt.verify(
-						TOKEN,
-						config.app.secretKey,
-						async (error, decoded) =>
-						{
-							if (error)
-							{
-								throw new Error(String(`JWT Verify Error: ${error}`));
-							}
+			const results = await dBQuery("SELECT * FROM user WHERE email = ?;", [email]);
 
-							if (decoded)
-							{
-								expect(decoded.id).toBe(results[0].id);
-								expect(decoded.email).toBe(results[0].email);
-							}
-						}
-					);
+			// Verify the jwt token recieved
+			jwt.verify(TOKEN, config.app.secretKey, async (error, decoded) =>
+			{
+				if (error)
+				{
+					throw new Error(String(`JWT Verify Error: ${error}`));
 				}
-			);
+
+				if (decoded)
+				{
+					expect(decoded.id).toBe(results[0].id);
+					expect(decoded.email).toBe(results[0].email);
+				}
+			});
 		});
 	});
 });

@@ -1,6 +1,7 @@
 import express from "express";
 import mysql from "mysql";
 import request from "supertest";
+import { promisify } from "util";
 
 import routeApiPortfolioAsset from "./index";
 import routeApi from "../index";
@@ -16,6 +17,7 @@ const PASSWORD: string = "testpassword!";
 const PORTFOLIO_NAME: string = "my-portfolio";
 const TICKER: string = "PS";
 
+let dBQuery;
 let token: string;
 let portfolio_id: string;
 let app: express.Express;
@@ -74,6 +76,9 @@ afterAll(async () =>
 
 beforeEach(async () =>
 {
+	// Promisify dbConnection.query for easier use with async/await
+	dBQuery = promisify(dBConnection.query).bind(dBConnection);
+
 	// Drop the database
 	dropDB(DB_NAME, dBConnection);
 
@@ -111,15 +116,7 @@ beforeEach(async () =>
 
 	expect(RES_PORTFOLIO_CREATE.statusCode).toBe(201);
 
-	const results: [{ id: string }] = await new Promise((resolve, reject) => {
-		dBConnection.query("SELECT id FROM portfolio WHERE name = ?;", [PORTFOLIO_NAME], (error, results) => {
-			if (error) {
-				reject(error);
-			} else {
-				resolve(results);
-			}
-		});
-	});
+	const results = await dBQuery("SELECT id FROM portfolio WHERE name = ?;", [PORTFOLIO_NAME]);
 
 	portfolio_id = results[0].id;
 });
@@ -140,18 +137,9 @@ describe("ROUTE: /api/portfolio-asset", () =>
 				}
 			}).expect(401);
 
-			dBConnection.query(
-				"SELECT * FROM portfolio_asset;",
-				async (error, results) =>
-				{
-					if (error)
-					{
-						throw new Error(error.stack);
-					}
+			const results = await dBQuery("SELECT * FROM portfolio_asset;");
 
-					expect(results.length).toBe(0);
-				}
-			);
+			expect(results.length).toBe(0);
 		});
 
 		test("Should fail if no portfolio id passed..", async () =>
@@ -168,18 +156,9 @@ describe("ROUTE: /api/portfolio-asset", () =>
 
 			expect(RES.text).toBe("No portfolio id received");
 
-			dBConnection.query(
-				"SELECT * FROM portfolio_asset;",
-				async (error, results) =>
-				{
-					if (error)
-					{
-						throw new Error(error.stack);
-					}
+			const results = await dBQuery("SELECT * FROM portfolio_asset;");
 
-					expect(results.length).toBe(0);
-				}
-			);
+			expect(results.length).toBe(0);
 		});
 
 		test("Should fail if no portfolio asset ticker passed..", async () =>
@@ -196,18 +175,9 @@ describe("ROUTE: /api/portfolio-asset", () =>
 
 				expect(RES.text).toBe("No portfolio asset ticker received");
 
-				dBConnection.query(
-					"SELECT * FROM portfolio_asset;",
-					async (error, results) =>
-					{
-						if (error)
-						{
-							throw new Error(error.stack);
-						}
+				const results = await dBQuery("SELECT * FROM portfolio_asset;");
 
-						expect(results.length).toBe(0);
-					}
-				);
+				expect(results.length).toBe(0);
 			});
 
 		test("Should insert portfolio asset into database..", async () =>
@@ -224,20 +194,11 @@ describe("ROUTE: /api/portfolio-asset", () =>
 
 			expect(RES_PORTFOLIO_ASSET.statusCode).toBe(201);
 
-			dBConnection.query(
-				"SELECT * FROM portfolio_asset;",
-				async (error, results) =>
-				{
-					if (error)
-					{
-						throw new Error(error.stack);
-					}
+			const results = await dBQuery("SELECT * FROM portfolio_asset;");
 
-					expect(results.length).toBeGreaterThan(0);
+			expect(results.length).toBeGreaterThan(0);
 
-					expect(results[0].ticker).toBe(TICKER);
-				}
-			);
+			expect(results[0].ticker).toBe(TICKER);
 		});
 	});
 });

@@ -1,6 +1,7 @@
 import express from "express";
 import mysql from "mysql";
 import request from "supertest";
+import { promisify } from "util";
 
 import routeApiPortfolio from "./index";
 import routeApi from "../index";
@@ -14,6 +15,7 @@ const EMAIL: string = "testemail@example.com";
 const PASSWORD: string = "testpassword!";
 const PORTFOLIO_NAME: string = "my-portfolio";
 
+let dBQuery;
 let token: string;
 
 let app: express.Express;
@@ -70,6 +72,9 @@ afterAll(async () =>
 
 beforeEach(async () =>
 {
+	// Promisify dbConnection.query for easier use with async/await
+	dBQuery = promisify(dBConnection.query).bind(dBConnection);
+
 	// Drop the database
 	dropDB(DB_NAME, dBConnection);
 
@@ -113,18 +118,9 @@ describe("ROUTE: /api/portfolio", () =>
 				}
 			}).expect(401);
 
-			dBConnection.query(
-				"SELECT * FROM portfolio;",
-				async (error, results) =>
-				{
-					if (error)
-					{
-						throw new Error(error.stack);
-					}
+			const results = await dBQuery("SELECT * FROM portfolio;");
 
-					expect(results.length).toBe(0);
-				}
-			);
+			expect(results.length).toBe(0);
 		});
 
 		test("Should fail if no portfolio name passed..", async () =>
@@ -142,18 +138,9 @@ describe("ROUTE: /api/portfolio", () =>
 
 			expect(RES.text).toBe("No portfolio name provided");
 
-			dBConnection.query(
-				"SELECT * FROM portfolio;",
-				async (error, results) =>
-				{
-					if (error)
-					{
-						throw new Error(error.stack);
-					}
+			const results = await dBQuery("SELECT * FROM portfolio;");
 
-					expect(results.length).toBe(0);
-				}
-			);
+			expect(results.length).toBe(0);
 		});
 
 		test("Should insert portfolio into database..", async () =>
@@ -173,20 +160,11 @@ describe("ROUTE: /api/portfolio", () =>
 
 			expect(RES_PORTFOLIO_CREATE.statusCode).toBe(201);
 
-			dBConnection.query(
-				"SELECT * FROM portfolio;",
-				async (error, results) =>
-				{
-					if (error)
-					{
-						throw new Error(error.stack);
-					}
+			const results = await dBQuery("SELECT * FROM portfolio;");
 
-					expect(results.length).toBeGreaterThan(0);
+			expect(results.length).toBeGreaterThan(0);
 
-					expect(results[0].name).toBe(PORTFOLIO_NAME);
-				}
-			);
+			expect(results[0].name).toBe(PORTFOLIO_NAME);
 		});
 	});
 
@@ -246,20 +224,12 @@ describe("ROUTE: /api/portfolio", () =>
 
 				expect(portfolio[0].name).toBe(PORTFOLIO_NAME);
 
-				dBConnection.query(
-					"SELECT * FROM portfolio;",
-					async (error, results) =>
-					{
-						if (error)
-						{
-							throw new Error(error.stack);
-						}
+				const results = await dBQuery("SELECT * FROM portfolio;");
 
-						expect(results.length).toBeGreaterThan(0);
+				expect(results.length).toBeGreaterThan(0);
 
-						expect(results[0].name).toBe(PORTFOLIO_NAME);
-					}
-				);
+				expect(results[0].name).toBe(PORTFOLIO_NAME);
+
 
 				const RES_PORTFOLIO_DELETE = await request(app).get("/api/portfolio/delete").set(
 					'tokenuser',
@@ -272,18 +242,9 @@ describe("ROUTE: /api/portfolio", () =>
 
 				expect(RES_PORTFOLIO_DELETE.statusCode).toBe(201);
 
-				dBConnection.query(
-					"SELECT * FROM portfolio;",
-					async (error, results) =>
-					{
-						if (error)
-						{
-							throw new Error(error.stack);
-						}
+				const resultsAfter = await dBQuery("SELECT * FROM portfolio;");
 
-						expect(results.length).toBe(0);
-					}
-				);
+				expect(resultsAfter.length).toBe(0);
 			});
 	});
 });
