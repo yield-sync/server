@@ -13,7 +13,7 @@ const jwt = require("jsonwebtoken");
 
 
 const DB_NAME: string = "mock_db_user";
-const ERROR_PASSPORT: string = "Password Must be ASCII, longer than 8 characters, and contain a special character";
+const ERROR_PASSWORD: string = "Password Must be ASCII, longer than 8 characters, and contain a special character";
 
 let app: express.Express;
 let dBConnection: mysql.Connection;
@@ -59,6 +59,15 @@ afterAll(() =>
 
 	// [mysql] Close connection
 	dBConnection.end();
+});
+
+beforeEach(async () =>
+{
+	// Drop the database
+	dropDB(DB_NAME, dBConnection);
+
+	// [mock-db] drop and recreate
+	await DBBuilder(dBConnection, DB_NAME, true);
 });
 
 
@@ -107,7 +116,7 @@ describe("ROUTE: /api/user", () =>
 
 			expect(response.statusCode).toBe(400);
 
-			expect(response.error.text).toBe(ERROR_PASSPORT);
+			expect(response.error.text).toBe(ERROR_PASSWORD);
 
 			dBConnection.query(
 				"SELECT * FROM user;",
@@ -132,7 +141,7 @@ describe("ROUTE: /api/user", () =>
 
 			expect(response.statusCode).toBe(400);
 
-			expect(response.error.text).toBe(ERROR_PASSPORT);
+			expect(response.error.text).toBe(ERROR_PASSWORD);
 
 			dBConnection.query(
 				"SELECT * FROM user;",
@@ -159,7 +168,7 @@ describe("ROUTE: /api/user", () =>
 
 			expect(res.statusCode).toBe(400);
 
-			expect(res.error.text).toBe(ERROR_PASSPORT);
+			expect(res.error.text).toBe(ERROR_PASSWORD);
 
 			dBConnection.query(
 				"SELECT * FROM user;",
@@ -182,7 +191,7 @@ describe("ROUTE: /api/user", () =>
 				}
 			});
 
-			expect(response.statusCode).toBe(200);
+			expect(response.statusCode).toBe(201);
 
 			dBConnection.query(
 				"SELECT * FROM user;",

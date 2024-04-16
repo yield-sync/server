@@ -14,6 +14,33 @@ export default (dBConnection: any) =>
 	const router: express.Router = express.Router().use(cors());
 
 	router.get(
+		"/",
+		user(),
+		async (req: express.Request, res: express.Response) =>
+		{
+			try
+			{
+				const RES_PORTFOLIO = await DB_QUERY(
+					"SELECT name FROM portfolio WHERE user_id = ?;",
+					[req.body.userDecoded.id]
+				);
+
+				res.status(200).send(RES_PORTFOLIO);
+
+				return;
+			}
+			catch (error)
+			{
+				console.log(error);
+
+				res.status(500).send("Internal server error");
+
+				return;
+			}
+		}
+	);
+
+	router.get(
 		"/create",
 		user(),
 		async (req: express.Request, res: express.Response) =>
@@ -32,7 +59,7 @@ export default (dBConnection: any) =>
 					[req.body.userDecoded.id, req.body.load.portfolio.name],
 				);
 
-				res.status(200).send("Created portfolio");
+				res.status(201).send("Created portfolio");
 
 				return;
 			}

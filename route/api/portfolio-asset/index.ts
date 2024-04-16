@@ -56,7 +56,7 @@ export default (dBConnection: mysql.Connection) =>
 					[load.portfolio_id, load.ticker]
 				);
 
-				res.status(200).send("Portfolio asset created.");
+				res.status(201).send("Portfolio asset created.");
 
 				return;
 

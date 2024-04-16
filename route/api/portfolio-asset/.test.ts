@@ -12,7 +12,7 @@ import DBBuilder, { dropDB } from "../../../sql/DBBuilder";
 
 const DB_NAME: string = "mock_db_portfolio_asset";
 const EMAIL: string = "testemail@example.com";
-const PASSPORT: string = "testpassword!";
+const PASSWORD: string = "testpassword!";
 const PORTFOLIO_NAME: string = "my-portfolio";
 const TICKER: string = "PS";
 
@@ -61,20 +61,38 @@ beforeAll(async () =>
 		"/api/portfolio-asset",
 		routeApiPortfolioAsset(dBConnection)
 	);
+});
+
+afterAll(async () =>
+{
+	// Drop the database
+	dropDB(DB_NAME, dBConnection);
+
+	// [mysql] Close connection
+	dBConnection.end();
+});
+
+beforeEach(async () =>
+{
+	// Drop the database
+	dropDB(DB_NAME, dBConnection);
+
+	// [mock-db] drop and recreate
+	await DBBuilder(dBConnection, DB_NAME, true);
 
 	// Create a user
 	await request(app).post("/api/user/create").send({
 		load: {
 			email: EMAIL,
-			password: PASSPORT
+			password: PASSWORD
 		}
-	}).expect(200);
+	}).expect(201);
 
 	// Send a login request
 	const RES_LOGIN = await request(app).post("/api/user/login").send({
 		load: {
 			email: EMAIL,
-			password: PASSPORT
+			password: PASSWORD
 		}
 	}).expect(200);
 
@@ -91,7 +109,7 @@ beforeAll(async () =>
 		}
 	});
 
-	expect(RES_PORTFOLIO_CREATE.statusCode).toBe(200);
+	expect(RES_PORTFOLIO_CREATE.statusCode).toBe(201);
 
 	const results: [{ id: string }] = await new Promise((resolve, reject) => {
 		dBConnection.query("SELECT id FROM portfolio WHERE name = ?;", [PORTFOLIO_NAME], (error, results) => {
@@ -104,15 +122,6 @@ beforeAll(async () =>
 	});
 
 	portfolio_id = results[0].id;
-});
-
-afterAll(async () =>
-{
-	// Drop the database
-	dropDB(DB_NAME, dBConnection);
-
-	// [mysql] Close connection
-	dBConnection.end();
 });
 
 
@@ -213,7 +222,7 @@ describe("ROUTE: /api/portfolio-asset", () =>
 				}
 			});
 
-			expect(RES_PORTFOLIO_ASSET.statusCode).toBe(200);
+			expect(RES_PORTFOLIO_ASSET.statusCode).toBe(201);
 
 			dBConnection.query(
 				"SELECT * FROM portfolio_asset;",

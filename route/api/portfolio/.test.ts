@@ -56,6 +56,25 @@ beforeAll(async () =>
 		"/api/portfolio",
 		routeApiPortfolio(dBConnection)
 	);
+});
+
+afterAll(async () =>
+{
+	// Drop the database
+	dropDB(DB_NAME, dBConnection);
+
+	// [mysql] Close connection
+	dBConnection.end();
+});
+
+
+beforeEach(async () =>
+{
+	// Drop the database
+	dropDB(DB_NAME, dBConnection);
+
+	// [mock-db] drop and recreate
+	await DBBuilder(dBConnection, DB_NAME, true);
 
 	// Create a user
 	await request(app).post("/api/user/create").send({
@@ -63,7 +82,7 @@ beforeAll(async () =>
 			email: EMAIL,
 			password: PASSWORD
 		}
-	}).expect(200);
+	}).expect(201);
 
 	// Send a login request
 	const RES_LOGIN = await request(app).post("/api/user/login").send({
@@ -76,15 +95,6 @@ beforeAll(async () =>
 	token = (JSON.parse(RES_LOGIN.text)).token;
 
 	expect(typeof token).toBe("string");
-});
-
-afterAll(async () =>
-{
-	// Drop the database
-	dropDB(DB_NAME, dBConnection);
-
-	// [mysql] Close connection
-	dBConnection.end();
 });
 
 
@@ -161,7 +171,7 @@ describe("ROUTE: /api/portfolio", () =>
 				}
 			});
 
-			expect(RES_PORTFOLIO_CREATE.statusCode).toBe(200);
+			expect(RES_PORTFOLIO_CREATE.statusCode).toBe(201);
 
 			dBConnection.query(
 				"SELECT * FROM portfolio;",
@@ -178,5 +188,31 @@ describe("ROUTE: /api/portfolio", () =>
 				}
 			);
 		});
+
+		test("Should be able to retrieve portfolio(s) from database..", async () =>
+			{
+				const PORTFOLIO_NAME: string = "my-portfolio";
+
+				const RES_PORTFOLIO_CREATE = await request(app).get("/api/portfolio/create").set(
+					'tokenuser',
+					`Bearer ${token}`
+				).send({
+					load: {
+						portfolio: {
+							name: PORTFOLIO_NAME
+						}
+					}
+				});
+
+				expect(RES_PORTFOLIO_CREATE.statusCode).toBe(201);
+
+				const RES_PORTFOLIO = await request(app).get("/api/portfolio").set('tokenuser', `Bearer ${token}`).send();
+
+				let portfolio: [{ name: string }] = JSON.parse(RES_PORTFOLIO.text);
+
+				expect(portfolio.length).toBeGreaterThanOrEqual(1);
+
+				expect(portfolio[0].name).toBe(PORTFOLIO_NAME);
+			});
 	});
 });

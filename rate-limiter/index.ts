@@ -3,7 +3,7 @@ import rateLimit from "express-rate-limit";
 
 
 // [INIT] Const
-const defaultMessage = "Too many requests, please try again later";
+const defaultMessage: string = "Too many requests, please try again later";
 
 
 export default {

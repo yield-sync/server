@@ -64,7 +64,7 @@ export default (dBConnection: mysql.Connection) =>
 				// Send Email
 				await sendEmailUserVerification(load.email);
 
-				res.status(200).send("Created user");
+				res.status(201).send("Created user");
 
 				return;
 			}
