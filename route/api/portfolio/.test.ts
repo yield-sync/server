@@ -101,7 +101,7 @@ beforeEach(async () =>
 // [test]
 describe("ROUTE: /api/portfolio", () =>
 {
-	describe("GET /", () =>
+	describe("GET /create", () =>
 	{
 		test("[auth] Should require a user token to insert portfolio into DB..", async () =>
 		{
@@ -188,8 +188,40 @@ describe("ROUTE: /api/portfolio", () =>
 				}
 			);
 		});
+	});
 
+	describe("GET /", () =>
+	{
 		test("Should be able to retrieve portfolio(s) from database..", async () =>
+		{
+			const PORTFOLIO_NAME: string = "my-portfolio";
+
+			const RES_PORTFOLIO_CREATE = await request(app).get("/api/portfolio/create").set(
+				'tokenuser',
+				`Bearer ${token}`
+			).send({
+				load: {
+					portfolio: {
+						name: PORTFOLIO_NAME
+					}
+				}
+			});
+
+			expect(RES_PORTFOLIO_CREATE.statusCode).toBe(201);
+
+			const RES_PORTFOLIO = await request(app).get("/api/portfolio").set('tokenuser', `Bearer ${token}`).send();
+
+			let portfolio: [{ id: string, name: string }] = JSON.parse(RES_PORTFOLIO.text);
+
+			expect(portfolio.length).toBeGreaterThanOrEqual(1);
+
+			expect(portfolio[0].name).toBe(PORTFOLIO_NAME);
+		});
+	});
+
+	describe("GET /delete", () =>
+	{
+		test("Should be able to delete portfolio from database..", async () =>
 			{
 				const PORTFOLIO_NAME: string = "my-portfolio";
 
@@ -208,11 +240,50 @@ describe("ROUTE: /api/portfolio", () =>
 
 				const RES_PORTFOLIO = await request(app).get("/api/portfolio").set('tokenuser', `Bearer ${token}`).send();
 
-				let portfolio: [{ name: string }] = JSON.parse(RES_PORTFOLIO.text);
+				let portfolio: [{ id: string, name: string }] = JSON.parse(RES_PORTFOLIO.text);
 
 				expect(portfolio.length).toBeGreaterThanOrEqual(1);
 
 				expect(portfolio[0].name).toBe(PORTFOLIO_NAME);
+
+				dBConnection.query(
+					"SELECT * FROM portfolio;",
+					async (error, results) =>
+					{
+						if (error)
+						{
+							throw new Error(error.stack);
+						}
+
+						expect(results.length).toBeGreaterThan(0);
+
+						expect(results[0].name).toBe(PORTFOLIO_NAME);
+					}
+				);
+
+				const RES_PORTFOLIO_DELETE = await request(app).get("/api/portfolio/delete").set(
+					'tokenuser',
+					`Bearer ${token}`
+				).send({
+					load: {
+						portfolio_id: portfolio[0].id
+					}
+				});
+
+				expect(RES_PORTFOLIO_DELETE.statusCode).toBe(201);
+
+				dBConnection.query(
+					"SELECT * FROM portfolio;",
+					async (error, results) =>
+					{
+						if (error)
+						{
+							throw new Error(error.stack);
+						}
+
+						expect(results.length).toBe(0);
+					}
+				);
 			});
 	});
 });

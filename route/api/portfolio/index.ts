@@ -21,7 +21,7 @@ export default (dBConnection: any) =>
 			try
 			{
 				const RES_PORTFOLIO = await DB_QUERY(
-					"SELECT name FROM portfolio WHERE user_id = ?;",
+					"SELECT id, name FROM portfolio WHERE user_id = ?;",
 					[req.body.userDecoded.id]
 				);
 
@@ -60,6 +60,38 @@ export default (dBConnection: any) =>
 				);
 
 				res.status(201).send("Created portfolio");
+
+				return;
+			}
+			catch (error)
+			{
+				res.status(500).send("Internal server error");
+
+				return;
+			}
+		}
+	);
+
+	router.get(
+		"/delete",
+		user(),
+		async (req: express.Request, res: express.Response) =>
+		{
+			try
+			{
+				if (!req.body.load.portfolio_id)
+				{
+					res.status(400).send("No portfolio id provided");
+
+					return;
+				}
+
+				await DB_QUERY(
+					"DELETE FROM portfolio WHERE user_id = ? AND id = ?;",
+					[req.body.userDecoded.id, req.body.load.portfolio_id],
+				);
+
+				res.status(201).send("Deleted portfolio");
 
 				return;
 			}
