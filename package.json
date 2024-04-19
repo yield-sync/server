@@ -7,7 +7,7 @@
   "scripts": {
     "build": "rimraf dist && npx tsc && cp -r static/ dist/",
     "dev": "cross-env NODE_ENV=development concurrently \"tsc --watch\" \"nodemon dist/index.js\"",
-    "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false npm install --prefix client && npm install --only=dev --prefix client && npm run build --prefix client",
+    "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false npm install --legacy-peer-deps --prefix frontend && npm install --only=dev --legacy-peer-deps --prefix frontend && npm run build --prefix frontend",
     "lint": "eslint . --ext .ts --fix",
     "predev": "npm run build",
     "prestart": "npm run build",

@@ -67,23 +67,18 @@ const app: express.Express = express().use(bodyParser.json()).use(bodyParser.url
 ).use(
 	"/api/user",
 	routeApiUser(dBConnection)
+).use(
+	express.static("frontend/dist")
 );
 
-
-// [heroku] Set Static Folder
-if (config.nodeENV == "production")
-{
-	app.use(express.static("client/dist"));
-
-	app.get(
-		"*",
-		(req: express.Request, res: express.Response) =>
-		{
-			res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html"));
-		}
-	);
-}
-
+// Catch-all route
+app.get(
+	"*",
+	(req: express.Request, res: express.Response) =>
+	{
+		res.send(path.resolve(__dirname, "frontend", "dist", "index.html"));
+	}
+);
 
 http.createServer(app).listen(
 	config.port,
