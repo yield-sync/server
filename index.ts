@@ -79,7 +79,7 @@ if (config.nodeENV == "production")
 		"*",
 		(req: express.Request, res: express.Response) =>
 		{
-			res.sendFile(path.resolve(__dirname, "client", "dist", "index.html"));
+			res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html"));
 		}
 	);
 }
