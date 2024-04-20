@@ -74,6 +74,45 @@ export default (dBConnection: any) =>
 	);
 
 	router.get(
+		"/update",
+		user(),
+		async (req: express.Request, res: express.Response) =>
+		{
+			try
+			{
+				if (!req.body.load.portfolio.id)
+				{
+					res.status(400).send("No portfolio id provided");
+
+					return;
+				}
+
+				if (!req.body.load.portfolio.name)
+				{
+					res.status(400).send("No portfolio name provided");
+
+					return;
+				}
+
+				await DB_QUERY(
+					"UPDATE portfolio SET name = ? WHERE user_id = ? AND id = ?;",
+					[req.body.load.portfolio.name, req.body.userDecoded.id, req.body.load.portfolio.id]
+				);
+
+				res.status(201).send("Updated portfolio");
+
+				return;
+			}
+			catch (error)
+			{
+				res.status(500).send(config.nodeENV == "production" ? "Internal server error" : error);
+
+				return;
+			}
+		}
+	);
+
+	router.get(
 		"/delete",
 		user(),
 		async (req: express.Request, res: express.Response) =>
