@@ -4,6 +4,7 @@ import express from "express";
 import mysql from "mysql";
 import { promisify } from "util";
 
+import config from "../../../config";
 import { user } from "../../../middleware/token";
 
 
@@ -63,7 +64,7 @@ export default (dBConnection: mysql.Connection) =>
 			}
 			catch (error)
 			{
-				res.status(500).send("Internal server error");
+				res.status(500).send(config.nodeENV == "production" ? "Internal server error" : error);
 
 				return;
 			}

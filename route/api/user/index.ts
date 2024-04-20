@@ -71,7 +71,7 @@ export default (dBConnection: mysql.Connection) =>
 			}
 			catch (error)
 			{
-				res.status(500).send("Internal server error");
+				res.status(500).send(config.nodeENV == "production" ? "Internal server error" : error);
 
 				return;
 			}
@@ -109,9 +109,7 @@ export default (dBConnection: mysql.Connection) =>
 			}
 			catch (error)
 			{
-				console.log(error);
-
-				res.status(500).send("Internal server error");
+				res.status(500).send(config.nodeENV == "production" ? "Internal server error" : error);
 
 				return;
 			}
@@ -160,7 +158,7 @@ export default (dBConnection: mysql.Connection) =>
 			}
 			catch (error)
 			{
-				res.status(500).send("Internal server error");
+				res.status(500).send(config.nodeENV == "production" ? "Internal server error" : error);
 
 				return;
 			}

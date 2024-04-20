@@ -3,6 +3,7 @@ import cors from "cors";
 import express from "express";
 import { promisify } from "util";
 
+import config from "../../../config";
 import { user } from "../../../middleware/token";
 
 
@@ -33,7 +34,7 @@ export default (dBConnection: any) =>
 			{
 				console.log(error);
 
-				res.status(500).send("Internal server error");
+				res.status(500).send(config.nodeENV == "production" ? "Internal server error" : error);
 
 				return;
 			}
@@ -65,7 +66,7 @@ export default (dBConnection: any) =>
 			}
 			catch (error)
 			{
-				res.status(500).send("Internal server error");
+				res.status(500).send(config.nodeENV == "production" ? "Internal server error" : error);
 
 				return;
 			}
@@ -97,7 +98,7 @@ export default (dBConnection: any) =>
 			}
 			catch (error)
 			{
-				res.status(500).send("Internal server error");
+				res.status(500).send(config.nodeENV == "production" ? "Internal server error" : error);
 
 				return;
 			}
