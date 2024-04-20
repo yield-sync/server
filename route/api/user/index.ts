@@ -6,6 +6,7 @@ import mysql from "mysql";
 import { promisify } from "util";
 
 import config from "../../../config";
+import { user } from "../../../middleware/token";
 import sendEmailUserVerification from "../../../util/mailUtil";
 import { validateEmail, validatePassword } from "../../../util/validationUtil";
 
@@ -78,14 +79,54 @@ export default (dBConnection: mysql.Connection) =>
 	);
 
 	router.post(
+		"/password-update",
+		user(),
+		async (req: express.Request, res: express.Response) =>
+		{
+			const load = req.body.load;
+			try
+			{
+				const RESULT = await DB_QUERY(
+					"SELECT * FROM user WHERE email = ?;",
+					[req.body.userDecoded.email]
+				);
+
+				if (!bcrypt.compareSync(load.password, RESULT[0].password))
+				{
+					res.status(401).send("Invalid password.");
+
+					return;
+				}
+
+				await DB_QUERY(
+					"UPDATE user SET password = ? WHERE id = ?;",
+					[await bcrypt.hash(load.passwordNew, 10), req.body.userDecoded.id]
+				);
+
+				res.status(200).send("Updated password.");
+
+				return
+			}
+			catch (error)
+			{
+				console.log(error);
+
+				res.status(500).send("Internal server error");
+
+				return;
+			}
+		}
+	);
+
+	router.post(
 		"/login",
 		async (req: express.Request, res: express.Response) =>
 		{
+			const load = req.body.load;
+
 			try
 			{
-				const load = req.body.load;
-
-				const RESULT = await DB_QUERY("SELECT * FROM user WHERE email = ?;", [load.email],);
+				const RESULT = await DB_QUERY("SELECT * FROM user WHERE email = ?;", [load.email]);
 
 				if (RESULT.length == 0)
 				{
@@ -94,30 +135,28 @@ export default (dBConnection: mysql.Connection) =>
 					return;
 				}
 
-				if (bcrypt.compareSync(load.password, RESULT[0].password))
-				{
-					res.status(200).send({
-						token: jsonWebToken.sign(
-							{
-								id: RESULT[0].id,
-								email: RESULT[0].email,
-								verified: RESULT[0].verified
-							},
-							config.app.secretKey,
-							{
-								expiresIn: config.nodeENV == "production" ? 7200 : 10000000
-							}
-						)
-					});
-
-					return;
-				}
-				else
+				if (!bcrypt.compareSync(load.password, RESULT[0].password))
 				{
 					res.status(401).send("Invalid password or email");
 
 					return;
 				}
+
+				res.status(200).send({
+					token: jsonWebToken.sign(
+						{
+							id: RESULT[0].id,
+							email: RESULT[0].email,
+							verified: RESULT[0].verified
+						},
+						config.app.secretKey,
+						{
+							expiresIn: config.nodeENV == "production" ? 7200 : 10000000
+						}
+					)
+				});
+
+				return;
 			}
 			catch (error)
 			{

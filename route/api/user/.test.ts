@@ -289,4 +289,99 @@ describe("ROUTE: /api/user", () =>
 			});
 		});
 	});
+
+	describe("POST /password-update", () =>
+		{
+			test("Should not allow user to change password given invalid current password..", async () =>
+			{
+				const email: string = "testemail@example.com";
+				const password: string = "testpassword!";
+				const PASSWORD_INVALID: string = "testpassword!!";
+
+				// Create a user
+				await request(app).post("/api/user/create").send({
+					load: {
+						email: email,
+						password: password
+					}
+				});
+
+				// Send a login request
+				const response = await request(app).post("/api/user/login").send({
+					load: {
+						email: email,
+						password: password
+					}
+				});
+
+				expect(response.statusCode).toBe(200);
+
+				const TOKEN = (JSON.parse(response.text)).token;
+
+				expect(typeof TOKEN).toBe("string");
+
+				await request(app).post("/api/user/password-update").set(
+					'tokenuser',
+					`Bearer ${TOKEN}`
+				).send({
+					load: {
+						password: PASSWORD_INVALID,
+						passwordNew: PASSWORD_INVALID,
+					}
+				}).expect(401);
+			});
+
+			test("Should allow user to change password given old one..", async () =>
+			{
+				const email: string = "testemail@example.com";
+				const password: string = "testpassword!";
+				const PASSWORD_NEW: string = "testpassword!!";
+
+				// Create a user
+				await request(app).post("/api/user/create").send({
+					load: {
+						email: email,
+						password: password
+					}
+				});
+
+				// Send a login request
+				const response = await request(app).post("/api/user/login").send({
+					load: {
+						email: email,
+						password: password
+					}
+				});
+
+				expect(response.statusCode).toBe(200);
+
+				const TOKEN = (JSON.parse(response.text)).token;
+
+				expect(typeof TOKEN).toBe("string");
+
+				await request(app).post("/api/user/password-update").set(
+					'tokenuser',
+					`Bearer ${TOKEN}`
+				).send({
+					load: {
+						password: password,
+						passwordNew: PASSWORD_NEW,
+					}
+				}).expect(200);
+
+				// Send a login request
+				const RESPONSE_LOGIN_NEW = await request(app).post("/api/user/login").send({
+					load: {
+						email: email,
+						password: PASSWORD_NEW
+					}
+				});
+
+				expect(RESPONSE_LOGIN_NEW.statusCode).toBe(200);
+
+				const TOKEN_NEW = (JSON.parse(RESPONSE_LOGIN_NEW.text)).token;
+
+				expect(typeof TOKEN_NEW).toBe("string");
+			});
+		});
 });
