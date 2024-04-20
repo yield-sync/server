@@ -168,6 +168,150 @@ describe("ROUTE: /api/portfolio", () =>
 		});
 	});
 
+	describe("GET /update", () =>
+		{
+			test("[auth] Should require a user token to update portfolio into DB..", async () =>
+			{
+				await request(app).get("/api/portfolio/update").send({
+					load: {
+						portfolio: {
+							name: PORTFOLIO_NAME
+						}
+					}
+				}).expect(401);
+			});
+
+			test("Should fail if no portfolio id passed..", async () =>
+			{
+				const PORTFOLIO_NAME: string = "my-portfolio";
+
+				const RES_PORTFOLIO_CREATE = await request(app).get("/api/portfolio/create").set(
+					'tokenuser',
+					`Bearer ${token}`
+				).send({
+					load: {
+						portfolio: {
+							name: PORTFOLIO_NAME
+						}
+					}
+				});
+
+				expect(RES_PORTFOLIO_CREATE.statusCode).toBe(201);
+
+				const RESULTS = await dBQuery("SELECT * FROM portfolio;");
+
+				expect(RESULTS.length).toBeGreaterThan(0);
+
+				expect(RESULTS[0].name).toBe(PORTFOLIO_NAME);
+
+				await request(app).get("/api/portfolio/update").set(
+					'tokenuser',
+					`Bearer ${token}`
+				).send({
+					load: {
+						portfolio: {
+							id: undefined,
+							name: undefined
+						}
+					}
+				}).expect(400);
+
+				await request(app).get("/api/portfolio/update").set(
+					'tokenuser',
+					`Bearer ${token}`
+				).send({
+					load: {
+						portfolio: {
+							id: undefined,
+							name: "with name"
+						}
+					}
+				}).expect(400);
+			});
+
+			test("Should fail if no portfolio name passed..", async () =>
+			{
+				const PORTFOLIO_NAME: string = "my-portfolio";
+
+				const RES_PORTFOLIO_CREATE = await request(app).get("/api/portfolio/create").set(
+					'tokenuser',
+					`Bearer ${token}`
+				).send({
+					load: {
+						portfolio: {
+							name: PORTFOLIO_NAME
+						}
+					}
+				});
+
+				expect(RES_PORTFOLIO_CREATE.statusCode).toBe(201);
+
+				const RESULTS = await dBQuery("SELECT * FROM portfolio;");
+
+				expect(RESULTS.length).toBeGreaterThan(0);
+
+				expect(RESULTS[0].name).toBe(PORTFOLIO_NAME);
+
+				await request(app).get("/api/portfolio/update").set(
+					'tokenuser',
+					`Bearer ${token}`
+				).send({
+					load: {
+						portfolio: {
+							id: RESULTS[0].id,
+							name: undefined
+						}
+					}
+				}).expect(400);
+			});
+
+			test("Should update portfolio into database..", async () =>
+			{
+				const PORTFOLIO_NAME: string = "my-portfolio";
+
+				const RES_PORTFOLIO_CREATE = await request(app).get("/api/portfolio/create").set(
+					'tokenuser',
+					`Bearer ${token}`
+				).send({
+					load: {
+						portfolio: {
+							name: PORTFOLIO_NAME
+						}
+					}
+				});
+
+				expect(RES_PORTFOLIO_CREATE.statusCode).toBe(201);
+
+				const RESULTS = await dBQuery("SELECT * FROM portfolio;");
+
+				expect(RESULTS.length).toBeGreaterThan(0);
+
+				expect(RESULTS[0].name).toBe(PORTFOLIO_NAME);
+
+				const PORTFOLIO_NAME_NEW: string = "new-name"
+
+				const RES_PORTFOLIO_UPDATE = await request(app).get("/api/portfolio/update").set(
+					'tokenuser',
+					`Bearer ${token}`
+				).send({
+					load: {
+						portfolio: {
+							id: RESULTS[0].id,
+							name: PORTFOLIO_NAME_NEW
+						}
+					}
+				});
+
+				expect(RES_PORTFOLIO_UPDATE.statusCode).toBe(201);
+
+				const results = await dBQuery("SELECT * FROM portfolio;");
+
+				expect(results.length).toBeGreaterThan(0);
+
+				expect(results[0].name).toBe(PORTFOLIO_NAME_NEW);
+			});
+		});
+
 	describe("GET /", () =>
 	{
 		test("Should be able to retrieve portfolio(s) from database..", async () =>
