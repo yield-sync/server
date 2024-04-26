@@ -17,4 +17,9 @@ describe("ROUTE: /api", () =>
 			expect(response.statusCode).toBe(200);
 		});
 	});
+
+	describe("GET /recover-account", () =>
+	{
+		test("Should be able to receive email from server")
+	});
 });

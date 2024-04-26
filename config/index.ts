@@ -8,6 +8,10 @@ export default
 	nodeENV: process.env.NODE_ENV || "development",
 	port: process.env.PORT || 5000,
 
+	api: {
+		sendinblueKey: process.env.API__SENDINBLUE_KEY || "",
+	},
+
 	// [app]
 	app: {
 		// [base-url]

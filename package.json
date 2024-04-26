@@ -7,9 +7,9 @@
   "scripts": {
     "build": "rimraf dist && npx tsc && cp -r static/ dist/",
     "dev": "cross-env NODE_ENV=development concurrently \"tsc --watch\" \"nodemon dist/index.js\"",
-	"frontend-build": "NPM_CONFIG_PRODUCTION=false npm run build --prefix frontend",
-	"frontend-install": "NPM_CONFIG_PRODUCTION=false npm install --prefix frontend --legacy-peer-deps",
-	"frontend-install-dev": "NPM_CONFIG_PRODUCTION=false npm install --prefix frontend --legacy-peer-deps --only=dev",
+    "frontend-build": "NPM_CONFIG_PRODUCTION=false npm run build --prefix frontend",
+    "frontend-install": "NPM_CONFIG_PRODUCTION=false npm install --prefix frontend --legacy-peer-deps",
+    "frontend-install-dev": "NPM_CONFIG_PRODUCTION=false npm install --prefix frontend --legacy-peer-deps --only=dev",
     "heroku-postbuild": "npm run frontend-install && npm run frontend-install-dev && npm run frontend-build",
     "lint": "eslint . --ext .ts --fix",
     "predev": "npm run build",
@@ -28,6 +28,7 @@
   },
   "license": "MIT",
   "dependencies": {
+    "@sendinblue/client": "^3.3.1",
     "@types/mysql": "^2.15.26",
     "@typescript-eslint/eslint-plugin": "^6.7.4",
     "@typescript-eslint/parser": "^6.7.4",
