@@ -235,7 +235,7 @@ describe("ROUTE: /api/user", () =>
 
 			const results = await dBQuery("SELECT * FROM user WHERE email = ?;", [email]);
 
-			// Shoud only work with the valid password
+			// Shou/d only work with the valid password
 			expect(bcrypt.compareSync(password, results[0].password)).toBe(true);
 
 			expect(bcrypt.compareSync(invalidPassword, results[0].password)).toBe(false);
@@ -244,7 +244,7 @@ describe("ROUTE: /api/user", () =>
 
 	describe("POST /login", () =>
 	{
-		test("Should allow user to recieve a decodable token..", async () =>
+		test("Should allow user to receive a decodable token..", async () =>
 		{
 			const email: string = "testemail@example.com";
 			const password: string = "testpassword!";

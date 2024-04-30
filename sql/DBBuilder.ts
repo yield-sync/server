@@ -53,6 +53,7 @@ export default async (dBConnection: Connection, dBName: string, reset: boolean =
 				id INT NOT NULL AUTO_INCREMENT,
 				email VARCHAR(255) NOT NULL,
 				password VARCHAR(255) NOT NULL,
+				admin BIT(1) DEFAULT 0,
 				verified BIT(1) DEFAULT 0,
 				created DATETIME DEFAULT CURRENT_TIMESTAMP
 			)

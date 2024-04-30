@@ -145,6 +145,7 @@ export default (dBConnection: mysql.Connection) =>
 						{
 							id: RESULT[0].id,
 							email: RESULT[0].email,
+							admin: RESULT[0].admin,
 							verified: RESULT[0].verified
 						},
 						config.app.secretKey,

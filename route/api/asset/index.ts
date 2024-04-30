@@ -22,10 +22,7 @@ export default (dBConnection: mysql.Connection) =>
 		{
 			try
 			{
-				const RES_PORTFOLIO = await DB_QUERY(
-					"SELECT id, name FROM portfolio WHERE user_id = ?;",
-					[req.body.userDecoded.id]
-				);
+				const RES_PORTFOLIO = await DB_QUERY("SELECT * FROM asset;", [req.body.userDecoded.id]);
 
 				res.status(200).send(RES_PORTFOLIO);
 
@@ -49,19 +46,16 @@ export default (dBConnection: mysql.Connection) =>
 		{
 			try
 			{
-				if (!req.body.load.portfolio.name)
+				if (!req.body.load.asset.name)
 				{
-					res.status(400).send("No portfolio name provided");
+					res.status(400).send("No asset.name provided");
 
 					return;
 				}
 
-				await DB_QUERY(
-					"INSERT INTO portfolio (user_id, name) VALUES (?, ?);",
-					[req.body.userDecoded.id, req.body.load.portfolio.name],
-				);
+				await DB_QUERY("INSERT INTO asset (name) VALUES (?);", [req.body.load.asset.name]);
 
-				res.status(201).send("Created portfolio");
+				res.status(201).send("Created asset");
 
 				return;
 			}
@@ -81,26 +75,26 @@ export default (dBConnection: mysql.Connection) =>
 		{
 			try
 			{
-				if (!req.body.load.portfolio.id)
+				if (!req.body.load.asset.id)
 				{
-					res.status(400).send("No portfolio id provided");
+					res.status(400).send("No asset.id provided");
 
 					return;
 				}
 
-				if (!req.body.load.portfolio.name)
+				if (!req.body.load.asset.name)
 				{
-					res.status(400).send("No portfolio name provided");
+					res.status(400).send("No asset.name provided");
 
 					return;
 				}
 
 				await DB_QUERY(
-					"UPDATE portfolio SET name = ? WHERE user_id = ? AND id = ?;",
-					[req.body.load.portfolio.name, req.body.userDecoded.id, req.body.load.portfolio.id]
+					"UPDATE asset SET name = ? WHERE id = ?;",
+					[req.body.load.asset.name, req.body.load.asset.id]
 				);
 
-				res.status(201).send("Updated portfolio");
+				res.status(201).send("Updated asset");
 
 				return;
 			}
@@ -120,19 +114,19 @@ export default (dBConnection: mysql.Connection) =>
 		{
 			try
 			{
-				if (!req.body.load.portfolio_id)
+				if (!req.body.load.asset.id)
 				{
-					res.status(400).send("No portfolio id provided");
+					res.status(400).send("No asset.id provided");
 
 					return;
 				}
 
 				await DB_QUERY(
 					"DELETE FROM portfolio WHERE user_id = ? AND id = ?;",
-					[req.body.userDecoded.id, req.body.load.portfolio_id],
+					[req.body.userDecoded.id, req.body.load.asset.id],
 				);
 
-				res.status(201).send("Deleted portfolio");
+				res.status(201).send("Deleted asset");
 
 				return;
 			}

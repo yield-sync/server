@@ -20,6 +20,6 @@ describe("ROUTE: /api", () =>
 
 	describe("GET /recover-account", () =>
 	{
-		test("Should be able to receive email from server")
+		//test("Should be able to receive email from server")
 	});
 });

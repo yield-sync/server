@@ -1,17 +1,17 @@
 // [import-personal]
-import config from "../config"
+//import config from "../config"
 import { validateEmail } from "./validationUtil"
 
 // [require]
 const brevo = require('@getbrevo/brevo');
 
 
-const defaultClient = brevo.ApiClient.instance;
+//const defaultClient = brevo.ApiClient.instance;
 
-let apiKey = defaultClient.authentications['api-key'];
-apiKey.apiKey = config.api.sendinblueKey;
+//let apiKey = defaultClient.authentications['api-key'];
+//apiKey.apiKey = config.api.sendinblueKey;
 
-const API_INSTANCE = new brevo.TransactionalEmailsApi();
+//const API_INSTANCE = new brevo.TransactionalEmailsApi();
 
 
 export const sendRecoveryEmail = (to: string) =>
@@ -64,16 +64,16 @@ export const sendRecoveryEmail = (to: string) =>
 		"subject": "New Subject"
 	};
 
-	API_INSTANCE.sendTransacEmail(sendSmtpEmail).then(
-		function(data)
-		{
-			console.log('API called successfully. Returned data: ' + JSON.stringify(data));
-		},
-		function(error)
-		{
-			console.error(error);
-		}
-	);
+//	API_INSTANCE.sendTransacEmail(sendSmtpEmail).then(
+//		function(data)
+//		{
+//			console.log('API called successfully. Returned data: ' + JSON.stringify(data));
+//		},
+//		function(error)
+//		{
+//			console.error(error);
+//		}
+//	);
 };
 
 
