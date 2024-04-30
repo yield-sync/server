@@ -41,7 +41,7 @@ export default (dBConnection: mysql.Connection) =>
 
 	router.get(
 		"/create",
-		user(),
+		userAdmin(),
 		async (req: express.Request, res: express.Response) =>
 		{
 			try

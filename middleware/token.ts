@@ -12,8 +12,16 @@ const jwt = require("jsonwebtoken");
 const { secretKey } = config.app;
 
 
-function verifyJWT(tokenBody: string | string[])
+function verifyJWT(token: string | string[])
 {
+	if (!token)
+	{
+		return;
+	}
+
+	// Remove "Bearer "
+	const tokenBody = token.slice(7);
+
 	let returnDecoded;
 
 	// [VERIFY] tokenBody
@@ -44,10 +52,7 @@ export const user = () =>
 			return;
 		}
 
-		// Remove "Bearer "
-		const tokenBody = req.headers.tokenuser.slice(7);
-
-		const DECODED = verifyJWT(tokenBody);
+		const DECODED = verifyJWT(req.headers.tokenuser);
 
 		if (!DECODED)
 		{
@@ -78,10 +83,7 @@ export const userAdmin = () =>
 			return;
 		}
 
-		// Remove "Bearer "
-		const tokenBody = req.headers.tokenuser.slice(7);
-
-		const DECODED = verifyJWT(tokenBody);
+		const DECODED = verifyJWT(req.headers.tokenuser);
 
 		if (!DECODED)
 		{
@@ -92,7 +94,7 @@ export const userAdmin = () =>
 
 		if (!DECODED.admin)
 		{
-			res.status(401).send("Access denied: not admin");
+			res.status(401).send("Access denied: You are not an admin");
 
 			return;
 		}
