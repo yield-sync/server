@@ -44,6 +44,27 @@ export default async (dBConnection: Connection, dBName: string, reset: boolean =
 		}
 	});
 
+	// Create the asset table
+	dBConnection.query(
+		`
+			CREATE TABLE asset (
+				PRIMARY KEY (id),
+				symbol VARCHAR(255) NOT NULL,
+				name VARCHAR(255) NOT NULL,
+				industry VARCHAR(255),
+				sector VARCHAR(255),
+				exchange VARCHAR(255)
+			)
+		`,
+		(error, results, fields) =>
+		{
+			if (error)
+			{
+				throw new Error(error.stack);
+			}
+		}
+	);
+
 	// Create the user table
 	dBConnection.query(
 		`
