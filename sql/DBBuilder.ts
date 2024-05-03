@@ -51,6 +51,7 @@ export default async (dBConnection: Connection, dBName: string, reset: boolean =
 				PRIMARY KEY (id),
 				symbol VARCHAR(255) NOT NULL,
 				name VARCHAR(255) NOT NULL,
+				id INT NOT NULL AUTO_INCREMENT,
 				industry VARCHAR(255),
 				sector VARCHAR(255),
 				exchange VARCHAR(255)

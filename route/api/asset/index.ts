@@ -5,7 +5,7 @@ import { promisify } from "util";
 import mysql from "mysql";
 
 import config from "../../../config";
-import { user } from "../../../middleware/token";
+import { user, userAdmin } from "../../../middleware/token";
 
 
 export default (dBConnection: mysql.Connection) =>
