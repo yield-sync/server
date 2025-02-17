@@ -32,7 +32,7 @@ beforeAll(async () =>
 	});
 
 	// [mysql] Open connection
-	dBConnection.connect((error: Error) =>
+	dBConnection.connect((error: URIError | null) =>
 	{
 		if (error)
 		{
@@ -46,7 +46,7 @@ beforeAll(async () =>
 	// [mysql] Select the recreated database
 	dBConnection.changeUser(
 	{ database: DB_NAME },
-	(error: Error) =>
+	(error: URIError | null) =>
 	{
 		if (error)
 		{
