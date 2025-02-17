@@ -21,9 +21,9 @@ export default
 		},
 
 		database: {
-			host: process.env.DATABASE__HOST,
-			user: process.env.DATABASE__USER,
-			password: process.env.DATABASE__PASSWORD,
+			host: process.env.APP__DATABASE__HOST,
+			user: process.env.APP__DATABASE__USER,
+			password: process.env.APP__DATABASE__PASSWORD,
 		},
 
 		// [secret]
