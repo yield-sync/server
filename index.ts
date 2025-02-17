@@ -4,10 +4,11 @@ import history from "connect-history-api-fallback";
 import cors from "cors";
 import express from "express";
 import http from "http";
-import mysql from "mysql";
+import mysql from "mysql2";
 import path from "path";
 
 import config from "./config";
+import SQLConnectionError from "./Exceptions/SQLConnectionError";
 import rateLimiter from "./rate-limiter";
 import routeApi from "./route/api";
 import routeApiUser from "./route/api/user";
@@ -25,11 +26,11 @@ const dBConnection: mysql.Connection = mysql.createConnection({
 
 // [mysql] Connect
 dBConnection.connect(
-	async (error: Error) =>
+	async (error: SQLConnectionError) =>
 	{
 		if (error)
 		{
-			throw new Error(error.message);
+			throw new SQLConnectionError(error.message);
 		}
 
 		console.log("Successfully connected to MySQL DB");

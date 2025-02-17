@@ -1,7 +1,7 @@
 /**
 * This script should be ran to initialize the database.
 */
-import mysql from "mysql";
+import mysql from "mysql2";
 
 import config from "../config";
 import DBBuilder from "./DBBuilder";
@@ -29,6 +29,12 @@ dBConnection.connect(
 
 async function main()
 {
+	console.log({
+		host: config.app.database.host,
+		user: config.app.database.user,
+		password: config.app.database.password,
+	});
+
 	// [mock-db] drop and recreate
 	await DBBuilder(dBConnection, DB_NAME, true);
 

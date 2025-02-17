@@ -2,7 +2,7 @@
 import cors from "cors";
 import express from "express";
 import { promisify } from "util";
-import mysql from "mysql";
+import mysql from "mysql2";
 
 import config from "../../../config";
 import { user } from "../../../middleware/token";

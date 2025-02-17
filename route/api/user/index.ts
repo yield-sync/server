@@ -2,7 +2,7 @@
 import cors from "cors";
 import bcrypt from "bcryptjs";
 import express from "express";
-import mysql from "mysql";
+import mysql from "mysql2";
 import { promisify } from "util";
 
 import config from "../../../config";

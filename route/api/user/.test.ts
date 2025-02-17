@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import express from "express";
-import mysql from "mysql";
+import mysql from "mysql2";
 import request from "supertest";
 import { promisify } from "util";
 

@@ -13,7 +13,7 @@ export default () =>
 		async (req: express.Request, res: express.Response) =>
 		{
 			res.status(200).send({
-				name: "yield_sync"
+				name: "yield_sync_server"
 			});
 
 			return;
