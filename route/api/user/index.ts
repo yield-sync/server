@@ -8,7 +8,7 @@ import { promisify } from "util";
 import { UserCreate, UserLogin, UserPasswordUpdate } from "./types";
 import config from "../../../config";
 import { user } from "../../../middleware/token";
-import sendEmailUserVerification from "../../../util/mailUtil";
+import { setVerificationEmail } from "../../../util/mailUtil";
 import { validateEmail, validatePassword } from "../../../util/validationUtil";
 
 
@@ -62,7 +62,7 @@ export default (dBConnection: mysql.Connection) =>
 				);
 
 				// Send Email
-				await sendEmailUserVerification(load.email);
+				await setVerificationEmail(load.email);
 
 				res.status(201).send("Created user");
 

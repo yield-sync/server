@@ -27,13 +27,13 @@ export const sendRecoveryEmail = (to: string) =>
 
 	sendSmtpEmail.htmlContent = `
 	<html>
-		<body>
-			<h1>Recover Your Account</h1>
-			<p>
-				If you did NOT request to recover your account please ignore this email.
-				Do NOT share with anything they may be trying to get unauthorized access to your account.
-			</p>
-		</body>
+	<body>
+		<h1>Recover Your Account</h1>
+		<p>
+			If you did NOT request to recover your account please ignore this email.
+			Do NOT share with anything they may be trying to get unauthorized access to your account.
+		</p>
+	</body>
 	</html>
 	`;
 
@@ -76,8 +76,6 @@ export const sendRecoveryEmail = (to: string) =>
 //	);
 };
 
-
-export default async (email: string) =>
+export const setVerificationEmail = (to: string) =>
 {
-	return;
 };
