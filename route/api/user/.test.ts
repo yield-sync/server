@@ -29,7 +29,7 @@ beforeAll(async () => {
 		password: config.app.database.password,
 	});
 
-	dBConnection.connect((error: Error) =>
+	dBConnection.connect((error: URIError | null) =>
 	{
 		if (error)
 		{

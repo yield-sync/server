@@ -5,6 +5,7 @@ import express from "express";
 import mysql from "mysql2";
 import { promisify } from "util";
 
+import { UserCreate, UserLogin, UserPasswordUpdate } from "./types";
 import config from "../../../config";
 import { user } from "../../../middleware/token";
 import sendEmailUserVerification from "../../../util/mailUtil";
@@ -29,9 +30,8 @@ export default (dBConnection: mysql.Connection) =>
 		{
 			try
 			{
-				const load = req.body.load;
+				const load: UserCreate = req.body.load;
 
-				// [VALIDATE] load.password
 				if (!validateEmail(load.email))
 				{
 					res.status(400).send("Invalid email");
@@ -39,7 +39,7 @@ export default (dBConnection: mysql.Connection) =>
 					return;
 				}
 
-				// Check that the email isnt already being used
+				// Check email available
 				const RESULTS = await DB_QUERY("SELECT * FROM user WHERE email = ?;", [load.email]);
 
 				if (RESULTS.length > 0)
@@ -49,7 +49,6 @@ export default (dBConnection: mysql.Connection) =>
 					return;
 				}
 
-				// [VALIDATE] load.password
 				if (!validatePassword(load.password))
 				{
 					res.status(400).send(ERROR_INVALID_PASSWORD);
@@ -83,7 +82,8 @@ export default (dBConnection: mysql.Connection) =>
 		user(),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const load = req.body.load;
+			const load: UserPasswordUpdate = req.body.load;
+
 			try
 			{
 				const RESULT = await DB_QUERY(
@@ -120,7 +120,7 @@ export default (dBConnection: mysql.Connection) =>
 		"/login",
 		async (req: express.Request, res: express.Response) =>
 		{
-			const load = req.body.load;
+			const load: UserLogin = req.body.load;
 
 			try
 			{
