@@ -2,17 +2,13 @@
 import cors from "cors";
 import express from "express";
 import mysql from "mysql2";
-import { promisify } from "util";
 
 import config from "../../../config";
 import { user } from "../../../middleware/token";
 
 
-export default (dBConnection: mysql.Connection) =>
+export default (dBConnection: mysql.Pool) =>
 {
-	// Promisify dbConnection.query for easier use with async/await
-	const DB_QUERY = promisify(dBConnection.query).bind(dBConnection);
-
 	const router: express.Router = express.Router().use(cors());
 
 	router.get(
@@ -39,12 +35,19 @@ export default (dBConnection: mysql.Connection) =>
 				}
 
 				// First determine that the portfolio belongs to the user
-				const portfolios = await DB_QUERY(
+				const [rows] = await dBConnection.promise().query(
 					"SELECT * FROM portfolio WHERE id = ? AND user_id = ?;",
 					[load.portfolio_id, req.body.userDecoded.id],
 				);
 
-				if (portfolios.length === 0)
+				if (!Array.isArray(rows))
+				{
+					res.status(400).send("Expected result is not Array");
+
+					return;
+				}
+
+				if (rows.length == 0)
 				{
 					res.status(400).send("Invalid portfolio_id");
 
@@ -52,7 +55,7 @@ export default (dBConnection: mysql.Connection) =>
 				}
 
 				// Insert into portfolio_asset
-				await DB_QUERY(
+				await dBConnection.promise().query(
 					"INSERT INTO portfolio_asset (portfolio_id, ticker) VALUES (?, ?);",
 					[load.portfolio_id, load.ticker]
 				);

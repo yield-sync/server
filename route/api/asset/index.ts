@@ -1,18 +1,14 @@
 // [import]
 import cors from "cors";
 import express from "express";
-import { promisify } from "util";
 import mysql from "mysql2";
 
 import config from "../../../config";
 import { user, userAdmin } from "../../../middleware/token";
 
 
-export default (dBConnection: mysql.Connection) =>
+export default (dBConnection: mysql.Pool) =>
 {
-	// Promisify dbConnection.query for easier use with async/await
-	const DB_QUERY = promisify(dBConnection.query).bind(dBConnection);
-
 	const router: express.Router = express.Router().use(cors());
 
 	router.get(
@@ -22,7 +18,7 @@ export default (dBConnection: mysql.Connection) =>
 		{
 			try
 			{
-				const RES_PORTFOLIO = await DB_QUERY("SELECT * FROM asset;", [req.body.userDecoded.id]);
+				const RES_PORTFOLIO = await dBConnection.promise().query("SELECT * FROM asset;", [req.body.userDecoded.id]);
 
 				res.status(200).send(RES_PORTFOLIO);
 
@@ -53,7 +49,7 @@ export default (dBConnection: mysql.Connection) =>
 					return;
 				}
 
-				await DB_QUERY("INSERT INTO asset (name) VALUES (?);", [req.body.load.asset.name]);
+				await dBConnection.promise().query("INSERT INTO asset (name) VALUES (?);", [req.body.load.asset.name]);
 
 				res.status(201).send("Created asset");
 
@@ -89,7 +85,7 @@ export default (dBConnection: mysql.Connection) =>
 					return;
 				}
 
-				await DB_QUERY(
+				await dBConnection.promise().query(
 					"UPDATE asset SET name = ? WHERE id = ?;",
 					[req.body.load.asset.name, req.body.load.asset.id]
 				);
@@ -121,7 +117,7 @@ export default (dBConnection: mysql.Connection) =>
 					return;
 				}
 
-				await DB_QUERY(
+				await dBConnection.promise().query(
 					"DELETE FROM portfolio WHERE user_id = ? AND id = ?;",
 					[req.body.userDecoded.id, req.body.load.asset.id],
 				);

@@ -1,4 +1,3 @@
-// [require]
 require("dotenv").config();
 
 
@@ -14,6 +13,8 @@ export default
 
 	// [app]
 	app: {
+		database_name: "yield_sync",
+
 		// [base-url]
 		baseURL: {
 			client: process.env.APP__BASE_URL || "http://localhost:8080",

@@ -1,75 +1,61 @@
 import bcrypt from "bcryptjs";
 import express from "express";
 import mysql from "mysql2";
-import request from "supertest";
-import { promisify } from "util";
 
 import routeApi from "../index";
 import routeApiUser from "./index";
 import config from "../../../config";
 import DBBuilder, { dropDB } from "../../../sql/DBBuilder";
+import { MySQLQueryResult } from "../../../types";
 
 
+const request = require('supertest');
 const jwt = require("jsonwebtoken");
 
 
 const DB_NAME: string = "mock_db_user";
 const ERROR_PASSWORD: string = "Password Must be ASCII, longer than 8 characters, and contain a special character";
 
-let dBQuery;
 let app: express.Express;
-let dBConnection: mysql.Connection;
+let dBConnection: mysql.Pool;
 
+
+afterAll(async () =>
+{
+	// Drop the database (should await)
+	await dropDB(DB_NAME, dBConnection);
+
+	// Close connection (should await)
+	await dBConnection.end();
+});
 
 beforeAll(async () => {
 	// [mysql] Database connection configuration
-	dBConnection = mysql.createConnection({
+	dBConnection = mysql.createPool({
 		host: config.app.database.host,
 		user: config.app.database.user,
 		password: config.app.database.password,
+		waitForConnections: true,
+		connectionLimit: 10,
+		queueLimit: 0
 	});
 
-	dBConnection.connect((error: URIError | null) =>
-	{
-		if (error)
-		{
-			throw new Error(`Failed to connect with error: ${error}`);
-		}
-	});
+	// [mysql] Connect
+	await dBConnection.promise().getConnection();
 
 	// [mock-db] drop and recreate
 	await DBBuilder(dBConnection, DB_NAME, true);
 
 	// [mysql] Select the recreated database
-	dBConnection.changeUser(
-	{ database: DB_NAME },
-	(error) =>
-	{
-		if (error)
-		{
-			throw new Error(String(`DB Change User Error: ${error}`));
-		}
-	});
+	await dBConnection.promise().query(`USE ??;`, [DB_NAME]);
 
 	app = express().use(express.json()).use("/api", routeApi()).use("/api/user", routeApiUser(dBConnection));
 })
 
-afterAll(() =>
-{
-	// Drop the database
-	dropDB(DB_NAME, dBConnection);
-
-	// [mysql] Close connection
-	dBConnection.end();
-});
-
 beforeEach(async () =>
 {
-	// Promisify dbConnection.query for easier use with async/await
-	dBQuery = promisify(dBConnection.query).bind(dBConnection);
-
 	// Drop the database
-	dropDB(DB_NAME, dBConnection);
+	await dropDB(DB_NAME, dBConnection);
 
 	// [mock-db] drop and recreate
 	await DBBuilder(dBConnection, DB_NAME, true);
@@ -97,9 +83,11 @@ describe("ROUTE: /api/user", () =>
 
 			expect(response.error.text).toBe("Invalid email");
 
-			const results = await dBQuery("SELECT * FROM user;");
+			const [results]: MySQLQueryResult = await dBConnection.promise().query(
+				"SELECT * FROM user;"
+			);
 
-			expect(results.length).toBe(0);
+			expect(results).toStrictEqual([]);
 		});
 
 		test("Should NOT allow creating a user with short password..",
@@ -119,9 +107,11 @@ describe("ROUTE: /api/user", () =>
 
 			expect(response.error.text).toBe(ERROR_PASSWORD);
 
-			const results = await dBQuery("SELECT * FROM user;");
+			const [results]: MySQLQueryResult = await dBConnection.promise().query(
+				"SELECT * FROM user;"
+			);
 
-			expect(results.length).toBe(0);
+			expect(results).toStrictEqual([]);
 		});
 
 		test("Should NOT allow password without special characters..", async () =>
@@ -140,9 +130,11 @@ describe("ROUTE: /api/user", () =>
 
 			expect(response.error.text).toBe(ERROR_PASSWORD);
 
-			const results = await dBQuery("SELECT * FROM user;");
+			const [results]: MySQLQueryResult = await dBConnection.promise().query(
+				"SELECT * FROM user;"
+			);
 
-			expect(results.length).toBe(0);
+			expect(results).toStrictEqual([]);
 		});
 
 		test("Should NOT allow creating a user with non-ASCII password..", async () =>
@@ -163,9 +155,11 @@ describe("ROUTE: /api/user", () =>
 
 			expect(res.error.text).toBe(ERROR_PASSWORD);
 
-			const results = await dBQuery("SELECT * FROM user;");
+			const [results]: MySQLQueryResult = await dBConnection.promise().query(
+				"SELECT * FROM user;"
+			);
 
-			expect(results.length).toBe(0);
+			expect(results).toStrictEqual([]);
 		});
 
 		test("Should allow creating a user..", async () =>
@@ -182,7 +176,9 @@ describe("ROUTE: /api/user", () =>
 
 			expect(response.statusCode).toBe(201);
 
-			const results = await dBQuery("SELECT * FROM user;");
+			const [results]: MySQLQueryResult = await dBConnection.promise().query(
+				"SELECT * FROM user;"
+			);
 
 			expect(results[0].email).toBe(email);
 
@@ -214,7 +210,14 @@ describe("ROUTE: /api/user", () =>
 
 			expect(response.text).toBe("This email is already being used.");
 
-			const results = await dBQuery("SELECT * FROM user;");
+			const [results]: MySQLQueryResult = await dBConnection.promise().query(
+				"SELECT * FROM user;"
+			);
+
+			if (!Array.isArray(results))
+			{
+				throw new Error("Expected result is not Array");
+			}
 
 			expect(results.length).toBe(1);
 		});
@@ -233,7 +236,10 @@ describe("ROUTE: /api/user", () =>
 				}
 			});
 
-			const results = await dBQuery("SELECT * FROM user WHERE email = ?;", [email]);
+			const [results]: MySQLQueryResult = await dBConnection.promise().query(
+				"SELECT * FROM user WHERE email = ?;",
+				[email]
+			);
 
 			// Shou/d only work with the valid password
 			expect(bcrypt.compareSync(password, results[0].password)).toBe(true);
@@ -271,7 +277,10 @@ describe("ROUTE: /api/user", () =>
 
 			expect(typeof TOKEN).toBe("string");
 
-			const results = await dBQuery("SELECT * FROM user WHERE email = ?;", [email]);
+			const [results]: MySQLQueryResult = await dBConnection.promise().query(
+				"SELECT * FROM user WHERE email = ?;",
+				[email]
+			);
 
 			// Verify the jwt token recieved
 			jwt.verify(TOKEN, config.app.secretKey, async (error, decoded) =>

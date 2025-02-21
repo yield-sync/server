@@ -1,7 +1,5 @@
 import express from "express";
 import mysql from "mysql2";
-import request from "supertest";
-import { promisify } from "util";
 
 import routeApiPortfolioAsset from "./index";
 import routeApi from "../index";
@@ -9,6 +7,10 @@ import routeApiPortfolio from "../portfolio/index";
 import routeApiUser from "../user/index";
 import config from "../../../config";
 import DBBuilder, { dropDB } from "../../../sql/DBBuilder";
+import { MySQLQueryResult } from "../../../types";
+
+
+const request = require('supertest');
 
 
 const DB_NAME: string = "mock_db_portfolio_asset";
@@ -17,44 +19,41 @@ const PASSWORD: string = "testpassword!";
 const PORTFOLIO_NAME: string = "my-portfolio";
 const TICKER: string = "PS";
 
-let dBQuery;
 let token: string;
 let portfolio_id: string;
 let app: express.Express;
-let dBConnection: mysql.Connection;
+let dBConnection: mysql.Pool;
 
+
+afterAll(async () =>
+{
+	// Drop the database (should await)
+	await dropDB(DB_NAME, dBConnection);
+
+	// Close connection (should await)
+	await dBConnection.end();
+});
 
 beforeAll(async () =>
 {
-	// [mysql] Database connection configuration
-	dBConnection = mysql.createConnection({
+// [mysql] Database connection configuration
+	dBConnection = mysql.createPool({
 		host: config.app.database.host,
 		user: config.app.database.user,
 		password: config.app.database.password,
+		waitForConnections: true,
+		connectionLimit: 10,
+		queueLimit: 0
 	});
 
-	// [mysql] Open connection
-	dBConnection.connect((error: URIError | null) =>
-	{
-		if (error)
-		{
-			throw new Error(error.stack);
-		}
-	});
+	// [mysql] Connect
+	await dBConnection.promise().getConnection();
 
 	// [mock-db] drop and recreate
 	await DBBuilder(dBConnection, DB_NAME, true);
 
 	// [mysql] Select the recreated database
-	dBConnection.changeUser(
-	{ database: DB_NAME },
-	(error: URIError | null) =>
-	{
-		if (error)
-		{
-			throw new Error(`DB Change User Error: ${error.stack}`);
-		}
-	});
+	await dBConnection.promise().query(`USE ??;`, [DB_NAME]);
 
 	app = express().use(express.json()).use("/api", routeApi()).use("/api/user", routeApiUser(dBConnection)).use(
 		"/api/portfolio",
@@ -65,22 +64,10 @@ beforeAll(async () =>
 	);
 });
 
-afterAll(async () =>
-{
-	// Drop the database
-	dropDB(DB_NAME, dBConnection);
-
-	// [mysql] Close connection
-	dBConnection.end();
-});
-
 beforeEach(async () =>
 {
-	// Promisify dbConnection.query for easier use with async/await
-	dBQuery = promisify(dBConnection.query).bind(dBConnection);
-
 	// Drop the database
-	dropDB(DB_NAME, dBConnection);
+	await dropDB(DB_NAME, dBConnection);
 
 	// [mock-db] drop and recreate
 	await DBBuilder(dBConnection, DB_NAME, true);
@@ -116,7 +103,9 @@ beforeEach(async () =>
 
 	expect(RES_PORTFOLIO_CREATE.statusCode).toBe(201);
 
-	const results = await dBQuery("SELECT id FROM portfolio WHERE name = ?;", [PORTFOLIO_NAME]);
+	const [results]: MySQLQueryResult = await dBConnection.promise().query(
+		"SELECT id FROM portfolio WHERE name = ?;", [PORTFOLIO_NAME]
+	);
 
 	portfolio_id = results[0].id;
 });
@@ -137,7 +126,12 @@ describe("ROUTE: /api/portfolio-asset", () =>
 				}
 			}).expect(401);
 
-			const results = await dBQuery("SELECT * FROM portfolio_asset;");
+			const [results]: MySQLQueryResult = await dBConnection.promise().query("SELECT * FROM portfolio_asset;");
+
+			if (!Array.isArray(results))
+			{
+				throw new Error("Expected result is not Array");
+			}
 
 			expect(results.length).toBe(0);
 		});
@@ -156,7 +150,12 @@ describe("ROUTE: /api/portfolio-asset", () =>
 
 			expect(RES.text).toBe("No portfolio id received");
 
-			const results = await dBQuery("SELECT * FROM portfolio_asset;");
+			const [results]: MySQLQueryResult = await dBConnection.promise().query("SELECT * FROM portfolio_asset;");
+
+			if (!Array.isArray(results))
+			{
+				throw new Error("Expected result is not Array");
+			}
 
 			expect(results.length).toBe(0);
 		});
@@ -175,7 +174,12 @@ describe("ROUTE: /api/portfolio-asset", () =>
 
 				expect(RES.text).toBe("No portfolio asset ticker received");
 
-				const results = await dBQuery("SELECT * FROM portfolio_asset;");
+				const [results]: MySQLQueryResult = await dBConnection.promise().query("SELECT * FROM portfolio_asset;");
+
+				if (!Array.isArray(results))
+				{
+					throw new Error("Expected result is not Array");
+				}
 
 				expect(results.length).toBe(0);
 			});
@@ -194,9 +198,19 @@ describe("ROUTE: /api/portfolio-asset", () =>
 
 			expect(RES_PORTFOLIO_ASSET.statusCode).toBe(201);
 
-			const results = await dBQuery("SELECT * FROM portfolio_asset;");
+			const [results]: MySQLQueryResult = await dBConnection.promise().query("SELECT * FROM portfolio_asset;");
+
+			if (!Array.isArray(results))
+			{
+				throw new Error("Expected result is not Array");
+			}
 
 			expect(results.length).toBeGreaterThan(0);
+
+			if (!("ticker" in results[0]))
+			{
+				throw new Error("Expected result is not Array");
+			}
 
 			expect(results[0].ticker).toBe(TICKER);
 		});

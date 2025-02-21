@@ -1,26 +1,24 @@
-// [import]
-import cors from "cors";
 import express from "express";
 
 
 export default () =>
 {
-	const router: express.Router = express.Router().use(cors());
-
-
-	router.get(
+	/**
+	* @route GET /api
+	* @desc Get status of Server
+	* @access Public
+	*/
+	return express.Router().get(
 		"/",
 		async (req: express.Request, res: express.Response) =>
 		{
-			res.status(200).send({
-				name: "yield_sync_server"
+			res.status(200).json({
+				name: "yield_sync_server",
+				timestamp: new Date().toISOString(),
 			});
 
 			return;
 		}
 	);
-
-
-	return router;
 };
 

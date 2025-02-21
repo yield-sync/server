@@ -1,51 +1,25 @@
-import { Connection } from "mysql2";
+import mysql from "mysql2";
 
 
 /**
 * Script to initialize the database
-* @param dBConnection {unrestricited} Connection to the database
+* @param dBConnection {mysql.Pool} Connection to the database
 * @param dBName {string} Name of the database to be affected
 * @param reset {boolean} True if DB is to be dropped first
 */
-export default async (dBConnection: Connection, dBName: string, reset: boolean = false) =>
+export default async (dBConnection: mysql.Pool, dBName: string, reset: boolean = false) =>
 {
-	if (reset)
-	{
-		dBConnection.query(
-			`DROP DATABASE IF EXISTS ${dBName};`,
-			(error, results, fields) =>
-			{
-				if (error)
-				{
-					throw new Error(error.stack);
-				}
-			}
-		);
+	if (reset) {
+		await dBConnection.promise().query(`DROP DATABASE IF EXISTS ??;`, [dBName]);
 	}
 
-	dBConnection.query(
-		`CREATE DATABASE ${dBName}`,
-		(error, results, fields) =>
-		{
-			if (error)
-			{
-				throw new Error(error.stack);
-			}
-		});
+	await dBConnection.promise().query(`CREATE DATABASE ??;`, [dBName]);
 
-	// Select the new database
-	dBConnection.changeUser({
-		database: dBName
-	}, (error) =>
-	{
-		if (error)
-		{
-			throw new Error(error.stack);
-		}
-	});
+	// [mysql] Select the recreated database
+	await dBConnection.promise().query(`USE ??;`, [dBName]);
 
 	// Create the asset table
-	dBConnection.query(
+	await dBConnection.promise().query(
 		`
 			CREATE TABLE asset (
 				PRIMARY KEY (id),
@@ -56,18 +30,11 @@ export default async (dBConnection: Connection, dBName: string, reset: boolean =
 				sector VARCHAR(255),
 				exchange VARCHAR(255)
 			)
-		`,
-		(error, results, fields) =>
-		{
-			if (error)
-			{
-				throw new Error(error.stack);
-			}
-		}
+		`
 	);
 
 	// Create the user table
-	dBConnection.query(
+	await dBConnection.promise().query(
 		`
 			CREATE TABLE user (
 				PRIMARY KEY (id),
@@ -79,18 +46,11 @@ export default async (dBConnection: Connection, dBName: string, reset: boolean =
 				verified BIT(1) DEFAULT 0,
 				created DATETIME DEFAULT CURRENT_TIMESTAMP
 			)
-		`,
-		(error, results, fields) =>
-		{
-			if (error)
-			{
-				throw new Error(error.stack);
-			}
-		}
+		`
 	);
 
 	// Create the portfolio table
-	dBConnection.query(
+	await dBConnection.promise().query(
 		`
 			CREATE TABLE portfolio (
 				PRIMARY KEY (id),
@@ -99,18 +59,11 @@ export default async (dBConnection: Connection, dBName: string, reset: boolean =
 				name VARCHAR(255) NOT NULL,
 				created DATETIME DEFAULT CURRENT_TIMESTAMP
 			)
-		`,
-		(error, results, fields) =>
-		{
-			if (error)
-			{
-				throw new Error(error.stack);
-			}
-		}
+		`
 	);
 
 	// Create the portfolio asset table
-	dBConnection.query(
+	dBConnection.promise().query(
 		`
 			CREATE TABLE portfolio_asset (
 				PRIMARY KEY (id),
@@ -119,29 +72,13 @@ export default async (dBConnection: Connection, dBName: string, reset: boolean =
 				ticker VARCHAR(255) NOT NULL,
 				created DATETIME DEFAULT CURRENT_TIMESTAMP
 			)
-		`,
-		(error, results, fields) =>
-		{
-			if (error)
-			{
-				throw new Error(error.stack);
-			}
-		}
+		`
 	);
 };
 
 
-export const dropDB = async (dBName: string, dBConnection: Connection) =>
+export const dropDB = async (dBName: string, dBConnection: mysql.Pool) =>
 {
-	dBConnection.query(
-		`DROP DATABASE IF EXISTS ${dBName}`,
-		(error, results, fields) =>
-		{
-			if (error)
-			{
-				throw new Error(error.stack);
-			}
-		}
-	);
+	await dBConnection.promise().query(`DROP DATABASE IF EXISTS ${dBName}`);
 }
 

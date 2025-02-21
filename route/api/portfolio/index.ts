@@ -1,18 +1,14 @@
 // [import]
 import cors from "cors";
 import express from "express";
-import { promisify } from "util";
 import mysql from "mysql2";
 
 import config from "../../../config";
 import { user } from "../../../middleware/token";
 
 
-export default (dBConnection: mysql.Connection) =>
+export default (dBConnection: mysql.Pool) =>
 {
-	// Promisify dbConnection.query for easier use with async/await
-	const DB_QUERY = promisify(dBConnection.query).bind(dBConnection);
-
 	const router: express.Router = express.Router().use(cors());
 
 	router.get(
@@ -22,12 +18,12 @@ export default (dBConnection: mysql.Connection) =>
 		{
 			try
 			{
-				const RES_PORTFOLIO = await DB_QUERY(
+				const RES_PORTFOLIO = await dBConnection.promise().query(
 					"SELECT id, name FROM portfolio WHERE user_id = ?;",
 					[req.body.userDecoded.id]
 				);
 
-				res.status(200).send(RES_PORTFOLIO);
+				res.status(200).send(RES_PORTFOLIO[0]);
 
 				return;
 			}
@@ -56,7 +52,7 @@ export default (dBConnection: mysql.Connection) =>
 					return;
 				}
 
-				await DB_QUERY(
+				await dBConnection.promise().query(
 					"INSERT INTO portfolio (user_id, name) VALUES (?, ?);",
 					[req.body.userDecoded.id, req.body.load.portfolio.name],
 				);
@@ -95,7 +91,7 @@ export default (dBConnection: mysql.Connection) =>
 					return;
 				}
 
-				await DB_QUERY(
+				await dBConnection.promise().query(
 					"UPDATE portfolio SET name = ? WHERE user_id = ? AND id = ?;",
 					[req.body.load.portfolio.name, req.body.userDecoded.id, req.body.load.portfolio.id]
 				);
@@ -127,7 +123,7 @@ export default (dBConnection: mysql.Connection) =>
 					return;
 				}
 
-				await DB_QUERY(
+				await dBConnection.promise().query(
 					"DELETE FROM portfolio WHERE user_id = ? AND id = ?;",
 					[req.body.userDecoded.id, req.body.load.portfolio_id],
 				);

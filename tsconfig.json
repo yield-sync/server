@@ -11,6 +11,11 @@
     "skipLibCheck": true,
     "sourceMap": true,
     "strict": false,
-    "target": "es6"
-  }
+    "target": "es6",
+    "typeRoots": ["./@types", "./node_modules/@types"]  
+  },
+  "include": [
+    "route/api/user/.test.ts",
+    "types.d.ts",
+  ]
 }

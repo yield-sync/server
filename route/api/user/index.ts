@@ -2,8 +2,7 @@
 import cors from "cors";
 import bcrypt from "bcryptjs";
 import express from "express";
-import mysql from "mysql2";
-import { promisify } from "util";
+import mysql, { RowDataPacket, FieldPacket } from "mysql2";
 
 import { UserCreate, UserLogin, UserPasswordUpdate } from "./types";
 import config from "../../../config";
@@ -17,11 +16,8 @@ const jsonWebToken = require("jsonwebtoken");
 const ERROR_INVALID_PASSWORD: string = "Password Must be ASCII, longer than 8 characters, and contain a special character";
 
 
-export default (dBConnection: mysql.Connection) =>
+export default (dBConnection: mysql.Pool) =>
 {
-	// Promisify dbConnection.query for easier use with async/await
-	const DB_QUERY = promisify(dBConnection.query).bind(dBConnection);
-
 	const router: express.Router = express.Router().use(cors());
 
 	router.post(
@@ -40,9 +36,12 @@ export default (dBConnection: mysql.Connection) =>
 				}
 
 				// Check email available
-				const RESULTS = await DB_QUERY("SELECT * FROM user WHERE email = ?;", [load.email]);
+				const [rows,]: [RowDataPacket[], FieldPacket[]] = await dBConnection.promise().query(
+					"SELECT * FROM user WHERE email = ?;",
+					[load.email]
+				);
 
-				if (RESULTS.length > 0)
+				if (rows.length > 0)
 				{
 					res.status(400).send("This email is already being used.");
 
@@ -56,7 +55,7 @@ export default (dBConnection: mysql.Connection) =>
 					return;
 				}
 
-				await DB_QUERY(
+				await dBConnection.promise().query(
 					"INSERT INTO user (email, password) VALUES (?, ?);",
 					[load.email, await bcrypt.hash(load.password, 10)]
 				);
@@ -86,19 +85,19 @@ export default (dBConnection: mysql.Connection) =>
 
 			try
 			{
-				const RESULT = await DB_QUERY(
+				const [rows]: [mysql.QueryResult, mysql.FieldPacket[]] = await dBConnection.promise().query(
 					"SELECT * FROM user WHERE email = ?;",
 					[req.body.userDecoded.email]
 				);
 
-				if (!bcrypt.compareSync(load.password, RESULT[0].password))
+				if (!bcrypt.compareSync(load.password, rows[0].password))
 				{
 					res.status(401).send("Invalid password.");
 
 					return;
 				}
 
-				await DB_QUERY(
+				await dBConnection.promise().query(
 					"UPDATE user SET password = ? WHERE id = ?;",
 					[await bcrypt.hash(load.passwordNew, 10), req.body.userDecoded.id]
 				);
@@ -124,16 +123,16 @@ export default (dBConnection: mysql.Connection) =>
 
 			try
 			{
-				const RESULT = await DB_QUERY("SELECT * FROM user WHERE email = ?;", [load.email]);
+				const [rows] = await dBConnection.promise().query("SELECT * FROM user WHERE email = ?;", [load.email]);
 
-				if (RESULT.length == 0)
+				if (rows[0].length == 0)
 				{
 					res.status(401).send("Invalid password or email");
 
 					return;
 				}
 
-				if (!bcrypt.compareSync(load.password, RESULT[0].password))
+				if (!bcrypt.compareSync(load.password, rows[0].password))
 				{
 					res.status(401).send("Invalid password or email");
 
@@ -143,10 +142,10 @@ export default (dBConnection: mysql.Connection) =>
 				res.status(200).send({
 					token: jsonWebToken.sign(
 						{
-							id: RESULT[0].id,
-							email: RESULT[0].email,
-							admin: RESULT[0].admin,
-							verified: RESULT[0].verified
+							id: rows[0].id,
+							email: rows[0].email,
+							admin: rows[0].admin,
+							verified: rows[0].verified
 						},
 						config.app.secretKey,
 						{

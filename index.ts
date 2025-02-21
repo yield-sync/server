@@ -8,7 +8,6 @@ import mysql from "mysql2";
 import path from "path";
 
 import config from "./config";
-import SQLConnectionError from "./Exceptions/SQLConnectionError";
 import rateLimiter from "./rate-limiter";
 import routeApi from "./route/api";
 import routeApiUser from "./route/api/user";
@@ -17,26 +16,27 @@ import routeApiPortfolioAsset from "./route/api/portfolio-asset";
 
 
 // [mysql] Connection Config
-const dBConnection: mysql.Connection = mysql.createConnection({
+const dBConnection = mysql.createPool({
 	database: "yield_sync",
 	host: config.app.database.host,
 	user: config.app.database.user,
 	password: config.app.database.password,
+	waitForConnections: true,
+	connectionLimit: 10,
+	queueLimit: 0
 });
 
 // [mysql] Connect
-dBConnection.connect(
-	async (error: SQLConnectionError) =>
+dBConnection.getConnection((error, connection) => {
+	if (error)
 	{
-		if (error)
-		{
-			throw new SQLConnectionError(error.message);
-		}
-
-		console.log("Successfully connected to MySQL DB");
+		console.error("MySQL Connection Error:", error.message);
+		process.exit(1);
 	}
-);
 
+	console.log("Successfully connected to MySQL DB");
+	connection.release();
+});
 
 const app: express.Express = express().use(bodyParser.json()).use(bodyParser.urlencoded({ extended: false })).use(
 	cors()
@@ -77,9 +77,10 @@ app.get(
 	"*",
 	(req: express.Request, res: express.Response) =>
 	{
-		res.send(path.resolve(__dirname, "frontend", "dist", "index.html"));
+		res.sendFile(path.join(__dirname, "frontend", "dist", "index.html"));
 	}
 );
+
 
 http.createServer(app).listen(
 	config.port,
