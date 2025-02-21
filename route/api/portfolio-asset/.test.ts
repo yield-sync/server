@@ -7,7 +7,6 @@ import routeApiPortfolio from "../portfolio/index";
 import routeApiUser from "../user/index";
 import config from "../../../config";
 import DBBuilder, { dropDB } from "../../../sql/DBBuilder";
-import { MySQLQueryResult } from "../../../types";
 
 
 const request = require('supertest');

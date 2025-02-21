@@ -7,7 +7,6 @@ import routeApi from "../index";
 import routeApiUser from "../user/index";
 import config from "../../../config";
 import DBBuilder, { dropDB } from "../../../sql/DBBuilder";
-import { MySQLQueryResult } from "../../../types";
 
 
 const DB_NAME: string = "mock_db_asset";

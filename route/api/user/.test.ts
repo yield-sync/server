@@ -6,7 +6,6 @@ import routeApi from "../index";
 import routeApiUser from "./index";
 import config from "../../../config";
 import DBBuilder, { dropDB } from "../../../sql/DBBuilder";
-import { MySQLQueryResult } from "../../../types";
 
 
 const request = require('supertest');

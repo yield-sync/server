@@ -1,4 +1,10 @@
 import mysql from "mysql2";
 
-type MySQLQueryResult = [mysql.QueryResult, mysql.FieldPacket[]];
 
+// types.d.ts
+declare global {
+	type MySQLQueryResult = [mysql.QueryResult, mysql.FieldPacket[]];
+}
+
+
+export {};

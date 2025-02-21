@@ -12,10 +12,11 @@
     "sourceMap": true,
     "strict": false,
     "target": "es6",
-    "typeRoots": ["./@types", "./node_modules/@types"]  
+    "typeRoots": ["./@types", "./node_modules/@types"]
   },
   "include": [
-    "route/api/user/.test.ts",
-    "types.d.ts",
+    "route/api/**/*.ts",
+    "route/api/**/*.test.ts",
+    "./types.d.ts",
   ]
 }
