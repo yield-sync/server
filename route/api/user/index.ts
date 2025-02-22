@@ -1,10 +1,7 @@
-// [import]
-import cors from "cors";
 import bcrypt from "bcryptjs";
-import express from "express";
-import mysql, { RowDataPacket, FieldPacket } from "mysql2";
+import { Router, Request, Response } from "express";
+import mysql, { FieldPacket } from "mysql2";
 
-import { UserCreate, UserLogin, UserPasswordUpdate } from "./types";
 import config from "../../../config";
 import { user } from "../../../middleware/token";
 import { setVerificationEmail } from "../../../util/mailUtil";
@@ -16,13 +13,11 @@ const jsonWebToken = require("jsonwebtoken");
 const ERROR_INVALID_PASSWORD: string = "Password Must be ASCII, longer than 8 characters, and contain a special character";
 
 
-export default (dBConnection: mysql.Pool) =>
+export default (dBConnection: mysql.Pool): Router =>
 {
-	const router: express.Router = express.Router().use(cors());
-
-	router.post(
+	return Router().post(
 		"/create",
-		async (req: express.Request, res: express.Response) =>
+		async (req: Request, res: Response) =>
 		{
 			try
 			{
@@ -36,12 +31,12 @@ export default (dBConnection: mysql.Pool) =>
 				}
 
 				// Check email available
-				const [rows,]: [RowDataPacket[], FieldPacket[]] = await dBConnection.promise().query(
+				const [users]: [IUser[], FieldPacket[]] = await dBConnection.promise().query<IUser[]>(
 					"SELECT * FROM user WHERE email = ?;",
 					[load.email]
 				);
 
-				if (rows.length > 0)
+				if (users.length > 0)
 				{
 					res.status(400).send("This email is already being used.");
 
@@ -74,23 +69,21 @@ export default (dBConnection: mysql.Pool) =>
 				return;
 			}
 		}
-	);
-
-	router.post(
+	).post(
 		"/password-update",
 		user(),
-		async (req: express.Request, res: express.Response) =>
+		async (req: Request, res: Response) =>
 		{
 			const load: UserPasswordUpdate = req.body.load;
 
 			try
 			{
-				const [rows]: [mysql.QueryResult, mysql.FieldPacket[]] = await dBConnection.promise().query(
+				const [users]: [IUser[], FieldPacket[]] = await dBConnection.promise().query<IUser[]>(
 					"SELECT * FROM user WHERE email = ?;",
 					[req.body.userDecoded.email]
 				);
 
-				if (!bcrypt.compareSync(load.password, rows[0].password))
+				if (!bcrypt.compareSync(load.password, users[0].password))
 				{
 					res.status(401).send("Invalid password.");
 
@@ -113,26 +106,29 @@ export default (dBConnection: mysql.Pool) =>
 				return;
 			}
 		}
-	);
-
-	router.post(
+	).post(
 		"/login",
-		async (req: express.Request, res: express.Response) =>
+		async (req: Request, res: Response) =>
 		{
 			const load: UserLogin = req.body.load;
 
 			try
 			{
-				const [rows] = await dBConnection.promise().query("SELECT * FROM user WHERE email = ?;", [load.email]);
+				const [users]: [IUser[], FieldPacket[]] = await dBConnection.promise().query<IUser[]>(
+					"SELECT * FROM user WHERE email = ?;",
+					[load.email]
+				);
 
-				if (rows[0].length == 0)
+				if (users.length != 1)
 				{
 					res.status(401).send("Invalid password or email");
 
 					return;
 				}
 
-				if (!bcrypt.compareSync(load.password, rows[0].password))
+				const user: IUser = users[0];
+
+				if (!bcrypt.compareSync(load.password, user.password))
 				{
 					res.status(401).send("Invalid password or email");
 
@@ -142,10 +138,10 @@ export default (dBConnection: mysql.Pool) =>
 				res.status(200).send({
 					token: jsonWebToken.sign(
 						{
-							id: rows[0].id,
-							email: rows[0].email,
-							admin: rows[0].admin,
-							verified: rows[0].verified
+							id: user.id,
+							email: user.email,
+							admin: user.admin,
+							verified: user.verified
 						},
 						config.app.secretKey,
 						{
@@ -164,7 +160,5 @@ export default (dBConnection: mysql.Pool) =>
 			}
 		}
 	);
-
-	return router;
 };
 
