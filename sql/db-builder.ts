@@ -25,13 +25,13 @@ const dBBuilder = async (mySQLPool: mysql.Pool, dBName: string, reset: boolean =
 	await mySQLPool.promise().query(
 		`
 			CREATE TABLE asset (
-				PRIMARY KEY (id),
+				id INT NOT NULL AUTO_INCREMENT,
 				symbol VARCHAR(255) NOT NULL,
 				name VARCHAR(255) NOT NULL,
-				id INT NOT NULL AUTO_INCREMENT,
 				industry VARCHAR(255),
 				sector VARCHAR(255),
-				exchange VARCHAR(255)
+				exchange VARCHAR(255),
+				PRIMARY KEY (id)
 			)
 		`
 	);
@@ -40,11 +40,11 @@ const dBBuilder = async (mySQLPool: mysql.Pool, dBName: string, reset: boolean =
 	await mySQLPool.promise().query(
 		`
 			CREATE TABLE portfolio (
-				PRIMARY KEY (id),
 				id INT NOT NULL AUTO_INCREMENT,
 				user_id INT NOT NULL,
 				name VARCHAR(255) NOT NULL,
-				created DATETIME DEFAULT CURRENT_TIMESTAMP
+				created DATETIME DEFAULT CURRENT_TIMESTAMP,
+				PRIMARY KEY (id)
 			)
 		`
 	);
@@ -53,11 +53,11 @@ const dBBuilder = async (mySQLPool: mysql.Pool, dBName: string, reset: boolean =
 	await mySQLPool.promise().query(
 		`
 			CREATE TABLE portfolio_asset (
-				PRIMARY KEY (id),
 				id INT NOT NULL AUTO_INCREMENT,
 				portfolio_id INT NOT NULL,
 				ticker VARCHAR(255) NOT NULL,
-				created DATETIME DEFAULT CURRENT_TIMESTAMP
+				created DATETIME DEFAULT CURRENT_TIMESTAMP,
+				PRIMARY KEY (id)
 			)
 		`
 	);
@@ -66,14 +66,14 @@ const dBBuilder = async (mySQLPool: mysql.Pool, dBName: string, reset: boolean =
 	await mySQLPool.promise().query(
 		`
 			CREATE TABLE user (
-				PRIMARY KEY (id),
-				UNIQUE(email),
 				id INT NOT NULL AUTO_INCREMENT,
 				email VARCHAR(255) NOT NULL,
 				password VARCHAR(255) NOT NULL,
 				admin BIT(1) DEFAULT 0,
 				verified BIT(1) DEFAULT 0,
-				created DATETIME DEFAULT CURRENT_TIMESTAMP
+				created DATETIME DEFAULT CURRENT_TIMESTAMP,
+				PRIMARY KEY (id),
+				UNIQUE(email)
 			)
 		`
 	);
@@ -82,11 +82,11 @@ const dBBuilder = async (mySQLPool: mysql.Pool, dBName: string, reset: boolean =
 	await mySQLPool.promise().query(
 		`
 			CREATE TABLE verification (
-				PRIMARY KEY (id),
 				id INT NOT NULL AUTO_INCREMENT,
 				user INT NOT NULL,
 				pin INT UNSIGNED NOT NULL,
-				created DATETIME DEFAULT CURRENT_TIMESTAMP
+				created DATETIME DEFAULT CURRENT_TIMESTAMP,
+				PRIMARY KEY (id)
 			)
 		`
 	);
