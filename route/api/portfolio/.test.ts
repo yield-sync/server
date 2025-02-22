@@ -73,14 +73,14 @@ beforeEach(async () =>
 	}).expect(201);
 
 	// Send a login request
-	const RES_LOGIN = await request(app).post("/api/user/login").send({
+	const resLogin = await request(app).post("/api/user/login").send({
 		load: {
 			email: EMAIL,
 			password: PASSWORD
 		}
 	}).expect(200);
 
-	token = (JSON.parse(RES_LOGIN.text)).token;
+	token = (JSON.parse(resLogin.text)).token;
 
 	expect(typeof token).toBe("string");
 });

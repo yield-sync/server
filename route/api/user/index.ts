@@ -30,9 +30,17 @@ export default (mySQLPool: mysql.Pool): Router =>
 				[req.body.userDecoded.email]
 			);
 
+			const normalizedUsers = users.map(user => ({
+				...user,
+				// Convert Buffer to boolean
+				admin: user.admin[0] === 1,
+				verified: user.verified[0] === 1,
+			}));
+
 			res.status(200).send({
-				email: users[0].email,
-				verified: users[0].verified,
+				email: normalizedUsers[0].email,
+				admin: normalizedUsers[0].admin,
+				verified: normalizedUsers[0].verified,
 			});
 		}
 	).post(

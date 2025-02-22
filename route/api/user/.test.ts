@@ -79,6 +79,47 @@ describe("ROUTE: /api/user", () =>
 					);
 				});
 			});
+
+			describe("Expected Success", () => {
+				test("Should return JSON of user profile..", async () =>
+				{
+					const EMAIL: string = "testemail@example.com";
+					const PASSWORD: string = "testpassword!";
+
+					// Create a user
+					await request(app).post("/api/user/create").send({
+						load: {
+							email: EMAIL,
+							password: PASSWORD
+						}
+					}).expect(201);
+
+					// Send a login request
+					const resLogin = await request(app).post("/api/user/login").send({
+						load: {
+							email: EMAIL,
+							password: PASSWORD
+						}
+					}).expect(200);
+
+					const token = (JSON.parse(resLogin.text)).token;
+
+					const response = await request(app).get("/api/user/").set(
+						'authorization',
+						`Bearer ${token}`
+					).send();
+
+					expect(response.statusCode).toBe(200);
+
+					const recievedJSON = JSON.parse(response.text)
+
+					expect(recievedJSON.email).toBe(EMAIL);
+
+					expect(recievedJSON.admin).toBe(false);
+
+					expect(recievedJSON.verified).toBe(false);
+				});
+			})
 		});
 	});
 
