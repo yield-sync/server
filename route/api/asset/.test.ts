@@ -56,7 +56,6 @@ beforeAll(async () =>
 	);
 });
 
-
 beforeEach(async () =>
 {
 	// Drop the database
