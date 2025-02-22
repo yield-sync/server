@@ -1,16 +1,21 @@
-import express from "express";
+import { Router, Request, Response } from "express";
 import mysql from "mysql2";
 
 import config from "../../../config";
 import { user } from "../../../middleware/token";
 
 
-export default (dBConnection: mysql.Pool): express.Router =>
+export default (dBConnection: mysql.Pool): Router =>
 {
-	return express.Router().get(
+	return Router().get(
+		/**
+		* @route GET /api/portfolio/
+		* @desc Return portfolios owned by user
+		* @access authorized:user
+		*/
 		"/",
 		user(),
-		async (req: express.Request, res: express.Response) =>
+		async (req: Request, res: Response) =>
 		{
 			try
 			{
@@ -33,9 +38,14 @@ export default (dBConnection: mysql.Pool): express.Router =>
 			}
 		}
 	).get(
+		/**
+		* @route GET /api/portfolio/create
+		* @desc Create portfolio
+		* @access authorized:user
+		*/
 		"/create",
 		user(),
-		async (req: express.Request, res: express.Response) =>
+		async (req: Request, res: Response) =>
 		{
 			try
 			{
@@ -63,9 +73,14 @@ export default (dBConnection: mysql.Pool): express.Router =>
 			}
 		}
 	).get(
+		/**
+		* @route GET /api/portfolio/update
+		* @desc Update portfolio
+		* @access authorized:user
+		*/
 		"/update",
 		user(),
-		async (req: express.Request, res: express.Response) =>
+		async (req: Request, res: Response) =>
 		{
 			try
 			{
@@ -100,9 +115,14 @@ export default (dBConnection: mysql.Pool): express.Router =>
 			}
 		}
 	).get(
+		/**
+		* @route GET /api/portfolio/delete
+		* @desc Delete portfolio
+		* @access authorized:user
+		*/
 		"/delete",
 		user(),
-		async (req: express.Request, res: express.Response) =>
+		async (req: Request, res: Response) =>
 		{
 			try
 			{

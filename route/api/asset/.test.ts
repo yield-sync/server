@@ -48,7 +48,7 @@ beforeAll(async () =>
 	await DBBuilder(dBConnection, DB_NAME, true);
 
 	// [mysql] Select the recreated database
-	await dBConnection.promise().query(`USE ??;`, [DB_NAME]);
+	await dBConnection.promise().query("USE ??;", [DB_NAME]);
 
 	app = express().use(express.json()).use("/api", routeApi()).use("/api/user", routeApiUser(dBConnection)).use(
 		"/api/asset",

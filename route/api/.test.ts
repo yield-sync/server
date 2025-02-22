@@ -1,9 +1,9 @@
-import express from "express";
+import express, { Express } from "express";
 import request from "supertest";
 
 import routeApi from "./index";
 
-let app: express.Express = express().use(express.json()).use("/api", routeApi());
+let app: Express = express().use(express.json()).use("/api", routeApi());
 
 // [test]
 describe("ROUTE: /api", () =>

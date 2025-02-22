@@ -1,5 +1,3 @@
-// [import]
-import cors from "cors";
 import express from "express";
 import mysql from "mysql2";
 
@@ -9,7 +7,12 @@ import { user, userAdmin } from "../../../middleware/token";
 
 export default (dBConnection: mysql.Pool): express.Router =>
 {
-	return express.Router().use(cors()).get(
+	return express.Router().get(
+		/**
+		* @route GET /api/asset/
+		* @desc Get all asset ever..?
+		* @access authorized:user
+		*/
 		"/",
 		user(),
 		async (req: express.Request, res: express.Response) =>
@@ -32,6 +35,12 @@ export default (dBConnection: mysql.Pool): express.Router =>
 			}
 		}
 	).get(
+		/**
+		* @route GET /api/asset/create
+		* @desc Create asset
+		user(),
+		* @access authorized:admin
+		*/
 		"/create",
 		userAdmin(),
 		async (req: express.Request, res: express.Response) =>
@@ -59,8 +68,13 @@ export default (dBConnection: mysql.Pool): express.Router =>
 			}
 		}
 	).get(
+		/**
+		* @route GET /api/asset/update
+		* @desc Update assset
+		* @access authorized:admin
+		*/
 		"/update",
-		user(),
+		userAdmin(),
 		async (req: express.Request, res: express.Response) =>
 		{
 			try
@@ -96,8 +110,14 @@ export default (dBConnection: mysql.Pool): express.Router =>
 			}
 		}
 	).get(
+		/**
+		* @route GET /api/asset/delete
+		* @desc Delete assset
+		* @access authorized
+		* @access authorized:admin
+		*/
 		"/delete",
-		user(),
+		userAdmin(),
 		async (req: express.Request, res: express.Response) =>
 		{
 			try

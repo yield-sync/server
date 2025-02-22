@@ -1,20 +1,21 @@
-// [import]
-import cors from "cors";
-import express from "express";
+import { Router, Request, Response } from "express";
 import mysql from "mysql2";
 
 import config from "../../../config";
 import { user } from "../../../middleware/token";
 
 
-export default (dBConnection: mysql.Pool) =>
+export default (dBConnection: mysql.Pool): Router =>
 {
-	const router: express.Router = express.Router().use(cors());
-
-	router.get(
+	return Router().get(
+		/**
+		* @route GET /api/portfolio-asset/create
+		* @desc Create portofolio asset
+		* @access authorized:user
+		*/
 		"/create",
 		user(),
-		async (req: express.Request, res: express.Response) =>
+		async (req: Request, res: Response) =>
 		{
 			try
 			{
@@ -73,7 +74,5 @@ export default (dBConnection: mysql.Pool) =>
 			}
 		}
 	);
-
-	return router;
 };
 

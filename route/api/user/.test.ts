@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import express from "express";
+import express, { Express } from "express";
 import mysql from "mysql2";
 
 import routeApi from "../index";
@@ -15,7 +15,7 @@ const jwt = require("jsonwebtoken");
 const DB_NAME: string = "mock_db_user";
 const ERROR_PASSWORD: string = "Password Must be ASCII, longer than 8 characters, and contain a special character";
 
-let app: express.Express;
+let app: Express;
 let dBConnection: mysql.Pool;
 
 
@@ -46,7 +46,7 @@ beforeAll(async () => {
 	await DBBuilder(dBConnection, DB_NAME, true);
 
 	// [mysql] Select the recreated database
-	await dBConnection.promise().query(`USE ??;`, [DB_NAME]);
+	await dBConnection.promise().query("USE ??;", [DB_NAME]);
 
 	app = express().use(express.json()).use("/api", routeApi()).use("/api/user", routeApiUser(dBConnection));
 })

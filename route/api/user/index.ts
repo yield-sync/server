@@ -16,6 +16,11 @@ const ERROR_INVALID_PASSWORD: string = "Password Must be ASCII, longer than 8 ch
 export default (dBConnection: mysql.Pool): Router =>
 {
 	return Router().post(
+		/**
+		* @route POST /api/user/create
+		* @desc Creates a user
+		* @access Public
+		*/
 		"/create",
 		async (req: Request, res: Response) =>
 		{
@@ -70,6 +75,11 @@ export default (dBConnection: mysql.Pool): Router =>
 			}
 		}
 	).post(
+		/**
+		* @route POST /api/user/password-udpate
+		* @desc Update password
+		* @access authorized:user
+		*/
 		"/password-update",
 		user(),
 		async (req: Request, res: Response) =>
@@ -107,6 +117,11 @@ export default (dBConnection: mysql.Pool): Router =>
 			}
 		}
 	).post(
+		/**
+		* @route POST /api/user/login
+		* @desc Login
+		* @access Public
+		*/
 		"/login",
 		async (req: Request, res: Response) =>
 		{
