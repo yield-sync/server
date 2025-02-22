@@ -64,6 +64,24 @@ beforeEach(async () =>
 // [test]
 describe("ROUTE: /api/user", () =>
 {
+	describe("GET", () =>
+	{
+		describe("/", () =>
+		{
+			describe("Expected Failures", () => {
+				test("Should NOT allow creating a user with invalid email..", async () =>
+				{
+					const response = await request(app).get("/api/user/").send();
+
+					expect(response.statusCode).toBe(401);
+					expect(response.error.text).toBe(
+						"{\"message\":\"Access denied: Invalid or missing token\"}"
+					);
+				});
+			});
+		});
+	});
+
 	describe("POST", () =>
 	{
 		describe("/create", () =>
