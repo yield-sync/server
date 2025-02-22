@@ -30,7 +30,10 @@ export default (mySQLPool: mysql.Pool): Router =>
 				[req.body.userDecoded.email]
 			);
 
-			res.status(200).send(users[0].email);
+			res.status(200).send({
+				email: users[0].email,
+				verified: users[0].verified,
+			});
 		}
 	).post(
 		/**
