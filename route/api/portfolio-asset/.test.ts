@@ -6,7 +6,7 @@ import routeApi from "../index";
 import routeApiPortfolio from "../portfolio/index";
 import routeApiUser from "../user/index";
 import config from "../../../config";
-import DBBuilder, { dropDB } from "../../../sql/DBBuilder";
+import DBBuilder, { dropDB } from "../../../sql/db-builder";
 
 
 const request = require('supertest');

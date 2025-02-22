@@ -6,7 +6,7 @@ import routeApiPortfolio from "./index";
 import routeApi from "../index";
 import routeApiUser from "../user/index";
 import config from "../../../config";
-import DBBuilder, { dropDB } from "../../../sql/DBBuilder";
+import DBBuilder, { dropDB } from "../../../sql/db-builder";
 
 
 const DB_NAME: string = "mock_db_portfolio";

@@ -1,22 +1,25 @@
 import mysql from "mysql2";
 
+import config from "../config";
+
 
 /**
-* Script to initialize the database
+* @notice Script to initialize the database
 * @param dBConnection {mysql.Pool} Connection to the database
 * @param dBName {string} Name of the database to be affected
 * @param reset {boolean} True if DB is to be dropped first
 */
-export default async (dBConnection: mysql.Pool, dBName: string, reset: boolean = false) =>
+const dBBuilder = async (dBConnection: mysql.Pool, dBName: string, reset: boolean = false) =>
 {
-	if (reset) {
-		await dBConnection.promise().query(`DROP DATABASE IF EXISTS ??;`, [dBName]);
+	if (reset)
+	{
+		await dBConnection.promise().query("DROP DATABASE IF EXISTS ??;", [dBName]);
 	}
 
-	await dBConnection.promise().query(`CREATE DATABASE ??;`, [dBName]);
+	await dBConnection.promise().query("CREATE DATABASE ??;", [dBName]);
 
 	// [mysql] Select the recreated database
-	await dBConnection.promise().query(`USE ??;`, [dBName]);
+	await dBConnection.promise().query("USE ??;", [dBName]);
 
 	// Create the asset table
 	await dBConnection.promise().query(
@@ -63,7 +66,7 @@ export default async (dBConnection: mysql.Pool, dBName: string, reset: boolean =
 	);
 
 	// Create the portfolio asset table
-	dBConnection.promise().query(
+	await dBConnection.promise().query(
 		`
 			CREATE TABLE portfolio_asset (
 				PRIMARY KEY (id),
@@ -77,8 +80,32 @@ export default async (dBConnection: mysql.Pool, dBName: string, reset: boolean =
 };
 
 
+export default dBBuilder;
+
+
 export const dropDB = async (dBName: string, dBConnection: mysql.Pool) =>
 {
-	await dBConnection.promise().query(`DROP DATABASE IF EXISTS ${dBName}`);
-}
+	await dBConnection.promise().query("DROP DATABASE IF EXISTS ??;", [dBName]);
+};
 
+/**
+ * @notice This is the function to build the production SQL DB
+ */
+export async function dBBuilderProduction()
+{
+	console.log("Initializing SQL database..");
+
+	const dBConnection: mysql.Pool = mysql.createPool({
+		host: config.app.database.host,
+		user: config.app.database.user,
+		password: config.app.database.password,
+		waitForConnections: true,
+		connectionLimit: 10,
+		queueLimit: 0
+	});
+
+	// [mock-db] drop and recreate
+	await dBBuilder(dBConnection, config.app.database_name, true);
+
+	dBConnection.end();
+};

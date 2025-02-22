@@ -5,7 +5,7 @@ import mysql from "mysql2";
 import routeApi from "../index";
 import routeApiUser from "./index";
 import config from "../../../config";
-import DBBuilder, { dropDB } from "../../../sql/DBBuilder";
+import DBBuilder, { dropDB } from "../../../sql/db-builder";
 
 
 const request = require('supertest');

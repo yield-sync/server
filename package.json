@@ -16,7 +16,7 @@
     "prestart": "npm run build",
     "start": "cross-env NODE_ENV=production node dist/index.js",
     "test": "jest --verbose",
-    "initialize-db": "npm run build && node dist/sql/production.js"
+    "db-builder-production": "npm run build && node dist/sql/db-builder-production.js"
   },
   "jest": {
     "preset": "ts-jest",
