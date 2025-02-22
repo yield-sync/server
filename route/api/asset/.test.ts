@@ -17,22 +17,22 @@ const PORTFOLIO_NAME: string = "my-portfolio";
 let token: string;
 
 let app: express.Express;
-let dBConnection: mysql.Pool;
+let mySQLPool: mysql.Pool;
 
 
 afterAll(async () =>
 {
 	// Drop the database (should await)
-	await dropDB(DB_NAME, dBConnection);
+	await dropDB(DB_NAME, mySQLPool);
 
 	// Close connection (should await)
-	await dBConnection.end();
+	await mySQLPool.end();
 });
 
 beforeAll(async () =>
 {
 	// [mysql] Database connection configuration
-	dBConnection = mysql.createPool({
+	mySQLPool = mysql.createPool({
 		host: config.app.database.host,
 		user: config.app.database.user,
 		password: config.app.database.password,
@@ -42,17 +42,17 @@ beforeAll(async () =>
 	});
 
 	// [mysql] Connect
-	await dBConnection.promise().getConnection();
+	await mySQLPool.promise().getConnection();
 
 	// [mock-db] drop and recreate
-	await DBBuilder(dBConnection, DB_NAME, true);
+	await DBBuilder(mySQLPool, DB_NAME, true);
 
 	// [mysql] Select the recreated database
-	await dBConnection.promise().query("USE ??;", [DB_NAME]);
+	await mySQLPool.promise().query("USE ??;", [DB_NAME]);
 
-	app = express().use(express.json()).use("/api", routeApi()).use("/api/user", routeApiUser(dBConnection)).use(
+	app = express().use(express.json()).use("/api", routeApi()).use("/api/user", routeApiUser(mySQLPool)).use(
 		"/api/asset",
-		routeAPIAsset(dBConnection)
+		routeAPIAsset(mySQLPool)
 	);
 });
 
@@ -60,10 +60,10 @@ beforeAll(async () =>
 beforeEach(async () =>
 {
 	// Drop the database
-	await dropDB(DB_NAME, dBConnection);
+	await dropDB(DB_NAME, mySQLPool);
 
 	// [mock-db] drop and recreate
-	await DBBuilder(dBConnection, DB_NAME, true);
+	await DBBuilder(mySQLPool, DB_NAME, true);
 
 	// Create a user
 	await request(app).post("/api/user/create").send({
@@ -102,7 +102,7 @@ describe("ROUTE: /api/asset", () =>
 				}
 			}).expect(401);
 
-			const [results]: MySQLQueryResult = await dBConnection.promise().query("SELECT * FROM asset;");
+			const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM asset;");
 
 			if (!Array.isArray(results))
 			{

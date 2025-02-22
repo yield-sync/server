@@ -16,21 +16,21 @@ const DB_NAME: string = "mock_db_user";
 const ERROR_PASSWORD: string = "Password Must be ASCII, longer than 8 characters, and contain a special character";
 
 let app: Express;
-let dBConnection: mysql.Pool;
+let mySQLPool: mysql.Pool;
 
 
 afterAll(async () =>
 {
 	// Drop the database (should await)
-	await dropDB(DB_NAME, dBConnection);
+	await dropDB(DB_NAME, mySQLPool);
 
 	// Close connection (should await)
-	await dBConnection.end();
+	await mySQLPool.end();
 });
 
 beforeAll(async () => {
 	// [mysql] Database connection configuration
-	dBConnection = mysql.createPool({
+	mySQLPool = mysql.createPool({
 		host: config.app.database.host,
 		user: config.app.database.user,
 		password: config.app.database.password,
@@ -40,24 +40,24 @@ beforeAll(async () => {
 	});
 
 	// [mysql] Connect
-	await dBConnection.promise().getConnection();
+	await mySQLPool.promise().getConnection();
 
 	// [mock-db] drop and recreate
-	await DBBuilder(dBConnection, DB_NAME, true);
+	await DBBuilder(mySQLPool, DB_NAME, true);
 
 	// [mysql] Select the recreated database
-	await dBConnection.promise().query("USE ??;", [DB_NAME]);
+	await mySQLPool.promise().query("USE ??;", [DB_NAME]);
 
-	app = express().use(express.json()).use("/api", routeApi()).use("/api/user", routeApiUser(dBConnection));
+	app = express().use(express.json()).use("/api", routeApi()).use("/api/user", routeApiUser(mySQLPool));
 })
 
 beforeEach(async () =>
 {
 	// Drop the database
-	await dropDB(DB_NAME, dBConnection);
+	await dropDB(DB_NAME, mySQLPool);
 
 	// [mock-db] drop and recreate
-	await DBBuilder(dBConnection, DB_NAME, true);
+	await DBBuilder(mySQLPool, DB_NAME, true);
 });
 
 
@@ -82,7 +82,7 @@ describe("ROUTE: /api/user", () =>
 
 			expect(response.error.text).toBe("Invalid email");
 
-			const [results]: MySQLQueryResult = await dBConnection.promise().query(
+			const [results]: MySQLQueryResult = await mySQLPool.promise().query(
 				"SELECT * FROM user;"
 			);
 
@@ -106,7 +106,7 @@ describe("ROUTE: /api/user", () =>
 
 			expect(response.error.text).toBe(ERROR_PASSWORD);
 
-			const [results]: MySQLQueryResult = await dBConnection.promise().query(
+			const [results]: MySQLQueryResult = await mySQLPool.promise().query(
 				"SELECT * FROM user;"
 			);
 
@@ -129,7 +129,7 @@ describe("ROUTE: /api/user", () =>
 
 			expect(response.error.text).toBe(ERROR_PASSWORD);
 
-			const [results]: MySQLQueryResult = await dBConnection.promise().query(
+			const [results]: MySQLQueryResult = await mySQLPool.promise().query(
 				"SELECT * FROM user;"
 			);
 
@@ -154,7 +154,7 @@ describe("ROUTE: /api/user", () =>
 
 			expect(res.error.text).toBe(ERROR_PASSWORD);
 
-			const [results]: MySQLQueryResult = await dBConnection.promise().query(
+			const [results]: MySQLQueryResult = await mySQLPool.promise().query(
 				"SELECT * FROM user;"
 			);
 
@@ -175,7 +175,7 @@ describe("ROUTE: /api/user", () =>
 
 			expect(response.statusCode).toBe(201);
 
-			const [results]: MySQLQueryResult = await dBConnection.promise().query(
+			const [results]: MySQLQueryResult = await mySQLPool.promise().query(
 				"SELECT * FROM user;"
 			);
 
@@ -209,7 +209,7 @@ describe("ROUTE: /api/user", () =>
 
 			expect(response.text).toBe("This email is already being used.");
 
-			const [results]: MySQLQueryResult = await dBConnection.promise().query(
+			const [results]: MySQLQueryResult = await mySQLPool.promise().query(
 				"SELECT * FROM user;"
 			);
 
@@ -235,7 +235,7 @@ describe("ROUTE: /api/user", () =>
 				}
 			});
 
-			const [results]: MySQLQueryResult = await dBConnection.promise().query(
+			const [results]: MySQLQueryResult = await mySQLPool.promise().query(
 				"SELECT * FROM user WHERE email = ?;",
 				[email]
 			);
@@ -276,7 +276,7 @@ describe("ROUTE: /api/user", () =>
 
 			expect(typeof TOKEN).toBe("string");
 
-			const [results]: MySQLQueryResult = await dBConnection.promise().query(
+			const [results]: MySQLQueryResult = await mySQLPool.promise().query(
 				"SELECT * FROM user WHERE email = ?;",
 				[email]
 			);

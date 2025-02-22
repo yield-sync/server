@@ -5,7 +5,7 @@ import config from "../../../config";
 import { user } from "../../../middleware/token";
 
 
-export default (dBConnection: mysql.Pool): Router =>
+export default (mySQLPool: mysql.Pool): Router =>
 {
 	return Router().get(
 		/**
@@ -19,7 +19,7 @@ export default (dBConnection: mysql.Pool): Router =>
 		{
 			try
 			{
-				const RES_PORTFOLIO = await dBConnection.promise().query(
+				const RES_PORTFOLIO = await mySQLPool.promise().query(
 					"SELECT id, name FROM portfolio WHERE user_id = ?;",
 					[req.body.userDecoded.id]
 				);
@@ -56,7 +56,7 @@ export default (dBConnection: mysql.Pool): Router =>
 					return;
 				}
 
-				await dBConnection.promise().query(
+				await mySQLPool.promise().query(
 					"INSERT INTO portfolio (user_id, name) VALUES (?, ?);",
 					[req.body.userDecoded.id, req.body.load.portfolio.name],
 				);
@@ -98,7 +98,7 @@ export default (dBConnection: mysql.Pool): Router =>
 					return;
 				}
 
-				await dBConnection.promise().query(
+				await mySQLPool.promise().query(
 					"UPDATE portfolio SET name = ? WHERE user_id = ? AND id = ?;",
 					[req.body.load.portfolio.name, req.body.userDecoded.id, req.body.load.portfolio.id]
 				);
@@ -133,7 +133,7 @@ export default (dBConnection: mysql.Pool): Router =>
 					return;
 				}
 
-				await dBConnection.promise().query(
+				await mySQLPool.promise().query(
 					"DELETE FROM portfolio WHERE user_id = ? AND id = ?;",
 					[req.body.userDecoded.id, req.body.load.portfolio_id],
 				);

@@ -14,14 +14,14 @@ import routeApiPortfolio from "./route/api/portfolio";
 import routeApiPortfolioAsset from "./route/api/portfolio-asset";
 
 
-const dBConnection = mysql.createPool({
-	database: "yield_sync",
+const MYSQL_POOL: mysql.Pool = mysql.createPool({
+	database: config.app.database.name,
 	host: config.app.database.host,
 	user: config.app.database.user,
 	password: config.app.database.password,
 	waitForConnections: true,
 	connectionLimit: 10,
-	queueLimit: 0
+	queueLimit: 0,
 });
 
 
@@ -49,13 +49,13 @@ http.createServer(
 		routeApi()
 	).use(
 		"/api/portfolio",
-		routeApiPortfolio(dBConnection)
+		routeApiPortfolio(MYSQL_POOL)
 	).use(
 		"/api/portfolio-asset",
-		routeApiPortfolioAsset(dBConnection)
+		routeApiPortfolioAsset(MYSQL_POOL)
 	).use(
 		"/api/user",
-		routeApiUser(dBConnection)
+		routeApiUser(MYSQL_POOL)
 	).use(
 		express.static("frontend/dist")
 	).get(

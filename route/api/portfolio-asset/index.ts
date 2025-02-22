@@ -5,7 +5,7 @@ import config from "../../../config";
 import { user } from "../../../middleware/token";
 
 
-export default (dBConnection: mysql.Pool): Router =>
+export default (mySQLPool: mysql.Pool): Router =>
 {
 	return Router().get(
 		/**
@@ -36,7 +36,7 @@ export default (dBConnection: mysql.Pool): Router =>
 				}
 
 				// First determine that the portfolio belongs to the user
-				const [rows] = await dBConnection.promise().query(
+				const [rows] = await mySQLPool.promise().query(
 					"SELECT * FROM portfolio WHERE id = ? AND user_id = ?;",
 					[load.portfolio_id, req.body.userDecoded.id],
 				);
@@ -56,7 +56,7 @@ export default (dBConnection: mysql.Pool): Router =>
 				}
 
 				// Insert into portfolio_asset
-				await dBConnection.promise().query(
+				await mySQLPool.promise().query(
 					"INSERT INTO portfolio_asset (portfolio_id, ticker) VALUES (?, ?);",
 					[load.portfolio_id, load.ticker]
 				);

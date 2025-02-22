@@ -13,8 +13,6 @@ export default
 
 	// [app]
 	app: {
-		database_name: "yield_sync",
-
 		// [base-url]
 		baseURL: {
 			client: process.env.APP__BASE_URL || "http://localhost:8080",
@@ -22,6 +20,7 @@ export default
 		},
 
 		database: {
+			name: "yield_sync",
 			host: process.env.APP__DATABASE__HOST,
 			user: process.env.APP__DATABASE__USER,
 			password: process.env.APP__DATABASE__PASSWORD,

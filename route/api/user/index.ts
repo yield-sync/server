@@ -13,7 +13,7 @@ const jsonWebToken = require("jsonwebtoken");
 const ERROR_INVALID_PASSWORD: string = "Password Must be ASCII, longer than 8 characters, and contain a special character";
 
 
-export default (dBConnection: mysql.Pool): Router =>
+export default (mySQLPool: mysql.Pool): Router =>
 {
 	return Router().post(
 		/**
@@ -36,7 +36,7 @@ export default (dBConnection: mysql.Pool): Router =>
 				}
 
 				// Check email available
-				const [users]: [IUser[], FieldPacket[]] = await dBConnection.promise().query<IUser[]>(
+				const [users]: [IUser[], FieldPacket[]] = await mySQLPool.promise().query<IUser[]>(
 					"SELECT * FROM user WHERE email = ?;",
 					[load.email]
 				);
@@ -55,7 +55,7 @@ export default (dBConnection: mysql.Pool): Router =>
 					return;
 				}
 
-				await dBConnection.promise().query(
+				await mySQLPool.promise().query(
 					"INSERT INTO user (email, password) VALUES (?, ?);",
 					[load.email, await bcrypt.hash(load.password, 10)]
 				);
@@ -88,7 +88,7 @@ export default (dBConnection: mysql.Pool): Router =>
 
 			try
 			{
-				const [users]: [IUser[], FieldPacket[]] = await dBConnection.promise().query<IUser[]>(
+				const [users]: [IUser[], FieldPacket[]] = await mySQLPool.promise().query<IUser[]>(
 					"SELECT * FROM user WHERE email = ?;",
 					[req.body.userDecoded.email]
 				);
@@ -100,7 +100,7 @@ export default (dBConnection: mysql.Pool): Router =>
 					return;
 				}
 
-				await dBConnection.promise().query(
+				await mySQLPool.promise().query(
 					"UPDATE user SET password = ? WHERE id = ?;",
 					[await bcrypt.hash(load.passwordNew, 10), req.body.userDecoded.id]
 				);
@@ -129,7 +129,7 @@ export default (dBConnection: mysql.Pool): Router =>
 
 			try
 			{
-				const [users]: [IUser[], FieldPacket[]] = await dBConnection.promise().query<IUser[]>(
+				const [users]: [IUser[], FieldPacket[]] = await mySQLPool.promise().query<IUser[]>(
 					"SELECT * FROM user WHERE email = ?;",
 					[load.email]
 				);

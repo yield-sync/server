@@ -5,7 +5,7 @@ import config from "../../../config";
 import { user, userAdmin } from "../../../middleware/token";
 
 
-export default (dBConnection: mysql.Pool): express.Router =>
+export default (mySQLPool: mysql.Pool): express.Router =>
 {
 	return express.Router().get(
 		/**
@@ -19,7 +19,7 @@ export default (dBConnection: mysql.Pool): express.Router =>
 		{
 			try
 			{
-				const RES_PORTFOLIO = await dBConnection.promise().query("SELECT * FROM asset;", [req.body.userDecoded.id]);
+				const RES_PORTFOLIO = await mySQLPool.promise().query("SELECT * FROM asset;", [req.body.userDecoded.id]);
 
 				res.status(200).send(RES_PORTFOLIO);
 
@@ -54,7 +54,7 @@ export default (dBConnection: mysql.Pool): express.Router =>
 					return;
 				}
 
-				await dBConnection.promise().query("INSERT INTO asset (name) VALUES (?);", [req.body.load.asset.name]);
+				await mySQLPool.promise().query("INSERT INTO asset (name) VALUES (?);", [req.body.load.asset.name]);
 
 				res.status(201).send("Created asset");
 
@@ -93,7 +93,7 @@ export default (dBConnection: mysql.Pool): express.Router =>
 					return;
 				}
 
-				await dBConnection.promise().query(
+				await mySQLPool.promise().query(
 					"UPDATE asset SET name = ? WHERE id = ?;",
 					[req.body.load.asset.name, req.body.load.asset.id]
 				);
@@ -129,7 +129,7 @@ export default (dBConnection: mysql.Pool): express.Router =>
 					return;
 				}
 
-				await dBConnection.promise().query(
+				await mySQLPool.promise().query(
 					"DELETE FROM portfolio WHERE user_id = ? AND id = ?;",
 					[req.body.userDecoded.id, req.body.load.asset.id],
 				);

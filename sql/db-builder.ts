@@ -5,24 +5,24 @@ import config from "../config";
 
 /**
 * @notice Script to initialize the database
-* @param dBConnection {mysql.Pool} Connection to the database
+* @param mySQLPool {mysql.Pool} Connection to the database
 * @param dBName {string} Name of the database to be affected
 * @param reset {boolean} True if DB is to be dropped first
 */
-const dBBuilder = async (dBConnection: mysql.Pool, dBName: string, reset: boolean = false) =>
+const dBBuilder = async (mySQLPool: mysql.Pool, dBName: string, reset: boolean = false) =>
 {
 	if (reset)
 	{
-		await dBConnection.promise().query("DROP DATABASE IF EXISTS ??;", [dBName]);
+		await mySQLPool.promise().query("DROP DATABASE IF EXISTS ??;", [dBName]);
 	}
 
-	await dBConnection.promise().query("CREATE DATABASE ??;", [dBName]);
+	await mySQLPool.promise().query("CREATE DATABASE ??;", [dBName]);
 
 	// [mysql] Select the recreated database
-	await dBConnection.promise().query("USE ??;", [dBName]);
+	await mySQLPool.promise().query("USE ??;", [dBName]);
 
 	// Create the asset table
-	await dBConnection.promise().query(
+	await mySQLPool.promise().query(
 		`
 			CREATE TABLE asset (
 				PRIMARY KEY (id),
@@ -37,7 +37,7 @@ const dBBuilder = async (dBConnection: mysql.Pool, dBName: string, reset: boolea
 	);
 
 	// Create the user table
-	await dBConnection.promise().query(
+	await mySQLPool.promise().query(
 		`
 			CREATE TABLE user (
 				PRIMARY KEY (id),
@@ -53,7 +53,7 @@ const dBBuilder = async (dBConnection: mysql.Pool, dBName: string, reset: boolea
 	);
 
 	// Create the portfolio table
-	await dBConnection.promise().query(
+	await mySQLPool.promise().query(
 		`
 			CREATE TABLE portfolio (
 				PRIMARY KEY (id),
@@ -66,7 +66,7 @@ const dBBuilder = async (dBConnection: mysql.Pool, dBName: string, reset: boolea
 	);
 
 	// Create the portfolio asset table
-	await dBConnection.promise().query(
+	await mySQLPool.promise().query(
 		`
 			CREATE TABLE portfolio_asset (
 				PRIMARY KEY (id),
@@ -83,9 +83,9 @@ const dBBuilder = async (dBConnection: mysql.Pool, dBName: string, reset: boolea
 export default dBBuilder;
 
 
-export const dropDB = async (dBName: string, dBConnection: mysql.Pool) =>
+export const dropDB = async (dBName: string, mySQLPool: mysql.Pool) =>
 {
-	await dBConnection.promise().query("DROP DATABASE IF EXISTS ??;", [dBName]);
+	await mySQLPool.promise().query("DROP DATABASE IF EXISTS ??;", [dBName]);
 };
 
 /**
@@ -95,7 +95,7 @@ export async function dBBuilderProduction()
 {
 	console.log("Initializing SQL database..");
 
-	const dBConnection: mysql.Pool = mysql.createPool({
+	const mySQLPool: mysql.Pool = mysql.createPool({
 		host: config.app.database.host,
 		user: config.app.database.user,
 		password: config.app.database.password,
@@ -105,7 +105,7 @@ export async function dBBuilderProduction()
 	});
 
 	// [mock-db] drop and recreate
-	await dBBuilder(dBConnection, config.app.database_name, true);
+	await dBBuilder(mySQLPool, config.app.database.name, true);
 
-	dBConnection.end();
+	mySQLPool.end();
 };
