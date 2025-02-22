@@ -36,22 +36,6 @@ const dBBuilder = async (mySQLPool: mysql.Pool, dBName: string, reset: boolean =
 		`
 	);
 
-	// Create the user table
-	await mySQLPool.promise().query(
-		`
-			CREATE TABLE user (
-				PRIMARY KEY (id),
-				UNIQUE(email),
-				id INT NOT NULL AUTO_INCREMENT,
-				email VARCHAR(255) NOT NULL,
-				password VARCHAR(255) NOT NULL,
-				admin BIT(1) DEFAULT 0,
-				verified BIT(1) DEFAULT 0,
-				created DATETIME DEFAULT CURRENT_TIMESTAMP
-			)
-		`
-	);
-
 	// Create the portfolio table
 	await mySQLPool.promise().query(
 		`
@@ -73,6 +57,35 @@ const dBBuilder = async (mySQLPool: mysql.Pool, dBName: string, reset: boolean =
 				id INT NOT NULL AUTO_INCREMENT,
 				portfolio_id INT NOT NULL,
 				ticker VARCHAR(255) NOT NULL,
+				created DATETIME DEFAULT CURRENT_TIMESTAMP
+			)
+		`
+	);
+
+	// Create the user table
+	await mySQLPool.promise().query(
+		`
+			CREATE TABLE user (
+				PRIMARY KEY (id),
+				UNIQUE(email),
+				id INT NOT NULL AUTO_INCREMENT,
+				email VARCHAR(255) NOT NULL,
+				password VARCHAR(255) NOT NULL,
+				admin BIT(1) DEFAULT 0,
+				verified BIT(1) DEFAULT 0,
+				created DATETIME DEFAULT CURRENT_TIMESTAMP
+			)
+		`
+	);
+
+	// Create the verification table
+	await mySQLPool.promise().query(
+		`
+			CREATE TABLE verification (
+				PRIMARY KEY (id),
+				id INT NOT NULL AUTO_INCREMENT,
+				user INT NOT NULL,
+				pin INT UNSIGNED NOT NULL,
 				created DATETIME DEFAULT CURRENT_TIMESTAMP
 			)
 		`
