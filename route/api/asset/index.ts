@@ -7,11 +7,9 @@ import config from "../../../config";
 import { user, userAdmin } from "../../../middleware/token";
 
 
-export default (dBConnection: mysql.Pool) =>
+export default (dBConnection: mysql.Pool): express.Router =>
 {
-	const router: express.Router = express.Router().use(cors());
-
-	router.get(
+	return express.Router().use(cors()).get(
 		"/",
 		user(),
 		async (req: express.Request, res: express.Response) =>
@@ -33,9 +31,7 @@ export default (dBConnection: mysql.Pool) =>
 				return;
 			}
 		}
-	);
-
-	router.get(
+	).get(
 		"/create",
 		userAdmin(),
 		async (req: express.Request, res: express.Response) =>
@@ -62,9 +58,7 @@ export default (dBConnection: mysql.Pool) =>
 				return;
 			}
 		}
-	);
-
-	router.get(
+	).get(
 		"/update",
 		user(),
 		async (req: express.Request, res: express.Response) =>
@@ -101,9 +95,7 @@ export default (dBConnection: mysql.Pool) =>
 				return;
 			}
 		}
-	);
-
-	router.get(
+	).get(
 		"/delete",
 		user(),
 		async (req: express.Request, res: express.Response) =>
@@ -134,8 +126,4 @@ export default (dBConnection: mysql.Pool) =>
 			}
 		}
 	);
-
-	return router;
 };
-
-
