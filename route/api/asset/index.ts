@@ -11,7 +11,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		/**
 		* @route GET /api/asset/
 		* @desc Get all asset ever..?
-		* @access authorized:user
+		* @access User
 		*/
 		"/",
 		user(),

@@ -11,7 +11,7 @@ export default (mySQLPool: mysql.Pool): Router =>
 		/**
 		* @route GET /api/portfolio-asset/create
 		* @desc Create portofolio asset
-		* @access authorized:user
+		* @access User
 		*/
 		"/create",
 		user(),

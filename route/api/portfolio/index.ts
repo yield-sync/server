@@ -11,7 +11,7 @@ export default (mySQLPool: mysql.Pool): Router =>
 		/**
 		* @route GET /api/portfolio/
 		* @desc Return portfolios owned by user
-		* @access authorized:user
+		* @access User
 		*/
 		"/",
 		user(),
@@ -41,7 +41,7 @@ export default (mySQLPool: mysql.Pool): Router =>
 		/**
 		* @route GET /api/portfolio/create
 		* @desc Create portfolio
-		* @access authorized:user
+		* @access User
 		*/
 		"/create",
 		user(),
@@ -76,7 +76,7 @@ export default (mySQLPool: mysql.Pool): Router =>
 		/**
 		* @route GET /api/portfolio/update
 		* @desc Update portfolio
-		* @access authorized:user
+		* @access User
 		*/
 		"/update",
 		user(),
@@ -118,7 +118,7 @@ export default (mySQLPool: mysql.Pool): Router =>
 		/**
 		* @route GET /api/portfolio/delete
 		* @desc Delete portfolio
-		* @access authorized:user
+		* @access User
 		*/
 		"/delete",
 		user(),

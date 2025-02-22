@@ -19,7 +19,7 @@ export default (mySQLPool: mysql.Pool): Router =>
 		/**
 		* @route POST /api/user/
 		* @desc User profile
-		* @access Public
+		* @access User
 		*/
 		"/",
 		user(),
@@ -106,7 +106,7 @@ export default (mySQLPool: mysql.Pool): Router =>
 		/**
 		* @route POST /api/user/password-udpate
 		* @desc Update password
-		* @access authorized:user
+		* @access User
 		*/
 		"/password-update",
 		user(),
