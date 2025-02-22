@@ -24,6 +24,11 @@ declare global
 		passwordNew: string,
 	};
 
+	type UserVerify = {
+		email: string,
+		pin: string,
+	};
+
 	type MySQLQueryResult = [QueryResult, FieldPacket[]];
 
 	// Interfaces

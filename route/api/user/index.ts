@@ -206,8 +206,7 @@ export default (mySQLPool: mysql.Pool): Router =>
 		"/verify",
 		async (req: Request, res: Response) =>
 		{
-			const { email, pin } = req.body;
-			console.log(email, pin);
+			const load: UserVerify = req.body.load;
 
 			res.status(200).json({
 				message: "Verified"
