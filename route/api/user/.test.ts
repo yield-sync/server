@@ -64,241 +64,225 @@ beforeEach(async () =>
 // [test]
 describe("ROUTE: /api/user", () =>
 {
-	describe("POST /create", () =>
+	describe("POST", () =>
 	{
-		test("Should NOT allow creating a user with invalid email..", async () =>
+		describe("/create", () =>
 		{
-			const email = "notemail";
-			const password = "testtest123!@";
-
-			const response = await request(app).post("/api/user/create").send({
-				load: {
-					email: email,
-					password: password
-				}
-			});
-
-			expect(response.statusCode).toBe(400);
-
-			expect(response.error.text).toBe("Invalid email");
-
-			const [results]: MySQLQueryResult = await mySQLPool.promise().query(
-				"SELECT * FROM user;"
-			);
-
-			expect(results).toStrictEqual([]);
-		});
-
-		test("Should NOT allow creating a user with short password..",
-		async () =>
-		{
-			const email = "testemail@example.com";
-			const password = "123";
-
-			const response = await request(app).post("/api/user/create").send({
-				load: {
-					email: email,
-					password: password
-				}
-			});
-
-			expect(response.statusCode).toBe(400);
-
-			expect(response.error.text).toBe(ERROR_PASSWORD);
-
-			const [results]: MySQLQueryResult = await mySQLPool.promise().query(
-				"SELECT * FROM user;"
-			);
-
-			expect(results).toStrictEqual([]);
-		});
-
-		test("Should NOT allow password without special characters..", async () =>
-		{
-			const email = "testemail@example.com";
-			const password = "12345678";
-
-			const response = await request(app).post("/api/user/create").send({
-				load: {
-					email: email,
-					password: password
-				}
-			});
-
-			expect(response.statusCode).toBe(400);
-
-			expect(response.error.text).toBe(ERROR_PASSWORD);
-
-			const [results]: MySQLQueryResult = await mySQLPool.promise().query(
-				"SELECT * FROM user;"
-			);
-
-			expect(results).toStrictEqual([]);
-		});
-
-		test("Should NOT allow creating a user with non-ASCII password..", async () =>
-		{
-			const email = "testemail@example.com";
-
-			// Contains non-ASCII character
-			const password = "!12345678¢";
-
-			const res = await request(app).post("/api/user/create").send({
-				load: {
-					email: email,
-					password: password
-				}
-			});
-
-			expect(res.statusCode).toBe(400);
-
-			expect(res.error.text).toBe(ERROR_PASSWORD);
-
-			const [results]: MySQLQueryResult = await mySQLPool.promise().query(
-				"SELECT * FROM user;"
-			);
-
-			expect(results).toStrictEqual([]);
-		});
-
-		test("Should allow creating a user..", async () =>
-		{
-			const email = "testemail@example.com";
-			const password = "testpassword!";
-
-			const response = await request(app).post("/api/user/create").send({
-				load: {
-					email: email,
-					password: password
-				}
-			});
-
-			expect(response.statusCode).toBe(201);
-
-			const [results]: MySQLQueryResult = await mySQLPool.promise().query(
-				"SELECT * FROM user;"
-			);
-
-			expect(results[0].email).toBe(email);
-
-			// Should NOT not be the literal password but rather the hash of it
-			expect(results[0].password).not.toBe(password);
-		});
-
-		test("Should only allow UNIQUE emails..", async () =>
-		{
-			const email = "testemail@example.com";
-			const password = "testpassword!";
-
-			// Create first user with unique email
-			await request(app).post("/api/user/create").send({
-				load: {
-					email: email,
-					password: password
-				}
-			});
-
-			const response = await request(app).post("/api/user/create").send({
-				load: {
-					email: email,
-					password: password
-				}
-			});
-
-			expect(response.statusCode).toBe(400);
-
-			expect(response.text).toBe("This email is already being used.");
-
-			const [results]: MySQLQueryResult = await mySQLPool.promise().query(
-				"SELECT * FROM user;"
-			);
-
-			if (!Array.isArray(results))
-			{
-				throw new Error("Expected result is not Array");
-			}
-
-			expect(results.length).toBe(1);
-		});
-
-		test("Should be able to decode password..", async () =>
-		{
-			const email = "testemail@example.com";
-			const password = "testpassword!";
-			const invalidPassword = "invalidPassword";
-
-			// Create first user with unique email
-			await request(app).post("/api/user/create").send({
-				load: {
-					email: email,
-					password: password
-				}
-			});
-
-			const [results]: MySQLQueryResult = await mySQLPool.promise().query(
-				"SELECT * FROM user WHERE email = ?;",
-				[email]
-			);
-
-			// Shou/d only work with the valid password
-			expect(bcrypt.compareSync(password, results[0].password)).toBe(true);
-
-			expect(bcrypt.compareSync(invalidPassword, results[0].password)).toBe(false);
-		});
-	});
-
-	describe("POST /login", () =>
-	{
-		test("Should allow user to receive a decodable token..", async () =>
-		{
-			const email: string = "testemail@example.com";
-			const password: string = "testpassword!";
-
-			// Create a user
-			await request(app).post("/api/user/create").send({
-				load: {
-					email: email,
-					password: password
-				}
-			});
-
-			// Send a login request
-			const response = await request(app).post("/api/user/login").send({
-				load: {
-					email: email,
-					password: password
-				}
-			});
-
-			expect(response.statusCode).toBe(200);
-
-			const TOKEN = (JSON.parse(response.text)).token;
-
-			expect(typeof TOKEN).toBe("string");
-
-			const [results]: MySQLQueryResult = await mySQLPool.promise().query(
-				"SELECT * FROM user WHERE email = ?;",
-				[email]
-			);
-
-			// Verify the jwt token recieved
-			jwt.verify(TOKEN, config.app.secretKey, async (error, decoded) =>
-			{
-				if (error)
+			describe("Expected Failures", () => {
+				test("Should NOT allow creating a user with invalid email..", async () =>
 				{
-					throw new Error(String(`JWT Verify Error: ${error}`));
-				}
+					const email = "notemail";
+					const password = "testtest123!@";
 
-				if (decoded)
+					const response = await request(app).post("/api/user/create").send({
+						load: {
+							email: email,
+							password: password
+						}
+					});
+
+					expect(response.statusCode).toBe(400);
+
+					expect(response.error.text).toBe("Invalid email");
+
+					const [results]: MySQLQueryResult = await mySQLPool.promise().query(
+						"SELECT * FROM user;"
+					);
+
+					expect(results).toStrictEqual([]);
+				});
+
+				test("Should NOT allow creating a user with short password..",
+				async () =>
 				{
-					expect(decoded.id).toBe(results[0].id);
-					expect(decoded.email).toBe(results[0].email);
-				}
+					const email = "testemail@example.com";
+					const password = "123";
+
+					const response = await request(app).post("/api/user/create").send({
+						load: {
+							email: email,
+							password: password
+						}
+					});
+
+					expect(response.statusCode).toBe(400);
+
+					expect(response.error.text).toBe(ERROR_PASSWORD);
+
+					const [results]: MySQLQueryResult = await mySQLPool.promise().query(
+						"SELECT * FROM user;"
+					);
+
+					expect(results).toStrictEqual([]);
+				});
+
+				test("Should NOT allow password without special characters..", async () =>
+				{
+					const email = "testemail@example.com";
+					const password = "12345678";
+
+					const response = await request(app).post("/api/user/create").send({
+						load: {
+							email: email,
+							password: password
+						}
+					});
+
+					expect(response.statusCode).toBe(400);
+
+					expect(response.error.text).toBe(ERROR_PASSWORD);
+
+					const [results]: MySQLQueryResult = await mySQLPool.promise().query(
+						"SELECT * FROM user;"
+					);
+
+					expect(results).toStrictEqual([]);
+				});
+
+				test("Should NOT allow creating a user with non-ASCII password..", async () =>
+				{
+					const email = "testemail@example.com";
+
+					// Contains non-ASCII character
+					const password = "!12345678¢";
+
+					const res = await request(app).post("/api/user/create").send({
+						load: {
+							email: email,
+							password: password
+						}
+					});
+
+					expect(res.statusCode).toBe(400);
+
+					expect(res.error.text).toBe(ERROR_PASSWORD);
+
+					const [results]: MySQLQueryResult = await mySQLPool.promise().query(
+						"SELECT * FROM user;"
+					);
+
+					expect(results).toStrictEqual([]);
+				});
+			});
+
+			describe("Expected Success", () =>
+			{
+				const email: string = "testemail@example.com";
+				const password: string = "testpassword!";
+
+				let results: any;
+
+				beforeEach(async () =>
+				{
+					const response = await request(app).post("/api/user/create").send({
+						load: {
+							email: email,
+							password: password
+						}
+					});
+
+					expect(response.statusCode).toBe(201);
+
+					[results] = await mySQLPool.promise().query("SELECT * FROM user;");
+				});
+
+				test("Should allow creating a user..", async () =>
+				{
+					expect(results[0].email).toBe(email);
+
+					// Should NOT not be the literal password but rather the hash of it
+					expect(results[0].password).not.toBe(password);
+				});
+
+				test("Should be able to decode password..", async () =>
+				{
+					const invalidPassword = "invalidPassword";
+
+					// Shou/d only work with the valid password
+					expect(bcrypt.compareSync(password, results[0].password)).toBe(true);
+
+					expect(bcrypt.compareSync(invalidPassword, results[0].password)).toBe(false);
+				});
+
+				test("Should only allow UNIQUE emails..", async () =>
+				{
+					const response = await request(app).post("/api/user/create").send({
+						load: {
+							email: email,
+							password: password
+						}
+					});
+
+					expect(response.statusCode).toBe(400);
+
+					expect(response.text).toBe("This email is already being used.");
+
+					const [results]: MySQLQueryResult = await mySQLPool.promise().query(
+						"SELECT * FROM user;"
+					);
+
+					if (!Array.isArray(results))
+					{
+						throw new Error("Expected result is not Array");
+					}
+
+					expect(results.length).toBe(1);
+				});
 			});
 		});
-	});
 
-	describe("POST /password-update", () =>
+		describe("/login", () =>
+		{
+			test("Should allow user to receive a decodable token..", async () =>
+			{
+				const email: string = "testemail@example.com";
+				const password: string = "testpassword!";
+
+				// Create a user
+				await request(app).post("/api/user/create").send({
+					load: {
+						email: email,
+						password: password
+					}
+				});
+
+				// Send a login request
+				const response = await request(app).post("/api/user/login").send({
+					load: {
+						email: email,
+						password: password
+					}
+				});
+
+				expect(response.statusCode).toBe(200);
+
+				const TOKEN = (JSON.parse(response.text)).token;
+
+				expect(typeof TOKEN).toBe("string");
+
+				const [results]: MySQLQueryResult = await mySQLPool.promise().query(
+					"SELECT * FROM user WHERE email = ?;",
+					[email]
+				);
+
+				// Verify the jwt token recieved
+				jwt.verify(TOKEN, config.app.secretKey, async (error, decoded) =>
+				{
+					if (error)
+					{
+						throw new Error(String(`JWT Verify Error: ${error}`));
+					}
+
+					if (decoded)
+					{
+						expect(decoded.id).toBe(results[0].id);
+						expect(decoded.email).toBe(results[0].email);
+					}
+				});
+			});
+		});
+
+		describe("/password-update", () =>
 		{
 			test("Should not allow user to change password given invalid current password..", async () =>
 			{
@@ -392,4 +376,5 @@ describe("ROUTE: /api/user", () =>
 				expect(typeof TOKEN_NEW).toBe("string");
 			});
 		});
+	});
 });
