@@ -116,7 +116,7 @@ describe("ROUTE: /api/portfolio", () =>
 		test("Should fail if no portfolio name passed..", async () =>
 		{
 			const RES = await request(app).get("/api/portfolio/create").set(
-				'tokenuser',
+				'authorization',
 				`Bearer ${token}`
 			).send({
 				load: {
@@ -143,7 +143,7 @@ describe("ROUTE: /api/portfolio", () =>
 			const PORTFOLIO_NAME: string = "my-portfolio";
 
 			const RES_PORTFOLIO_CREATE = await request(app).get("/api/portfolio/create").set(
-				'tokenuser',
+				'authorization',
 				`Bearer ${token}`
 			).send({
 				load: {
@@ -191,7 +191,7 @@ describe("ROUTE: /api/portfolio", () =>
 				const PORTFOLIO_NAME: string = "my-portfolio";
 
 				const RES_PORTFOLIO_CREATE = await request(app).get("/api/portfolio/create").set(
-					'tokenuser',
+					'authorization',
 					`Bearer ${token}`
 				).send({
 					load: {
@@ -220,7 +220,7 @@ describe("ROUTE: /api/portfolio", () =>
 				expect(results[0].name).toBe(PORTFOLIO_NAME);
 
 				await request(app).get("/api/portfolio/update").set(
-					'tokenuser',
+					'authorization',
 					`Bearer ${token}`
 				).send({
 					load: {
@@ -232,7 +232,7 @@ describe("ROUTE: /api/portfolio", () =>
 				}).expect(400);
 
 				await request(app).get("/api/portfolio/update").set(
-					'tokenuser',
+					'authorization',
 					`Bearer ${token}`
 				).send({
 					load: {
@@ -249,7 +249,7 @@ describe("ROUTE: /api/portfolio", () =>
 				const PORTFOLIO_NAME: string = "my-portfolio";
 
 				const RES_PORTFOLIO_CREATE = await request(app).get("/api/portfolio/create").set(
-					'tokenuser',
+					'authorization',
 					`Bearer ${token}`
 				).send({
 					load: {
@@ -278,7 +278,7 @@ describe("ROUTE: /api/portfolio", () =>
 				expect(results[0].name).toBe(PORTFOLIO_NAME);
 
 				await request(app).get("/api/portfolio/update").set(
-					'tokenuser',
+					'authorization',
 					`Bearer ${token}`
 				).send({
 					load: {
@@ -295,7 +295,7 @@ describe("ROUTE: /api/portfolio", () =>
 				const PORTFOLIO_NAME: string = "my-portfolio";
 
 				const RES_PORTFOLIO_CREATE = await request(app).get("/api/portfolio/create").set(
-					'tokenuser',
+					'authorization',
 					`Bearer ${token}`
 				).send({
 					load: {
@@ -326,7 +326,7 @@ describe("ROUTE: /api/portfolio", () =>
 				const PORTFOLIO_NAME_NEW: string = "new-name"
 
 				const RES_PORTFOLIO_UPDATE = await request(app).get("/api/portfolio/update").set(
-					'tokenuser',
+					'authorization',
 					`Bearer ${token}`
 				).send({
 					load: {
@@ -364,7 +364,7 @@ describe("ROUTE: /api/portfolio", () =>
 			const PORTFOLIO_NAME: string = "my-portfolio";
 
 			const RES_PORTFOLIO_CREATE = await request(app).get("/api/portfolio/create").set(
-				'tokenuser',
+				'authorization',
 				`Bearer ${token}`
 			).send({
 				load: {
@@ -376,7 +376,7 @@ describe("ROUTE: /api/portfolio", () =>
 
 			expect(RES_PORTFOLIO_CREATE.statusCode).toBe(201);
 
-			const RES_PORTFOLIO = await request(app).get("/api/portfolio").set('tokenuser', `Bearer ${token}`).send();
+			const RES_PORTFOLIO = await request(app).get("/api/portfolio").set('authorization', `Bearer ${token}`).send();
 
 			let portfolio: [{ id: string, name: string }] = JSON.parse(RES_PORTFOLIO.text);
 
@@ -393,7 +393,7 @@ describe("ROUTE: /api/portfolio", () =>
 				const PORTFOLIO_NAME: string = "my-portfolio";
 
 				const RES_PORTFOLIO_CREATE = await request(app).get("/api/portfolio/create").set(
-					'tokenuser',
+					'authorization',
 					`Bearer ${token}`
 				).send({
 					load: {
@@ -405,7 +405,7 @@ describe("ROUTE: /api/portfolio", () =>
 
 				expect(RES_PORTFOLIO_CREATE.statusCode).toBe(201);
 
-				const RES_PORTFOLIO = await request(app).get("/api/portfolio").set('tokenuser', `Bearer ${token}`).send();
+				const RES_PORTFOLIO = await request(app).get("/api/portfolio").set('authorization', `Bearer ${token}`).send();
 
 				let portfolio: [{ id: string, name: string }] = JSON.parse(RES_PORTFOLIO.text);
 
@@ -432,7 +432,7 @@ describe("ROUTE: /api/portfolio", () =>
 
 
 				const RES_PORTFOLIO_DELETE = await request(app).get("/api/portfolio/delete").set(
-					'tokenuser',
+					'authorization',
 					`Bearer ${token}`
 				).send({
 					load: {

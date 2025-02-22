@@ -12,101 +12,56 @@ const jwt = require("jsonwebtoken");
 const { secretKey } = config.app;
 
 
-function verifyJWT(token: string | string[])
+function verifyJWT(token: string): any | null
 {
-	if (!token)
+	try
 	{
-		return;
-	}
-
-	// Remove "Bearer "
-	const tokenBody = token.slice(7);
-
-	let returnDecoded;
-
-	// [VERIFY] tokenBody
-	jwt.verify(
-		tokenBody,
-		secretKey,
-		async (err, decoded) =>
+		if (!token?.startsWith("Bearer "))
 		{
-			if (decoded)
-			{
-				returnDecoded = decoded;
-			}
+			return null;
 		}
-	);
 
-	return returnDecoded;
+		const tokenBody = token.slice(7).trim();
+
+		return jwt.verify(tokenBody, secretKey);
+	}
+	catch (error)
+	{
+		// Token is invalid or expired
+		return null;
+	}
 }
 
 
-export const user = () =>
+export const userMiddleware = (requireAdmin: boolean = false) =>
 {
 	return (req: express.Request, res: express.Response, next: express.NextFunction) =>
 	{
-		if (!req.headers.tokenuser)
+		const authHeader = req.headers.authorization;
+
+		const decoded = verifyJWT(authHeader || "");
+
+		if (!decoded)
 		{
-			res.status(401).send("Access denied: No token passed");
+			res.status(401).json({ message: "Access denied: Invalid or missing token" });
 
 			return;
 		}
 
-		const DECODED = verifyJWT(req.headers.tokenuser);
-
-		if (!DECODED)
+		if (requireAdmin && !decoded.admin)
 		{
-			res.status(401).send("Access denied: Invalid token");
+			res.status(403).json({ message: "Access denied: You are not an admin" });
 
 			return;
 		}
 
-		// [INIT] Put decoded in req.body
-		req.body = {
-			...req.body,
-			userDecoded: DECODED,
-		};
+		// Attach decoded user to request object
+		req.body.userDecoded = decoded;
 
-		// [200] Success
 		next();
 	};
-}
+};
 
-export const userAdmin = () =>
-{
-	return (req: express.Request, res: express.Response, next: express.NextFunction) =>
-	{
-		if (!req.headers.tokenuser)
-		{
-			res.status(401).send("Access denied: No token passed");
+export const user = () => userMiddleware(false);
 
-			return;
-		}
-
-		const DECODED = verifyJWT(req.headers.tokenuser);
-
-		if (!DECODED)
-		{
-			res.status(401).send("Access denied: Invalid token");
-
-			return;
-		}
-
-		if (!DECODED.admin)
-		{
-			res.status(401).send("Access denied: You are not an admin");
-
-			return;
-		}
-
-		// [INIT] Put decoded in req.body
-		req.body = {
-			...req.body,
-			userDecoded: DECODED,
-		};
-
-		// [200] Success
-		next();
-	}
-}
-
+export const userAdmin = () => userMiddleware(true);

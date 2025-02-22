@@ -92,7 +92,7 @@ beforeEach(async () =>
 	expect(typeof token).toBe("string");
 
 	// Create a portfolio
-	const RES_PORTFOLIO_CREATE = await request(app).get("/api/portfolio/create").set('tokenuser', `Bearer ${token}`).send({
+	const RES_PORTFOLIO_CREATE = await request(app).get("/api/portfolio/create").set('authorization', `Bearer ${token}`).send({
 		load: {
 			portfolio: {
 				name: PORTFOLIO_NAME
@@ -138,7 +138,7 @@ describe("ROUTE: /api/portfolio-asset", () =>
 		test("Should fail if no portfolio id passed..", async () =>
 		{
 			const RES = await request(app).get("/api/portfolio-asset/create").set(
-				'tokenuser',
+				'authorization',
 				`Bearer ${token}`
 			).send({
 				load: {
@@ -162,7 +162,7 @@ describe("ROUTE: /api/portfolio-asset", () =>
 		test("Should fail if no portfolio asset ticker passed..", async () =>
 			{
 				const RES = await request(app).get("/api/portfolio-asset/create").set(
-					'tokenuser',
+					'authorization',
 					`Bearer ${token}`
 				).send({
 					load: {
@@ -186,7 +186,7 @@ describe("ROUTE: /api/portfolio-asset", () =>
 		test("Should insert portfolio asset into database..", async () =>
 		{
 			const RES_PORTFOLIO_ASSET = await request(app).get("/api/portfolio-asset/create").set(
-				'tokenuser',
+				'authorization',
 				`Bearer ${token}`
 			).send({
 				load: {

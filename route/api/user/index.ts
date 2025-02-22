@@ -15,7 +15,24 @@ const ERROR_INVALID_PASSWORD: string = "Password Must be ASCII, longer than 8 ch
 
 export default (mySQLPool: mysql.Pool): Router =>
 {
-	return Router().post(
+	return Router().get(
+		/**
+		* @route POST /api/user/
+		* @desc User profile
+		* @access Public
+		*/
+		"/",
+		user(),
+		async (req: Request, res: Response) =>
+		{
+			const [users]: [IUser[], FieldPacket[]] = await mySQLPool.promise().query<IUser[]>(
+				"SELECT * FROM user WHERE email = ?;",
+				[req.body.userDecoded.email]
+			);
+
+			res.status(200).send(users[0].email);
+		}
+	).post(
 		/**
 		* @route POST /api/user/create
 		* @desc Creates a user
@@ -173,6 +190,17 @@ export default (mySQLPool: mysql.Pool): Router =>
 
 				return;
 			}
+		}
+	).post(
+		"/verify",
+		async (req: Request, res: Response) =>
+		{
+			const { email, pin } = req.body;
+			console.log(email, pin);
+
+			res.status(200).json({
+				message: "Verified"
+			})
 		}
 	);
 };

@@ -329,7 +329,7 @@ describe("ROUTE: /api/user", () =>
 				expect(typeof TOKEN).toBe("string");
 
 				await request(app).post("/api/user/password-update").set(
-					'tokenuser',
+					'authorization',
 					`Bearer ${TOKEN}`
 				).send({
 					load: {
@@ -368,7 +368,7 @@ describe("ROUTE: /api/user", () =>
 				expect(typeof TOKEN).toBe("string");
 
 				await request(app).post("/api/user/password-update").set(
-					'tokenuser',
+					'authorization',
 					`Bearer ${TOKEN}`
 				).send({
 					load: {
