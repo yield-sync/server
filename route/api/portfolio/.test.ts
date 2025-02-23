@@ -93,13 +93,9 @@ describe("Request: GET", () =>
 	{
 		describe("Expected Failures", () =>
 		{
-			test("[auth] Should require a user token to insert portfolio into DB..", async () =>
+			test("[auth] Should require a user token..", async () =>
 			{
-				await request(app).get("/api/portfolio/create").send({
-					load: {
-						name: PORTFOLIO_NAME
-					}
-				}).expect(401);
+				await request(app).get("/api/portfolio/create").send().expect(401);
 
 				const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio;");
 
@@ -175,13 +171,9 @@ describe("Request: GET", () =>
 
 	describe("Route: /api/portfolio/update", () =>
 	{
-		test("[auth] Should require a user token to update portfolio into DB..", async () =>
+		test("[auth] Should require a user token..", async () =>
 		{
-			await request(app).get("/api/portfolio/update").send({
-				load: {
-					name: PORTFOLIO_NAME
-				}
-			}).expect(401);
+			await request(app).get("/api/portfolio/update").send().expect(401);
 		});
 
 		test("Should fail if no portfolio id passed..", async () =>

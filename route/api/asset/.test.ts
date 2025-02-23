@@ -9,10 +9,11 @@ import config from "../../../config";
 import DBBuilder, { dropDB } from "../../../sql/db-builder";
 
 
+const ASSET_NAME: string = "Asset";
+const ASSET_SYMBOL: string = "A";
 const DB_NAME: string = "mock_db_asset";
 const EMAIL: string = "testemail@example.com";
 const PASSWORD: string = "testpassword!";
-const PORTFOLIO_NAME: string = "my-portfolio";
 
 let token: string;
 
@@ -80,24 +81,73 @@ describe("Request: GET", () =>
 {
 	describe("Route: /api/asset/create", () =>
 	{
-		test("[auth] Should require a user token insert asset into DB..", async () =>
+		describe("Expected Failures", () =>
 		{
-			await request(app).get("/api/asset/create").send({
-				load: {
-					asset: {
-						name: PORTFOLIO_NAME
-					}
-				}
-			}).expect(401);
-
-			const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM asset;");
-
-			if (!Array.isArray(results))
+			test("[auth] Should require a user token..", async () =>
 			{
-				throw new Error("Expected result is not Array");
-			}
+				await request(app).get("/api/asset/create").send().expect(401);
 
-			expect(results.length).toBe(0);
+				const [assets]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM asset;");
+
+				if (!Array.isArray(assets))
+				{
+					throw new Error("SQL result assets is not an Array");
+				}
+
+				expect(assets.length).toBe(0);
+			});
 		});
+
+		describe("Expected Success", () =>
+		{
+			it("Should create an asset..", async () =>
+			{
+				// Create an asset
+				const resAssetCreate = await request(app).get("/api/asset/create").set(
+					"authorization",
+					`Bearer ${token}`
+				).send({
+					load: {
+						name: ASSET_NAME,
+						symbol: ASSET_SYMBOL,
+					} as AssetCreate
+				});
+
+				expect(resAssetCreate.statusCode).toBe(201);
+
+				const [assets]: MySQLQueryResult = await mySQLPool.promise().query(
+					"SELECT * FROM asset WHERE name = ?;", [ASSET_NAME]
+				);
+
+				if (!Array.isArray(assets))
+				{
+					throw new Error("Expected assets to be an Array");
+				}
+
+				expect(assets.length).toBeGreaterThan(0);
+
+				if (!("name" in assets[0]))
+				{
+					throw new Error("Expected assets array element to have key 'name'");
+				}
+
+				expect(assets[0].name).toBe(ASSET_NAME);
+
+				if (!("symbol" in assets[0]))
+				{
+					throw new Error("Expected assets array element to have key 'symbol'");
+				}
+
+				expect(assets[0].symbol).toBe(ASSET_SYMBOL);
+			});
+		});
+	});
+
+	describe("Route: /api/asset/update", () =>
+	{
+	});
+
+	describe("Route: /api/asset/delete", () =>
+	{
 	});
 });
