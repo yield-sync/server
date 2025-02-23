@@ -38,9 +38,9 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				return;
 			}
 		}
-	).get(
+	).post(
 		/**
-		* @route GET /api/asset/create
+		* @route POST /api/asset/create
 		* @desc Create asset
 		* @access authorized:admin
 		*/
@@ -84,9 +84,9 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				return;
 			}
 		}
-	).get(
+	).post(
 		/**
-		* @route GET /api/asset/update
+		* @route POST /api/asset/update
 		* @desc Update assset
 		* @access authorized:admin
 		*/
@@ -137,9 +137,9 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				return;
 			}
 		}
-	).get(
+	).post(
 		/**
-		* @route GET /api/asset/delete
+		* @route POST /api/asset/delete
 		* @desc Delete assset
 		* @access authorized:admin
 		*/

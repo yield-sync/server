@@ -8,9 +8,9 @@ import { HTTPStatus } from "../../../constants/HTTPStatus";
 
 export default (mySQLPool: mysql.Pool): express.Router =>
 {
-	return express.Router().get(
+	return express.Router().post(
 		/**
-		* @route GET /api/portfolio-asset/create
+		* @route POST /api/portfolio-asset/create
 		* @desc Create portofolio asset
 		* @access User
 		*/

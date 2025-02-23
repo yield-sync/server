@@ -82,7 +82,7 @@ beforeEach(async () =>
 });
 
 
-describe("Request: GET", () =>
+describe("Request: POST", () =>
 {
 	describe("Route: /api/asset/create", () =>
 	{
@@ -90,7 +90,7 @@ describe("Request: GET", () =>
 		{
 			test("[auth] Should require a user token..", async () =>
 			{
-				await request(app).get("/api/asset/create").send().expect(401);
+				await request(app).post("/api/asset/create").send().expect(401);
 
 				const [assets]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM asset;");
 
@@ -108,7 +108,7 @@ describe("Request: GET", () =>
 			it("Should create an asset..", async () =>
 			{
 				// Create an asset
-				const resAssetCreate = await request(app).get("/api/asset/create").set(
+				const resAssetCreate = await request(app).post("/api/asset/create").set(
 					"authorization",
 					`Bearer ${token}`
 				).send({
@@ -154,7 +154,7 @@ describe("Request: GET", () =>
 		{
 			test("[auth] Should require a user token..", async () =>
 			{
-				await request(app).get("/api/asset/update").send().expect(401);
+				await request(app).post("/api/asset/update").send().expect(401);
 			});
 		});
 	});
@@ -162,11 +162,11 @@ describe("Request: GET", () =>
 	describe("Route: /api/asset/delete", () =>
 	{
 		describe("Expected Failure", () =>
+		{
+			test("[auth] Should require a user token..", async () =>
 			{
-				test("[auth] Should require a user token..", async () =>
-				{
-					await request(app).get("/api/asset/delete").send().expect(401);
-				});
+				await request(app).post("/api/asset/delete").send().expect(401);
 			});
+		});
 	});
 });

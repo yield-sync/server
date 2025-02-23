@@ -86,8 +86,7 @@ beforeEach(async () =>
 });
 
 
-// [test]
-describe("Request: GET", () =>
+describe("Request: POST (1/2)", () =>
 {
 	describe("Route: /api/portfolio/create", () =>
 	{
@@ -95,7 +94,7 @@ describe("Request: GET", () =>
 		{
 			test("[auth] Should require a user token..", async () =>
 			{
-				await request(app).get("/api/portfolio/create").send().expect(401);
+				await request(app).post("/api/portfolio/create").send().expect(401);
 
 				const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio;");
 
@@ -111,7 +110,7 @@ describe("Request: GET", () =>
 
 			test("Should fail if no portfolio name passed..", async () =>
 			{
-				const RES = await request(app).get("/api/portfolio/create").set(
+				const RES = await request(app).post("/api/portfolio/create").set(
 					'authorization',
 					`Bearer ${token}`
 				).send({
@@ -139,7 +138,7 @@ describe("Request: GET", () =>
 				{
 				const PORTFOLIO_NAME: string = "my-portfolio";
 
-				const RES_PORTFOLIO_CREATE = await request(app).get("/api/portfolio/create").set(
+				const RES_PORTFOLIO_CREATE = await request(app).post("/api/portfolio/create").set(
 					'authorization',
 					`Bearer ${token}`
 				).send({
@@ -168,21 +167,59 @@ describe("Request: GET", () =>
 			});
 		});
 	});
+});
 
+describe("Request: GET", () =>
+{
+	describe("Route: /api/portfolio/", () =>
+	{
+		describe("Expected Success", () =>
+		{
+			test("Should be able to retrieve portfolio(s) from database..", async () =>
+			{
+				const PORTFOLIO_NAME: string = "my-portfolio";
+
+				const RES_PORTFOLIO_CREATE = await request(app).post("/api/portfolio/create").set(
+					'authorization',
+					`Bearer ${token}`
+				).send({
+					load: {
+						name: PORTFOLIO_NAME
+					}
+				});
+
+				expect(RES_PORTFOLIO_CREATE.statusCode).toBe(201);
+
+				const RES_PORTFOLIO = await request(app).get("/api/portfolio").set('authorization', `Bearer ${token}`).send();
+
+				expect(RES_PORTFOLIO.statusCode).toBe(200);
+
+				let portfolio: [{ id: string, name: string }] = JSON.parse(RES_PORTFOLIO.text);
+
+				expect(portfolio.length).toBeGreaterThanOrEqual(1);
+
+				expect(portfolio[0].name).toBe(PORTFOLIO_NAME);
+			});
+		});
+	});
+});
+
+describe("Request: POST (2/2)", () =>
+{
 	describe("Route: /api/portfolio/update", () =>
 	{
 		describe("Expected Failure", () =>
 		{
 			test("[auth] Should require a user token..", async () =>
 			{
-				await request(app).get("/api/portfolio/update").send().expect(401);
+				await request(app).post("/api/portfolio/update").send().expect(401);
 			});
 
 			test("Should fail if no portfolio id passed..", async () =>
 			{
 				const PORTFOLIO_NAME: string = "my-portfolio";
 
-				const RES_PORTFOLIO_CREATE = await request(app).get("/api/portfolio/create").set(
+				const RES_PORTFOLIO_CREATE = await request(app).post("/api/portfolio/create").set(
 					'authorization',
 					`Bearer ${token}`
 				).send({
@@ -209,7 +246,7 @@ describe("Request: GET", () =>
 
 				expect(results[0].name).toBe(PORTFOLIO_NAME);
 
-				await request(app).get("/api/portfolio/update").set(
+				await request(app).post("/api/portfolio/update").set(
 					'authorization',
 					`Bearer ${token}`
 				).send({
@@ -219,7 +256,7 @@ describe("Request: GET", () =>
 					}
 				}).expect(400);
 
-				await request(app).get("/api/portfolio/update").set(
+				await request(app).post("/api/portfolio/update").set(
 					'authorization',
 					`Bearer ${token}`
 				).send({
@@ -234,7 +271,7 @@ describe("Request: GET", () =>
 			{
 				const PORTFOLIO_NAME: string = "my-portfolio";
 
-				const RES_PORTFOLIO_CREATE = await request(app).get("/api/portfolio/create").set(
+				const RES_PORTFOLIO_CREATE = await request(app).post("/api/portfolio/create").set(
 					'authorization',
 					`Bearer ${token}`
 				).send({
@@ -261,7 +298,7 @@ describe("Request: GET", () =>
 
 				expect(results[0].name).toBe(PORTFOLIO_NAME);
 
-				await request(app).get("/api/portfolio/update").set(
+				await request(app).post("/api/portfolio/update").set(
 					'authorization',
 					`Bearer ${token}`
 				).send({
@@ -279,7 +316,7 @@ describe("Request: GET", () =>
 			{
 				const PORTFOLIO_NAME: string = "my-portfolio";
 
-				const RES_PORTFOLIO_CREATE = await request(app).get("/api/portfolio/create").set(
+				const RES_PORTFOLIO_CREATE = await request(app).post("/api/portfolio/create").set(
 					'authorization',
 					`Bearer ${token}`
 				).send({
@@ -308,7 +345,7 @@ describe("Request: GET", () =>
 
 				const PORTFOLIO_NAME_NEW: string = "new-name"
 
-				const RES_PORTFOLIO_UPDATE = await request(app).get("/api/portfolio/update").set(
+				const RES_PORTFOLIO_UPDATE = await request(app).post("/api/portfolio/update").set(
 					'authorization',
 					`Bearer ${token}`
 				).send({
@@ -339,36 +376,6 @@ describe("Request: GET", () =>
 		});
 	});
 
-	describe("Route: /api/portfolio/", () =>
-	{
-		describe("Expected Success", () =>
-		{
-			test("Should be able to retrieve portfolio(s) from database..", async () =>
-			{
-				const PORTFOLIO_NAME: string = "my-portfolio";
-
-				const RES_PORTFOLIO_CREATE = await request(app).get("/api/portfolio/create").set(
-					'authorization',
-					`Bearer ${token}`
-				).send({
-					load: {
-						name: PORTFOLIO_NAME
-					}
-				});
-
-				expect(RES_PORTFOLIO_CREATE.statusCode).toBe(201);
-
-				const RES_PORTFOLIO = await request(app).get("/api/portfolio").set('authorization', `Bearer ${token}`).send();
-
-				let portfolio: [{ id: string, name: string }] = JSON.parse(RES_PORTFOLIO.text);
-
-				expect(portfolio.length).toBeGreaterThanOrEqual(1);
-
-				expect(portfolio[0].name).toBe(PORTFOLIO_NAME);
-			});
-		});
-	});
-
 	describe("Route: /api/portfolio/delete", () =>
 	{
 		describe("Expected Success", () =>
@@ -377,7 +384,7 @@ describe("Request: GET", () =>
 			{
 				const PORTFOLIO_NAME: string = "my-portfolio";
 
-				const RES_PORTFOLIO_CREATE = await request(app).get("/api/portfolio/create").set(
+				const RES_PORTFOLIO_CREATE = await request(app).post("/api/portfolio/create").set(
 					'authorization',
 					`Bearer ${token}`
 				).send({
@@ -388,7 +395,10 @@ describe("Request: GET", () =>
 
 				expect(RES_PORTFOLIO_CREATE.statusCode).toBe(201);
 
-				const RES_PORTFOLIO = await request(app).get("/api/portfolio").set('authorization', `Bearer ${token}`).send();
+				const RES_PORTFOLIO = await request(app).get("/api/portfolio").set(
+					'authorization',
+					`Bearer ${token}`
+				).send();
 
 				let portfolio: [{ id: string, name: string }] = JSON.parse(RES_PORTFOLIO.text);
 
@@ -414,7 +424,7 @@ describe("Request: GET", () =>
 				expect(results[0].name).toBe(PORTFOLIO_NAME);
 
 
-				const RES_PORTFOLIO_DELETE = await request(app).get("/api/portfolio/delete").set(
+				const RES_PORTFOLIO_DELETE = await request(app).post("/api/portfolio/delete").set(
 					'authorization',
 					`Bearer ${token}`
 				).send({

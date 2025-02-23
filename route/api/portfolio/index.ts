@@ -38,9 +38,9 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				return;
 			}
 		}
-	).get(
+	).post(
 		/**
-		* @route GET /api/portfolio/create
+		* @route POST /api/portfolio/create
 		* @desc Create portfolio
 		* @access User
 		*/
@@ -77,9 +77,9 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				return;
 			}
 		}
-	).get(
+	).post(
 		/**
-		* @route GET /api/portfolio/update
+		* @route POST /api/portfolio/update
 		* @desc Update portfolio
 		* @access User
 		*/
@@ -123,9 +123,9 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				return;
 			}
 		}
-	).get(
+	).post(
 		/**
-		* @route GET /api/portfolio/delete
+		* @route POST /api/portfolio/delete
 		* @desc Delete portfolio
 		* @access User
 		*/
