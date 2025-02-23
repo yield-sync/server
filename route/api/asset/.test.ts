@@ -81,7 +81,7 @@ describe("Request: GET", () =>
 {
 	describe("Route: /api/asset/create", () =>
 	{
-		describe("Expected Failures", () =>
+		describe("Expected Failure", () =>
 		{
 			test("[auth] Should require a user token..", async () =>
 			{

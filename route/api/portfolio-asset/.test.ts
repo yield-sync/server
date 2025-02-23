@@ -138,7 +138,7 @@ describe("Request: GET", () =>
 {
 	describe("Route: /api/portfolio-asset/", () =>
 	{
-		describe("Expected Failures", () =>
+		describe("Expected Failure", () =>
 		{
 			test("[auth] Should require a user token to insert portfolio asset into DB..", async () =>
 			{

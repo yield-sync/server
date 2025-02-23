@@ -66,7 +66,7 @@ describe("Request: GET", () =>
 {
 	describe("Route: /api/user/", () =>
 	{
-		describe("Expected Failures", () => {
+		describe("Expected Failure", () => {
 			test("Should NOT allow creating a user with invalid email..", async () =>
 			{
 				const response = await request(app).get("/api/user/").send();
@@ -125,7 +125,7 @@ describe("Request: POST", () =>
 {
 	describe("Route: /api/user/create", () =>
 	{
-		describe("Expected Failures", () => {
+		describe("Expected Failure", () => {
 			test("Should NOT allow creating a user with invalid email..", async () =>
 			{
 				const email = "notemail";
