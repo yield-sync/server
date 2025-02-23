@@ -3,6 +3,7 @@ import mysql from "mysql2";
 
 import config from "../../../config";
 import { user } from "../../../middleware/token";
+import { HTTPStatus } from "../../../constants/HTTPStatus";
 
 
 export default (mySQLPool: mysql.Pool): express.Router =>
@@ -24,15 +25,15 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					[req.body.userDecoded.id]
 				);
 
-				res.status(200).send(RES_PORTFOLIO[0]);
+				res.status(HTTPStatus.OK).send(RES_PORTFOLIO[0]);
 
 				return;
 			}
 			catch (error)
 			{
-				console.log(error);
-
-				res.status(500).send(config.nodeENV == "production" ? "Internal server error" : error);
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).send(
+					config.nodeENV == "production" ? "Internal server error" : error
+				);
 
 				return;
 			}
@@ -53,7 +54,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				if (!load.name)
 				{
-					res.status(400).send("No portfolio name provided");
+					res.status(HTTPStatus.BAD_REQUEST).send("No portfolio name provided");
 
 					return;
 				}
@@ -63,13 +64,15 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					[req.body.userDecoded.id, load.name],
 				);
 
-				res.status(201).send("Created portfolio");
+				res.status(HTTPStatus.CREATED).send("Created portfolio");
 
 				return;
 			}
 			catch (error)
 			{
-				res.status(500).send(config.nodeENV == "production" ? "Internal server error" : error);
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).send(
+					config.nodeENV == "production" ? "Internal server error" : error
+				);
 
 				return;
 			}
@@ -90,14 +93,14 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				if (!load.id)
 				{
-					res.status(400).send("No portfolio id provided");
+					res.status(HTTPStatus.BAD_REQUEST).send("No portfolio id provided");
 
 					return;
 				}
 
 				if (!load.name)
 				{
-					res.status(400).send("No portfolio name provided");
+					res.status(HTTPStatus.BAD_REQUEST).send("No portfolio name provided");
 
 					return;
 				}
@@ -107,13 +110,15 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					[load.name, req.body.userDecoded.id, load.id]
 				);
 
-				res.status(201).send("Updated portfolio");
+				res.status(HTTPStatus.CREATED).send("Updated portfolio");
 
 				return;
 			}
 			catch (error)
 			{
-				res.status(500).send(config.nodeENV == "production" ? "Internal server error" : error);
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).send(
+					config.nodeENV == "production" ? "Internal server error" : error
+				);
 
 				return;
 			}
@@ -132,7 +137,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				if (!req.body.load.portfolio_id)
 				{
-					res.status(400).send("No portfolio id provided");
+					res.status(HTTPStatus.BAD_REQUEST).send("No portfolio id provided");
 
 					return;
 				}
@@ -142,13 +147,15 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					[req.body.userDecoded.id, req.body.load.portfolio_id],
 				);
 
-				res.status(201).send("Deleted portfolio");
+				res.status(HTTPStatus.CREATED).send("Deleted portfolio");
 
 				return;
 			}
 			catch (error)
 			{
-				res.status(500).send(config.nodeENV == "production" ? "Internal server error" : error);
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).send(
+					config.nodeENV == "production" ? "Internal server error" : error
+				);
 
 				return;
 			}

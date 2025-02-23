@@ -3,6 +3,7 @@ import mysql from "mysql2";
 
 import config from "../../../config";
 import { user, userAdmin } from "../../../middleware/token";
+import { HTTPStatus } from "../../../constants/HTTPStatus";
 
 
 export default (mySQLPool: mysql.Pool): express.Router =>
@@ -20,7 +21,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				const [assets]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM asset;", []);
 
-				res.status(200).send(assets);
+				res.status(HTTPStatus.OK).send(assets);
 
 				return;
 			}
@@ -28,7 +29,9 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				console.log(error);
 
-				res.status(500).send(config.nodeENV == "production" ? "Internal server error" : error);
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).send(
+					config.nodeENV == "production" ? "Internal server error" : error
+				);
 
 				return;
 			}
@@ -50,14 +53,14 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				if (!load.name)
 				{
-					res.status(400).send("No asset name provided");
+					res.status(HTTPStatus.BAD_REQUEST).send("No asset name provided");
 
 					return;
 				}
 
 				if (!load.symbol)
 				{
-					res.status(400).send("No asset symbol provided");
+					res.status(HTTPStatus.BAD_REQUEST).send("No asset symbol provided");
 
 					return;
 				}
@@ -67,13 +70,15 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					[load.symbol, load.name]
 				);
 
-				res.status(201).send("Created asset");
+				res.status(HTTPStatus.CREATED).send("Created asset");
 
 				return;
 			}
 			catch (error)
 			{
-				res.status(500).send(config.nodeENV == "production" ? "Internal server error" : error);
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).send(
+					config.nodeENV == "production" ? "Internal server error" : error
+				);
 
 				return;
 			}
@@ -94,21 +99,21 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				if (!load.asset_id)
 				{
-					res.status(400).send("No asset_id provided");
+					res.status(HTTPStatus.BAD_REQUEST).send("No asset_id provided");
 
 					return;
 				}
 
 				if (!load.name)
 				{
-					res.status(400).send("No asset name provided");
+					res.status(HTTPStatus.BAD_REQUEST).send("No asset name provided");
 
 					return;
 				}
 
 				if (!load.symbol)
 					{
-						res.status(400).send("No asset symbol provided");
+						res.status(HTTPStatus.BAD_REQUEST).send("No asset symbol provided");
 
 						return;
 					}
@@ -118,13 +123,15 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					[load.name, load.symbol, load.asset_id]
 				);
 
-				res.status(201).send("Updated asset");
+				res.status(HTTPStatus.CREATED).send("Updated asset");
 
 				return;
 			}
 			catch (error)
 			{
-				res.status(500).send(config.nodeENV == "production" ? "Internal server error" : error);
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).send(
+					config.nodeENV == "production" ? "Internal server error" : error
+				);
 
 				return;
 			}
@@ -145,20 +152,22 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				if (!load.asset_id)
 				{
-					res.status(400).send("No asset_id provided");
+					res.status(HTTPStatus.BAD_REQUEST).send("No asset_id provided");
 
 					return;
 				}
 
 				await mySQLPool.promise().query("DELETE FROM asset WHERE id = ?;", [load.asset_id]);
 
-				res.status(201).send("Deleted asset");
+				res.status(HTTPStatus.CREATED).send("Deleted asset");
 
 				return;
 			}
 			catch (error)
 			{
-				res.status(500).send(config.nodeENV == "production" ? "Internal server error" : error);
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).send(
+					config.nodeENV == "production" ? "Internal server error" : error
+				);
 
 				return;
 			}

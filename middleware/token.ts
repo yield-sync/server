@@ -1,6 +1,7 @@
 import express from "express";
 
 import config from '../config';
+import { HTTPStatus } from "../constants/HTTPStatus";
 
 
 const jwt = require("jsonwebtoken");
@@ -40,14 +41,14 @@ export const userMiddleware = (requireAdmin: boolean = false) =>
 
 		if (!decoded)
 		{
-			res.status(401).json({ message: "Access denied: Invalid or missing token" });
+			res.status(HTTPStatus.UNAUTHORIZED).json({ message: "Access denied: Invalid or missing token" });
 
 			return;
 		}
 
 		if (requireAdmin && !decoded.admin)
 		{
-			res.status(403).json({ message: "Access denied: You are not an admin" });
+			res.status(HTTPStatus.FORBIDDEN).json({ message: "Access denied: You are not an admin" });
 
 			return;
 		}

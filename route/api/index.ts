@@ -1,5 +1,7 @@
 import express from "express";
 
+import { HTTPStatus } from "../../constants/HTTPStatus";
+
 
 export default (): express.Router =>
 {
@@ -12,7 +14,7 @@ export default (): express.Router =>
 		"/",
 		async (req: express.Request, res: express.Response) =>
 		{
-			res.status(200).json({
+			res.status(HTTPStatus.OK).json({
 				name: "yield_sync_server",
 				timestamp: new Date().toISOString(),
 			});
@@ -21,4 +23,3 @@ export default (): express.Router =>
 		}
 	);
 };
-

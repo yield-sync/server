@@ -3,6 +3,7 @@ import mysql from "mysql2";
 
 import config from "../../../config";
 import { user } from "../../../middleware/token";
+import { HTTPStatus } from "../../../constants/HTTPStatus";
 
 
 export default (mySQLPool: mysql.Pool): express.Router =>
@@ -23,14 +24,14 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				if (!load.asset_id)
 				{
-					res.status(400).send("No asset_id received")
+					res.status(HTTPStatus.BAD_REQUEST).send("No asset_id received")
 
 					return;
 				}
 
 				if (!load.portfolio_id)
 				{
-					res.status(400).send("No portfolio_id received")
+					res.status(HTTPStatus.BAD_REQUEST).send("No portfolio_id received")
 
 					return;
 				}
@@ -43,14 +44,14 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				if (!Array.isArray(portfolios))
 				{
-					res.status(400).send("Expected result is not Array");
+					res.status(HTTPStatus.BAD_REQUEST).send("Expected result is not Array");
 
 					return;
 				}
 
 				if (portfolios.length == 0)
 				{
-					res.status(400).send("Invalid portfolio_id");
+					res.status(HTTPStatus.BAD_REQUEST).send("Invalid portfolio_id");
 
 					return;
 				}
@@ -61,14 +62,16 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					[load.portfolio_id, load.asset_id]
 				);
 
-				res.status(201).send("Portfolio asset created.");
+				res.status(HTTPStatus.CREATED).send("Portfolio asset created.");
 
 				return;
 
 			}
 			catch (error)
 			{
-				res.status(500).send(config.nodeENV == "production" ? "Internal server error" : error);
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).send(
+					config.nodeENV == "production" ? "Internal server error" : error
+				);
 
 				return;
 			}

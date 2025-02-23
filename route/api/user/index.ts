@@ -6,6 +6,7 @@ import config from "../../../config";
 import { user } from "../../../middleware/token";
 import { setVerificationEmail } from "../../../util/mailUtil";
 import { validateEmail, validatePassword } from "../../../util/validation";
+import { HTTPStatus } from "../../../constants/HTTPStatus";
 
 
 const jsonWebToken = require("jsonwebtoken");
@@ -39,7 +40,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					verified: user.verified[0] === 1,
 				}));
 
-				res.status(200).send({
+				res.status(HTTPStatus.OK).send({
 					email: normalizedUsers[0].email,
 					admin: normalizedUsers[0].admin,
 					verified: normalizedUsers[0].verified,
@@ -47,7 +48,9 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			}
 			catch (error)
 			{
-				res.status(500).send(config.nodeENV == "production" ? "Internal server error" : error);
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).send(
+					config.nodeENV == "production" ? "Internal server error" : error
+				);
 
 				return;
 			}
@@ -67,14 +70,14 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				if (!validateEmail(load.email))
 				{
-					res.status(400).send("Invalid email");
+					res.status(HTTPStatus.BAD_REQUEST).send("Invalid email");
 
 					return;
 				}
 
 				if (!validatePassword(load.password))
 				{
-					res.status(400).send(ERROR_INVALID_PASSWORD);
+					res.status(HTTPStatus.BAD_REQUEST).send(ERROR_INVALID_PASSWORD);
 
 					return;
 				}
@@ -87,7 +90,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				if (users.length > 0)
 				{
-					res.status(400).send("This email is already being used.");
+					res.status(HTTPStatus.BAD_REQUEST).send("This email is already being used.");
 
 					return;
 				}
@@ -100,13 +103,15 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				// Send Email
 				await setVerificationEmail(load.email);
 
-				res.status(201).send("Created user");
+				res.status(HTTPStatus.CREATED).send("Created user");
 
 				return;
 			}
 			catch (error)
 			{
-				res.status(500).send(config.nodeENV == "production" ? "Internal server error" : error);
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).send(
+					config.nodeENV == "production" ? "Internal server error" : error
+				);
 
 				return;
 			}
@@ -142,13 +147,15 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					[await bcrypt.hash(load.passwordNew, 10), req.body.userDecoded.id]
 				);
 
-				res.status(200).send("Updated password.");
+				res.status(HTTPStatus.OK).send("Updated password.");
 
 				return
 			}
 			catch (error)
 			{
-				res.status(500).send(config.nodeENV == "production" ? "Internal server error" : error);
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).send(
+					config.nodeENV == "production" ? "Internal server error" : error
+				);
 
 				return;
 			}
@@ -187,7 +194,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				res.status(200).send({
+				res.status(HTTPStatus.OK).send({
 					token: jsonWebToken.sign(
 						{
 							id: user.id,
@@ -206,7 +213,9 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			}
 			catch (error)
 			{
-				res.status(500).send(config.nodeENV == "production" ? "Internal server error" : error);
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).send(
+					config.nodeENV == "production" ? "Internal server error" : error
+				);
 
 				return;
 			}
@@ -219,11 +228,13 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 			try
 			{
-				res.status(200).json({ message: "Verified" })
+				res.status(HTTPStatus.OK).json({ message: "Verified" })
 			}
 			catch (error)
 			{
-				res.status(500).send(config.nodeENV == "production" ? "Internal server error" : error);
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).send(
+					config.nodeENV == "production" ? "Internal server error" : error
+				);
 
 				return;
 			}
