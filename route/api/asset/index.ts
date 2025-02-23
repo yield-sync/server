@@ -2,7 +2,7 @@ import express from "express";
 import mysql from "mysql2";
 
 import config from "../../../config";
-import { user, userAdmin } from "../../../middleware/token";
+import { userAdmin } from "../../../middleware/token";
 import { HTTPStatus } from "../../../constants/HTTPStatus";
 
 
@@ -19,7 +19,9 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		{
 			try
 			{
-				const [assets]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM asset;", []);
+				const [assets]: [IAsset[], FieldPacket[]] = await mySQLPool.promise().query<IAsset[]>(
+					"SELECT * FROM asset;", []
+				);
 
 				res.status(HTTPStatus.OK).send(assets);
 

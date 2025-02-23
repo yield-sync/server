@@ -83,6 +83,9 @@ beforeEach(async () =>
 		}
 	}).expect(201);
 
+	// Promote user to admin
+	await mySQLPool.promise().query("UPDATE user SET admin = b'1' WHERE email = ?;", [EMAIL]);
+
 	// Send a login request
 	const resLogin = await request(app).post("/api/user/login").send({
 		load: {

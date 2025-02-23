@@ -63,6 +63,15 @@ declare global
 	type MySQLQueryResult = [QueryResult, FieldPacket[]];
 
 	// Interfaces
+	interface IAsset extends
+		RowDataPacket
+	{
+		id: number;
+		name: string;
+		symbol: string;
+		ssid: string;
+	}
+
 	interface IUser extends
 		RowDataPacket
 	{
