@@ -21,6 +21,8 @@ let app: express.Express;
 let mySQLPool: mysql.Pool;
 
 
+
+
 afterAll(async () =>
 {
 	await dropDB(DB_NAME, mySQLPool);
@@ -63,6 +65,9 @@ beforeEach(async () =>
 			password: PASSWORD
 		} as UserCreate
 	}).expect(201);
+
+	// Promote user to admin
+	await mySQLPool.promise().query("UPDATE user SET admin = b'1' WHERE email = ?;", [EMAIL]);
 
 	const resLogin = await request(app).post("/api/user/login").send({
 		load: {

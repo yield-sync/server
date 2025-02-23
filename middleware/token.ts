@@ -46,7 +46,7 @@ export const userMiddleware = (requireAdmin: boolean = false) =>
 			return;
 		}
 
-		if (requireAdmin && !decoded.admin)
+		if (requireAdmin && decoded.admin.data[0] !== 1)
 		{
 			res.status(HTTPStatus.FORBIDDEN).json({ message: "Access denied: You are not an admin" });
 
