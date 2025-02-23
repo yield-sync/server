@@ -150,9 +150,23 @@ describe("Request: GET", () =>
 
 	describe("Route: /api/asset/update", () =>
 	{
+		describe("Expected Failure", () =>
+		{
+			test("[auth] Should require a user token..", async () =>
+			{
+				await request(app).get("/api/asset/update").send().expect(401);
+			});
+		});
 	});
 
 	describe("Route: /api/asset/delete", () =>
 	{
+		describe("Expected Failure", () =>
+			{
+				test("[auth] Should require a user token..", async () =>
+				{
+					await request(app).get("/api/asset/delete").send().expect(401);
+				});
+			});
 	});
 });

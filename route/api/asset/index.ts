@@ -42,7 +42,6 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		/**
 		* @route GET /api/asset/create
 		* @desc Create asset
-		user(),
 		* @access authorized:admin
 		*/
 		"/create",
