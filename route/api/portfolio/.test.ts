@@ -91,85 +91,85 @@ describe("ROUTE: /api/portfolio", () =>
 {
 	describe("GET /create", () =>
 	{
-		test("[auth] Should require a user token to insert portfolio into DB..", async () =>
+		describe("Expected Failures", () =>
 		{
-			await request(app).get("/api/portfolio/create").send({
-				load: {
-					portfolio: {
+			test("[auth] Should require a user token to insert portfolio into DB..", async () =>
+			{
+				await request(app).get("/api/portfolio/create").send({
+					load: {
 						name: PORTFOLIO_NAME
 					}
+				}).expect(401);
+
+				const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio;");
+
+				if (!Array.isArray(results))
+				{
+					throw new Error("Expected result is not Array");
 				}
-			}).expect(401);
 
-			const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio;");
+				expect(Array.isArray(results)).toBe(true);
 
-			if (!Array.isArray(results))
-			{
-				throw new Error("Expected result is not Array");
-			}
-
-			expect(Array.isArray(results)).toBe(true);
-
-			expect(results.length).toBe(0);
-		});
-
-		test("Should fail if no portfolio name passed..", async () =>
-		{
-			const RES = await request(app).get("/api/portfolio/create").set(
-				'authorization',
-				`Bearer ${token}`
-			).send({
-				load: {
-					portfolio: {
-						name: undefined
-					}
-				}
-			}).expect(400);
-
-			expect(RES.text).toBe("No portfolio name provided");
-
-			const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio;");
-
-			if (!Array.isArray(results))
-			{
-				throw new Error("Expected result is not Array");
-			}
-
-			expect(results.length).toBe(0);
-		});
-
-		test("Should insert portfolio into database..", async () =>
-		{
-			const PORTFOLIO_NAME: string = "my-portfolio";
-
-			const RES_PORTFOLIO_CREATE = await request(app).get("/api/portfolio/create").set(
-				'authorization',
-				`Bearer ${token}`
-			).send({
-				load: {
-					portfolio: {
-						name: PORTFOLIO_NAME
-					}
-				}
+				expect(results.length).toBe(0);
 			});
 
-			expect(RES_PORTFOLIO_CREATE.statusCode).toBe(201);
-
-			const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio;");
-
-			if (!Array.isArray(results))
+			test("Should fail if no portfolio name passed..", async () =>
 			{
-				throw new Error("Expected result is not Array");
-			}
+				const RES = await request(app).get("/api/portfolio/create").set(
+					'authorization',
+					`Bearer ${token}`
+				).send({
+					load: {
+						name: undefined
+					}
+				}).expect(400);
 
-			expect(results.length).toBeGreaterThan(0);
+				expect(RES.text).toBe("No portfolio name provided");
 
-			if (!("name" in results[0]))
-			{
-				throw new Error("Expected result is not Array");
-			}
+				const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio;");
 
-			expect(results[0].name).toBe(PORTFOLIO_NAME);
+				if (!Array.isArray(results))
+				{
+					throw new Error("Expected result is not Array");
+				}
+
+				expect(results.length).toBe(0);
+			});
+		});
+
+		describe("Expected Success", () =>
+		{
+			test("Should insert portfolio into database..", async () =>
+				{
+				const PORTFOLIO_NAME: string = "my-portfolio";
+
+				const RES_PORTFOLIO_CREATE = await request(app).get("/api/portfolio/create").set(
+					'authorization',
+					`Bearer ${token}`
+				).send({
+					load: {
+						name: PORTFOLIO_NAME
+					}
+				});
+
+				expect(RES_PORTFOLIO_CREATE.statusCode).toBe(201);
+
+				const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio;");
+
+				if (!Array.isArray(results))
+				{
+					throw new Error("Expected result is not Array");
+				}
+
+				expect(results.length).toBeGreaterThan(0);
+
+				if (!("name" in results[0]))
+				{
+					throw new Error("Expected result is not Array");
+				}
+
+				expect(results[0].name).toBe(PORTFOLIO_NAME);
+			});
 		});
 	});
 
@@ -179,9 +179,7 @@ describe("ROUTE: /api/portfolio", () =>
 			{
 				await request(app).get("/api/portfolio/update").send({
 					load: {
-						portfolio: {
-							name: PORTFOLIO_NAME
-						}
+						name: PORTFOLIO_NAME
 					}
 				}).expect(401);
 			});
@@ -195,9 +193,7 @@ describe("ROUTE: /api/portfolio", () =>
 					`Bearer ${token}`
 				).send({
 					load: {
-						portfolio: {
-							name: PORTFOLIO_NAME
-						}
+						name: PORTFOLIO_NAME
 					}
 				});
 
@@ -224,10 +220,8 @@ describe("ROUTE: /api/portfolio", () =>
 					`Bearer ${token}`
 				).send({
 					load: {
-						portfolio: {
-							id: undefined,
-							name: undefined
-						}
+						id: undefined,
+						name: undefined
 					}
 				}).expect(400);
 
@@ -236,10 +230,8 @@ describe("ROUTE: /api/portfolio", () =>
 					`Bearer ${token}`
 				).send({
 					load: {
-						portfolio: {
-							id: undefined,
-							name: "with name"
-						}
+						id: undefined,
+						name: "with name"
 					}
 				}).expect(400);
 			});
@@ -253,9 +245,7 @@ describe("ROUTE: /api/portfolio", () =>
 					`Bearer ${token}`
 				).send({
 					load: {
-						portfolio: {
-							name: PORTFOLIO_NAME
-						}
+						name: PORTFOLIO_NAME
 					}
 				});
 
@@ -282,10 +272,8 @@ describe("ROUTE: /api/portfolio", () =>
 					`Bearer ${token}`
 				).send({
 					load: {
-						portfolio: {
-							id: results[0].id,
-							name: undefined
-						}
+						id: results[0].id,
+						name: undefined
 					}
 				}).expect(400);
 			});
@@ -299,9 +287,7 @@ describe("ROUTE: /api/portfolio", () =>
 					`Bearer ${token}`
 				).send({
 					load: {
-						portfolio: {
-							name: PORTFOLIO_NAME
-						}
+						name: PORTFOLIO_NAME
 					}
 				});
 
@@ -330,10 +316,8 @@ describe("ROUTE: /api/portfolio", () =>
 					`Bearer ${token}`
 				).send({
 					load: {
-						portfolio: {
-							id: results[0].id,
-							name: PORTFOLIO_NAME_NEW
-						}
+						id: results[0].id,
+						name: PORTFOLIO_NAME_NEW
 					}
 				});
 
@@ -368,9 +352,7 @@ describe("ROUTE: /api/portfolio", () =>
 				`Bearer ${token}`
 			).send({
 				load: {
-					portfolio: {
-						name: PORTFOLIO_NAME
-					}
+					name: PORTFOLIO_NAME
 				}
 			});
 
@@ -397,9 +379,7 @@ describe("ROUTE: /api/portfolio", () =>
 					`Bearer ${token}`
 				).send({
 					load: {
-						portfolio: {
-							name: PORTFOLIO_NAME
-						}
+						name: PORTFOLIO_NAME
 					}
 				});
 

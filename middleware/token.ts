@@ -1,14 +1,11 @@
-// [import]
 import express from "express";
 
 import config from '../config';
 
 
-// [require]
 const jwt = require("jsonwebtoken");
 
 
-// [INIT] Const
 const { secretKey } = config.app;
 
 

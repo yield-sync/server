@@ -8,23 +8,54 @@ declare global
 	type QueryResult = QueryResult;
 
 	// Types
-	type UserCreate = {
+	type Load = {};
+
+	type AssetCreate = Load & {
+		symbol: string,
+		name: string,
+	};
+
+	type AssetUpdate = Load & {
+		asset_id: string,
+		name: string,
+		symbol: string,
+	};
+
+	type AssetDelete = Load & {
+		asset_id: string,
+	};
+
+	type PortfolioAssetCreate = Load & {
+		portfolio_id: string,
+		asset_id: string,
+	};
+
+	type PortfolioCreate = Load & {
+		name: string,
+	};
+
+	type PortfolioUpdate = Load & {
+		id: string,
+		name: string,
+	};
+
+	type UserCreate = Load & {
 		email: string,
 		password: string,
 	};
 
-	type UserLogin = {
+	type UserLogin = Load & {
 		email: string,
 		password: string,
 	};
 
-	type UserPasswordUpdate = {
+	type UserPasswordUpdate = Load & {
 		email: string,
 		password: string,
 		passwordNew: string,
 	};
 
-	type UserVerify = {
+	type UserVerify = Load & {
 		email: string,
 		pin: string,
 	};

@@ -22,16 +22,13 @@ let mySQLPool: mysql.Pool;
 
 afterAll(async () =>
 {
-	// Drop the database (should await)
 	await dropDB(DB_NAME, mySQLPool);
 
-	// Close connection (should await)
 	await mySQLPool.end();
 });
 
 beforeAll(async () =>
 {
-	// [mysql] Database connection configuration
 	mySQLPool = mysql.createPool({
 		host: config.app.database.host,
 		user: config.app.database.user,
@@ -41,13 +38,10 @@ beforeAll(async () =>
 		queueLimit: 0
 	});
 
-	// [mysql] Connect
 	await mySQLPool.promise().getConnection();
 
-	// [mock-db] drop and recreate
 	await DBBuilder(mySQLPool, DB_NAME, true);
 
-	// [mysql] Select the recreated database
 	await mySQLPool.promise().query("USE ??;", [DB_NAME]);
 
 	app = express().use(express.json()).use("/api", routeApi()).use("/api/user", routeApiUser(mySQLPool)).use(
@@ -58,26 +52,22 @@ beforeAll(async () =>
 
 beforeEach(async () =>
 {
-	// Drop the database
 	await dropDB(DB_NAME, mySQLPool);
 
-	// [mock-db] drop and recreate
 	await DBBuilder(mySQLPool, DB_NAME, true);
 
-	// Create a user
 	await request(app).post("/api/user/create").send({
 		load: {
 			email: EMAIL,
 			password: PASSWORD
-		}
+		} as UserCreate
 	}).expect(201);
 
-	// Send a login request
 	const resLogin = await request(app).post("/api/user/login").send({
 		load: {
 			email: EMAIL,
 			password: PASSWORD
-		}
+		} as UserLogin
 	}).expect(200);
 
 	token = (JSON.parse(resLogin.text)).token;
@@ -86,29 +76,31 @@ beforeEach(async () =>
 });
 
 
-// [test]
 describe("ROUTE: /api/asset", () =>
 {
-	describe("GET /create", () =>
+	describe("GET", () =>
 	{
-		test("[auth] Should require a user token insert asset into DB..", async () =>
+		describe("/create", () =>
 		{
-			await request(app).get("/api/asset/create").send({
-				load: {
-					asset: {
-						name: PORTFOLIO_NAME
-					}
-				}
-			}).expect(401);
-
-			const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM asset;");
-
-			if (!Array.isArray(results))
+			test("[auth] Should require a user token insert asset into DB..", async () =>
 			{
-				throw new Error("Expected result is not Array");
-			}
+				await request(app).get("/api/asset/create").send({
+					load: {
+						asset: {
+							name: PORTFOLIO_NAME
+						}
+					}
+				}).expect(401);
 
-			expect(results.length).toBe(0);
+				const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM asset;");
+
+				if (!Array.isArray(results))
+				{
+					throw new Error("Expected result is not Array");
+				}
+
+				expect(results.length).toBe(0);
+			});
 		});
 	});
 });

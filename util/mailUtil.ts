@@ -1,6 +1,6 @@
 // [import-personal]
 //import config from "../config"
-import { validateEmail } from "./validationUtil"
+import { validateEmail } from "./validation"
 
 // [require]
 const brevo = require('@getbrevo/brevo');

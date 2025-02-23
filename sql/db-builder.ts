@@ -17,52 +17,10 @@ const dBBuilder = async (mySQLPool: mysql.Pool, dBName: string, reset: boolean =
 	}
 
 	await mySQLPool.promise().query("CREATE DATABASE ??;", [dBName]);
-
-	// [mysql] Select the recreated database
 	await mySQLPool.promise().query("USE ??;", [dBName]);
 
-	// Create the asset table
-	await mySQLPool.promise().query(
-		`
-			CREATE TABLE asset (
-				id INT NOT NULL AUTO_INCREMENT,
-				symbol VARCHAR(255) NOT NULL,
-				name VARCHAR(255) NOT NULL,
-				industry VARCHAR(255),
-				sector VARCHAR(255),
-				exchange VARCHAR(255),
-				PRIMARY KEY (id)
-			)
-		`
-	);
 
-	// Create the portfolio table
-	await mySQLPool.promise().query(
-		`
-			CREATE TABLE portfolio (
-				id INT NOT NULL AUTO_INCREMENT,
-				user_id INT NOT NULL,
-				name VARCHAR(255) NOT NULL,
-				created DATETIME DEFAULT CURRENT_TIMESTAMP,
-				PRIMARY KEY (id)
-			)
-		`
-	);
-
-	// Create the portfolio asset table
-	await mySQLPool.promise().query(
-		`
-			CREATE TABLE portfolio_asset (
-				id INT NOT NULL AUTO_INCREMENT,
-				portfolio_id INT NOT NULL,
-				ticker VARCHAR(255) NOT NULL,
-				created DATETIME DEFAULT CURRENT_TIMESTAMP,
-				PRIMARY KEY (id)
-			)
-		`
-	);
-
-	// Create the user table
+	// user
 	await mySQLPool.promise().query(
 		`
 			CREATE TABLE user (
@@ -78,15 +36,86 @@ const dBBuilder = async (mySQLPool: mysql.Pool, dBName: string, reset: boolean =
 		`
 	);
 
-	// Create the verification table
+
+	// asset
+	await mySQLPool.promise().query(
+		`
+			CREATE TABLE asset (
+				id INT NOT NULL AUTO_INCREMENT,
+				symbol VARCHAR(255) NOT NULL,
+				name VARCHAR(255) NOT NULL,
+				exchange VARCHAR(255),
+				PRIMARY KEY (id)
+			)
+		`
+	);
+
+
+	// asset_industry
+	await mySQLPool.promise().query(
+		`
+			CREATE TABLE asset_industry (
+				id INT NOT NULL AUTO_INCREMENT,
+				asset_id INT NOT NULL,
+				industry VARCHAR(255),
+				PRIMARY KEY (id),
+				FOREIGN KEY (asset_id) REFERENCES asset(id) ON DELETE CASCADE
+			)
+		`
+	);
+
+	// asset_sector
+	await mySQLPool.promise().query(
+		`
+			CREATE TABLE asset_sector (
+				id INT NOT NULL AUTO_INCREMENT,
+				asset_id INT NOT NULL,
+				sector VARCHAR(255),
+				PRIMARY KEY (id),
+				FOREIGN KEY (asset_id) REFERENCES asset(id) ON DELETE CASCADE
+			)
+		`
+	);
+
+	// portfolio
+	await mySQLPool.promise().query(
+		`
+			CREATE TABLE portfolio (
+				id INT NOT NULL AUTO_INCREMENT,
+				user_id INT NOT NULL,
+				name VARCHAR(255) NOT NULL,
+				created DATETIME DEFAULT CURRENT_TIMESTAMP,
+				PRIMARY KEY (id),
+				FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
+			)
+		`
+	);
+
+	// portfolio_asset
+	await mySQLPool.promise().query(
+		`
+			CREATE TABLE portfolio_asset (
+				id INT NOT NULL AUTO_INCREMENT,
+				portfolio_id INT NOT NULL,
+				asset_id INT NOT NULL,
+				created DATETIME DEFAULT CURRENT_TIMESTAMP,
+				PRIMARY KEY (id),
+				FOREIGN KEY (portfolio_id) REFERENCES portfolio(id) ON DELETE CASCADE,
+				FOREIGN KEY (asset_id) REFERENCES asset(id) ON DELETE CASCADE
+			)
+		`
+	);
+
+	// verification
 	await mySQLPool.promise().query(
 		`
 			CREATE TABLE verification (
 				id INT NOT NULL AUTO_INCREMENT,
-				user INT NOT NULL,
+				user_id INT NOT NULL,
 				pin INT UNSIGNED NOT NULL,
 				created DATETIME DEFAULT CURRENT_TIMESTAMP,
-				PRIMARY KEY (id)
+				PRIMARY KEY (id),
+				FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
 			)
 		`
 	);

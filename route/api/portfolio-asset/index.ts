@@ -1,13 +1,13 @@
-import { Router, Request, Response } from "express";
+import express from "express";
 import mysql from "mysql2";
 
 import config from "../../../config";
 import { user } from "../../../middleware/token";
 
 
-export default (mySQLPool: mysql.Pool): Router =>
+export default (mySQLPool: mysql.Pool): express.Router =>
 {
-	return Router().get(
+	return express.Router().get(
 		/**
 		* @route GET /api/portfolio-asset/create
 		* @desc Create portofolio asset
@@ -15,40 +15,40 @@ export default (mySQLPool: mysql.Pool): Router =>
 		*/
 		"/create",
 		user(),
-		async (req: Request, res: Response) =>
+		async (req: express.Request, res: express.Response) =>
 		{
+			const load: PortfolioAssetCreate = req.body.load;
+
 			try
 			{
-				const load = req.body.load;
-
-				if (!load.portfolio_id)
+				if (!load.asset_id)
 				{
-					res.status(400).send("No portfolio id received")
+					res.status(400).send("No asset_id received")
 
 					return;
 				}
 
-				if (!load.ticker)
+				if (!load.portfolio_id)
 				{
-					res.status(400).send("No portfolio asset ticker received")
+					res.status(400).send("No portfolio_id received")
 
 					return;
 				}
 
 				// First determine that the portfolio belongs to the user
-				const [rows] = await mySQLPool.promise().query(
+				const [portfolios]: MySQLQueryResult = await mySQLPool.promise().query(
 					"SELECT * FROM portfolio WHERE id = ? AND user_id = ?;",
 					[load.portfolio_id, req.body.userDecoded.id],
 				);
 
-				if (!Array.isArray(rows))
+				if (!Array.isArray(portfolios))
 				{
 					res.status(400).send("Expected result is not Array");
 
 					return;
 				}
 
-				if (rows.length == 0)
+				if (portfolios.length == 0)
 				{
 					res.status(400).send("Invalid portfolio_id");
 
@@ -57,8 +57,8 @@ export default (mySQLPool: mysql.Pool): Router =>
 
 				// Insert into portfolio_asset
 				await mySQLPool.promise().query(
-					"INSERT INTO portfolio_asset (portfolio_id, ticker) VALUES (?, ?);",
-					[load.portfolio_id, load.ticker]
+					"INSERT INTO portfolio_asset (portfolio_id, asset_id) VALUES (?, ?);",
+					[load.portfolio_id, load.asset_id]
 				);
 
 				res.status(201).send("Portfolio asset created.");

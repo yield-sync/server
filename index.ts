@@ -9,9 +9,10 @@ import path from "path";
 import config from "./config";
 import rateLimiter from "./rate-limiter";
 import routeApi from "./route/api";
-import routeApiUser from "./route/api/user";
+import routeApiAsset from "./route/api/asset";
 import routeApiPortfolio from "./route/api/portfolio";
 import routeApiPortfolioAsset from "./route/api/portfolio-asset";
+import routeApiUser from "./route/api/user";
 
 
 const MYSQL_POOL: mysql.Pool = mysql.createPool({
@@ -45,6 +46,9 @@ http.createServer(
 	).use(
 		"/api",
 		routeApi()
+	).use(
+		"/api/asset",
+		routeApiAsset(MYSQL_POOL)
 	).use(
 		"/api/portfolio",
 		routeApiPortfolio(MYSQL_POOL)

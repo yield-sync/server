@@ -19,6 +19,6 @@
     "route/api/**/*.ts",
     "route/api/**/*.test.ts",
     "sql/**/*.ts",
-    "./types.d.ts",
+    "global.d.ts",
   ]
 }

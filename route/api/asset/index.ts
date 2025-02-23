@@ -14,14 +14,13 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		* @access User
 		*/
 		"/",
-		user(),
 		async (req: express.Request, res: express.Response) =>
 		{
 			try
 			{
-				const RES_PORTFOLIO = await mySQLPool.promise().query("SELECT * FROM asset;", [req.body.userDecoded.id]);
+				const [assets]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM asset;", []);
 
-				res.status(200).send(RES_PORTFOLIO);
+				res.status(200).send(assets);
 
 				return;
 			}
@@ -45,16 +44,28 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		userAdmin(),
 		async (req: express.Request, res: express.Response) =>
 		{
+			const load: AssetCreate = req.body.load;
+
 			try
 			{
-				if (!req.body.load.asset.name)
+				if (!load.name)
 				{
-					res.status(400).send("No asset.name provided");
+					res.status(400).send("No asset name provided");
 
 					return;
 				}
 
-				await mySQLPool.promise().query("INSERT INTO asset (name) VALUES (?);", [req.body.load.asset.name]);
+				if (!load.symbol)
+				{
+					res.status(400).send("No asset symbol provided");
+
+					return;
+				}
+
+				await mySQLPool.promise().query(
+					"INSERT INTO asset (symbol, name) VALUES (?, ?);",
+					[load.symbol, load.name]
+				);
 
 				res.status(201).send("Created asset");
 
@@ -77,25 +88,34 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		userAdmin(),
 		async (req: express.Request, res: express.Response) =>
 		{
+			const load: AssetUpdate = req.body.load;
+
 			try
 			{
-				if (!req.body.load.asset.id)
+				if (!load.asset_id)
 				{
-					res.status(400).send("No asset.id provided");
+					res.status(400).send("No asset_id provided");
 
 					return;
 				}
 
-				if (!req.body.load.asset.name)
+				if (!load.name)
 				{
-					res.status(400).send("No asset.name provided");
+					res.status(400).send("No asset name provided");
 
 					return;
 				}
+
+				if (!load.symbol)
+					{
+						res.status(400).send("No asset symbol provided");
+
+						return;
+					}
 
 				await mySQLPool.promise().query(
-					"UPDATE asset SET name = ? WHERE id = ?;",
-					[req.body.load.asset.name, req.body.load.asset.id]
+					"UPDATE asset SET name = ?, symbol = ? WHERE id = ?;",
+					[load.name, load.symbol, load.asset_id]
 				);
 
 				res.status(201).send("Updated asset");
@@ -113,26 +133,24 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		/**
 		* @route GET /api/asset/delete
 		* @desc Delete assset
-		* @access authorized
 		* @access authorized:admin
 		*/
 		"/delete",
 		userAdmin(),
 		async (req: express.Request, res: express.Response) =>
 		{
+			const load: AssetDelete = req.body.load;
+
 			try
 			{
-				if (!req.body.load.asset.id)
+				if (!load.asset_id)
 				{
-					res.status(400).send("No asset.id provided");
+					res.status(400).send("No asset_id provided");
 
 					return;
 				}
 
-				await mySQLPool.promise().query(
-					"DELETE FROM portfolio WHERE user_id = ? AND id = ?;",
-					[req.body.userDecoded.id, req.body.load.asset.id],
-				);
+				await mySQLPool.promise().query("DELETE FROM asset WHERE id = ?;", [load.asset_id]);
 
 				res.status(201).send("Deleted asset");
 

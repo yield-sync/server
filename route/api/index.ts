@@ -1,16 +1,16 @@
-import { Router, Request, Response } from "express";
+import express from "express";
 
 
-export default (): Router =>
+export default (): express.Router =>
 {
-	return Router().get(
+	return express.Router().get(
 		/**
 		* @route GET /api
 		* @desc Get status of Server
 		* @access Public
 		*/
 		"/",
-		async (req: Request, res: Response) =>
+		async (req: express.Request, res: express.Response) =>
 		{
 			res.status(200).json({
 				name: "yield_sync_server",

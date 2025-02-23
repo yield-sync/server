@@ -1,11 +1,11 @@
 import bcrypt from "bcryptjs";
-import { Router, Request, Response } from "express";
+import express from "express";
 import mysql, { FieldPacket } from "mysql2";
 
 import config from "../../../config";
 import { user } from "../../../middleware/token";
 import { setVerificationEmail } from "../../../util/mailUtil";
-import { validateEmail, validatePassword } from "../../../util/validationUtil";
+import { validateEmail, validatePassword } from "../../../util/validation";
 
 
 const jsonWebToken = require("jsonwebtoken");
@@ -13,9 +13,9 @@ const jsonWebToken = require("jsonwebtoken");
 const ERROR_INVALID_PASSWORD: string = "Password Must be ASCII, longer than 8 characters, and contain a special character";
 
 
-export default (mySQLPool: mysql.Pool): Router =>
+export default (mySQLPool: mysql.Pool): express.Router =>
 {
-	return Router().get(
+	return express.Router().get(
 		/**
 		* @route POST /api/user/
 		* @desc User profile
@@ -23,25 +23,34 @@ export default (mySQLPool: mysql.Pool): Router =>
 		*/
 		"/",
 		user(),
-		async (req: Request, res: Response) =>
+		async (req: express.Request, res: express.Response) =>
 		{
-			const [users]: [IUser[], FieldPacket[]] = await mySQLPool.promise().query<IUser[]>(
-				"SELECT * FROM user WHERE email = ?;",
-				[req.body.userDecoded.email]
-			);
+			try
+			{
+				const [users]: [IUser[], FieldPacket[]] = await mySQLPool.promise().query<IUser[]>(
+					"SELECT * FROM user WHERE email = ?;",
+					[req.body.userDecoded.email]
+				);
 
-			const normalizedUsers = users.map(user => ({
-				...user,
-				// Convert Buffer to boolean
-				admin: user.admin[0] === 1,
-				verified: user.verified[0] === 1,
-			}));
+				const normalizedUsers = users.map(user => ({
+					...user,
+					// Convert Buffer to boolean
+					admin: user.admin[0] === 1,
+					verified: user.verified[0] === 1,
+				}));
 
-			res.status(200).send({
-				email: normalizedUsers[0].email,
-				admin: normalizedUsers[0].admin,
-				verified: normalizedUsers[0].verified,
-			});
+				res.status(200).send({
+					email: normalizedUsers[0].email,
+					admin: normalizedUsers[0].admin,
+					verified: normalizedUsers[0].verified,
+				});
+			}
+			catch (error)
+			{
+				res.status(500).send(config.nodeENV == "production" ? "Internal server error" : error);
+
+				return;
+			}
 		}
 	).post(
 		/**
@@ -50,15 +59,22 @@ export default (mySQLPool: mysql.Pool): Router =>
 		* @access Public
 		*/
 		"/create",
-		async (req: Request, res: Response) =>
+		async (req: express.Request, res: express.Response) =>
 		{
+			const load: UserCreate = req.body.load;
+
 			try
 			{
-				const load: UserCreate = req.body.load;
-
 				if (!validateEmail(load.email))
 				{
 					res.status(400).send("Invalid email");
+
+					return;
+				}
+
+				if (!validatePassword(load.password))
+				{
+					res.status(400).send(ERROR_INVALID_PASSWORD);
 
 					return;
 				}
@@ -72,13 +88,6 @@ export default (mySQLPool: mysql.Pool): Router =>
 				if (users.length > 0)
 				{
 					res.status(400).send("This email is already being used.");
-
-					return;
-				}
-
-				if (!validatePassword(load.password))
-				{
-					res.status(400).send(ERROR_INVALID_PASSWORD);
 
 					return;
 				}
@@ -110,7 +119,7 @@ export default (mySQLPool: mysql.Pool): Router =>
 		*/
 		"/password-update",
 		user(),
-		async (req: Request, res: Response) =>
+		async (req: express.Request, res: express.Response) =>
 		{
 			const load: UserPasswordUpdate = req.body.load;
 
@@ -151,7 +160,7 @@ export default (mySQLPool: mysql.Pool): Router =>
 		* @access Public
 		*/
 		"/login",
-		async (req: Request, res: Response) =>
+		async (req: express.Request, res: express.Response) =>
 		{
 			const load: UserLogin = req.body.load;
 
@@ -204,13 +213,20 @@ export default (mySQLPool: mysql.Pool): Router =>
 		}
 	).post(
 		"/verify",
-		async (req: Request, res: Response) =>
+		async (req: express.Request, res: express.Response) =>
 		{
 			const load: UserVerify = req.body.load;
 
-			res.status(200).json({
-				message: "Verified"
-			})
+			try
+			{
+				res.status(200).json({ message: "Verified" })
+			}
+			catch (error)
+			{
+				res.status(500).send(config.nodeENV == "production" ? "Internal server error" : error);
+
+				return;
+			}
 		}
 	);
 };

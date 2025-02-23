@@ -3,6 +3,7 @@ import mysql from "mysql2";
 
 import routeApiPortfolioAsset from "./index";
 import routeApi from "../index";
+import routeApiAsset from "../asset/index";
 import routeApiPortfolio from "../portfolio/index";
 import routeApiUser from "../user/index";
 import config from "../../../config";
@@ -12,6 +13,8 @@ import DBBuilder, { dropDB } from "../../../sql/db-builder";
 const request = require('supertest');
 
 
+const ASSET_NAME: string = "Asset";
+const ASSET_SYMBOL: string = "ASS";
 const DB_NAME: string = "mock_db_portfolio_asset";
 const EMAIL: string = "testemail@example.com";
 const PASSWORD: string = "testpassword!";
@@ -19,6 +22,7 @@ const PORTFOLIO_NAME: string = "my-portfolio";
 const TICKER: string = "PS";
 
 let token: string;
+let asset_id: string;
 let portfolio_id: string;
 let app: express.Express;
 let mySQLPool: mysql.Pool;
@@ -26,16 +30,13 @@ let mySQLPool: mysql.Pool;
 
 afterAll(async () =>
 {
-	// Drop the database (should await)
 	await dropDB(DB_NAME, mySQLPool);
 
-	// Close connection (should await)
 	await mySQLPool.end();
 });
 
 beforeAll(async () =>
 {
-// [mysql] Database connection configuration
 	mySQLPool = mysql.createPool({
 		host: config.app.database.host,
 		user: config.app.database.user,
@@ -45,16 +46,19 @@ beforeAll(async () =>
 		queueLimit: 0
 	});
 
-	// [mysql] Connect
 	await mySQLPool.promise().getConnection();
 
-	// [mock-db] drop and recreate
 	await DBBuilder(mySQLPool, DB_NAME, true);
 
-	// [mysql] Select the recreated database
 	await mySQLPool.promise().query("USE ??;", [DB_NAME]);
 
-	app = express().use(express.json()).use("/api", routeApi()).use("/api/user", routeApiUser(mySQLPool)).use(
+	app = express().use(express.json()).use("/api", routeApi()).use(
+		"/api/asset",
+		routeApiAsset(mySQLPool)
+	).use(
+		"/api/user",
+		routeApiUser(mySQLPool)
+	).use(
 		"/api/portfolio",
 		routeApiPortfolio(mySQLPool)
 	).use(
@@ -92,21 +96,41 @@ beforeEach(async () =>
 	expect(typeof token).toBe("string");
 
 	// Create a portfolio
-	const RES_PORTFOLIO_CREATE = await request(app).get("/api/portfolio/create").set('authorization', `Bearer ${token}`).send({
+	const resPortfolioCreate = await request(app).get("/api/portfolio/create").set(
+		'authorization',
+		`Bearer ${token}`
+	).send({
 		load: {
-			portfolio: {
-				name: PORTFOLIO_NAME
-			}
-		}
+			name: PORTFOLIO_NAME
+		} as PortfolioCreate
 	});
 
-	expect(RES_PORTFOLIO_CREATE.statusCode).toBe(201);
+	expect(resPortfolioCreate.statusCode).toBe(201);
 
-	const [results]: MySQLQueryResult = await mySQLPool.promise().query(
+	const [portfolios]: MySQLQueryResult = await mySQLPool.promise().query(
 		"SELECT id FROM portfolio WHERE name = ?;", [PORTFOLIO_NAME]
 	);
 
-	portfolio_id = results[0].id;
+	portfolio_id = portfolios[0].id;
+
+	// Create an asset
+	const resAssetCreate = await request(app).get("/api/asset/create").set(
+		'authorization',
+		`Bearer ${token}`
+	).send({
+		load: {
+			name: ASSET_NAME,
+			symbol: ASSET_SYMBOL,
+		} as AssetCreate
+	});
+
+	expect(resAssetCreate.statusCode).toBe(201);
+
+	const [assets]: MySQLQueryResult = await mySQLPool.promise().query(
+		"SELECT id FROM asset WHERE name = ?;", [ASSET_NAME]
+	);
+
+	asset_id = assets[0].id;
 });
 
 
@@ -114,64 +138,16 @@ describe("ROUTE: /api/portfolio-asset", () =>
 {
 	describe("GET /", () =>
 	{
-		test("[auth] Should require a user token to insert portfolio asset into DB..", async () =>
+		describe("Expected Failures", () =>
 		{
-			await request(app).get("/api/portfolio-asset/create").send({
-				load: {
-					portfolio: {
-						portfolio_id: portfolio_id,
-						ticker: TICKER
-					}
-				}
-			}).expect(401);
-
-			const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio_asset;");
-
-			if (!Array.isArray(results))
+			test("[auth] Should require a user token to insert portfolio asset into DB..", async () =>
 			{
-				throw new Error("Expected result is not Array");
-			}
-
-			expect(results.length).toBe(0);
-		});
-
-		test("Should fail if no portfolio id passed..", async () =>
-		{
-			const RES = await request(app).get("/api/portfolio-asset/create").set(
-				'authorization',
-				`Bearer ${token}`
-			).send({
-				load: {
-					portfolio_id: undefined,
-					ticker: TICKER
-				}
-			}).expect(400);
-
-			expect(RES.text).toBe("No portfolio id received");
-
-			const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio_asset;");
-
-			if (!Array.isArray(results))
-			{
-				throw new Error("Expected result is not Array");
-			}
-
-			expect(results.length).toBe(0);
-		});
-
-		test("Should fail if no portfolio asset ticker passed..", async () =>
-			{
-				const RES = await request(app).get("/api/portfolio-asset/create").set(
-					'authorization',
-					`Bearer ${token}`
-				).send({
+				await request(app).get("/api/portfolio-asset/create").send({
 					load: {
-						portfolio_id: portfolio_id,
-						ticker: undefined
-					}
-				}).expect(400);
-
-				expect(RES.text).toBe("No portfolio asset ticker received");
+						portfolio_id,
+						asset_id,
+					} as PortfolioAssetCreate
+				}).expect(401);
 
 				const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio_asset;");
 
@@ -183,35 +159,92 @@ describe("ROUTE: /api/portfolio-asset", () =>
 				expect(results.length).toBe(0);
 			});
 
-		test("Should insert portfolio asset into database..", async () =>
-		{
-			const RES_PORTFOLIO_ASSET = await request(app).get("/api/portfolio-asset/create").set(
-				'authorization',
-				`Bearer ${token}`
-			).send({
-				load: {
-					portfolio_id: portfolio_id,
-					ticker: TICKER
+			test("Should fail if no portfolio_id passed..", async () =>
+			{
+				const RES = await request(app).get("/api/portfolio-asset/create").set(
+					'authorization',
+					`Bearer ${token}`
+				).send({
+					load: {
+						asset_id: asset_id,
+					}
+				}).expect(400);
+
+				expect(RES.text).toBe("No portfolio_id received");
+
+				const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio_asset;");
+
+				if (!Array.isArray(results))
+				{
+					throw new Error("Expected result is not Array");
 				}
+
+				expect(results.length).toBe(0);
 			});
 
-			expect(RES_PORTFOLIO_ASSET.statusCode).toBe(201);
-
-			const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio_asset;");
-
-			if (!Array.isArray(results))
+			test("Should fail if no portfolio asset ticker passed..", async () =>
 			{
-				throw new Error("Expected result is not Array");
-			}
+				const RES = await request(app).get("/api/portfolio-asset/create").set(
+					'authorization',
+					`Bearer ${token}`
+				).send({
+					load: {
+						portfolio_id: portfolio_id,
+					}
+				}).expect(400);
 
-			expect(results.length).toBeGreaterThan(0);
+				expect(RES.text).toBe("No asset_id received");
 
-			if (!("ticker" in results[0]))
+				const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio_asset;");
+
+				if (!Array.isArray(results))
+				{
+					throw new Error("Expected result is not Array");
+				}
+
+				expect(results.length).toBe(0);
+			});
+		});
+
+		describe("Expected Success", () =>
+		{
+			test("Should insert portfolio asset into database..", async () =>
 			{
-				throw new Error("Expected result is not Array");
-			}
+				const RES_PORTFOLIO_ASSET = await request(app).get("/api/portfolio-asset/create").set(
+					'authorization',
+					`Bearer ${token}`
+				).send({
+					load: {
+						portfolio_id: portfolio_id,
+						asset_id: asset_id,
+					} as PortfolioAssetCreate
+				});
 
-			expect(results[0].ticker).toBe(TICKER);
+				expect(RES_PORTFOLIO_ASSET.statusCode).toBe(201);
+
+				const [portfolioAssests]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio_asset;");
+
+				if (!Array.isArray(portfolioAssests))
+				{
+					throw new Error("Expected result is not Array");
+				}
+
+				expect(portfolioAssests.length).toBeGreaterThan(0);
+
+				if (!("asset_id" in portfolioAssests[0]))
+				{
+					throw new Error("Key 'asset_id' not in portfolioAssets");
+				}
+
+				expect(portfolioAssests[0].asset_id).toBe(asset_id);
+
+				if (!("portfolio_id" in portfolioAssests[0]))
+				{
+					throw new Error("Key 'portfolio_id' not in portfolioAssets");
+				}
+
+				expect(portfolioAssests[0].portfolio_id).toBe(portfolio_id);
+			});
 		});
 	});
 });

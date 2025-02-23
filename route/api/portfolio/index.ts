@@ -1,13 +1,13 @@
-import { Router, Request, Response } from "express";
+import express from "express";
 import mysql from "mysql2";
 
 import config from "../../../config";
 import { user } from "../../../middleware/token";
 
 
-export default (mySQLPool: mysql.Pool): Router =>
+export default (mySQLPool: mysql.Pool): express.Router =>
 {
-	return Router().get(
+	return express.Router().get(
 		/**
 		* @route GET /api/portfolio/
 		* @desc Return portfolios owned by user
@@ -15,7 +15,7 @@ export default (mySQLPool: mysql.Pool): Router =>
 		*/
 		"/",
 		user(),
-		async (req: Request, res: Response) =>
+		async (req: express.Request, res: express.Response) =>
 		{
 			try
 			{
@@ -45,11 +45,13 @@ export default (mySQLPool: mysql.Pool): Router =>
 		*/
 		"/create",
 		user(),
-		async (req: Request, res: Response) =>
+		async (req: express.Request, res: express.Response) =>
 		{
+			const load: PortfolioCreate = req.body.load;
+
 			try
 			{
-				if (!req.body.load.portfolio.name)
+				if (!load.name)
 				{
 					res.status(400).send("No portfolio name provided");
 
@@ -58,7 +60,7 @@ export default (mySQLPool: mysql.Pool): Router =>
 
 				await mySQLPool.promise().query(
 					"INSERT INTO portfolio (user_id, name) VALUES (?, ?);",
-					[req.body.userDecoded.id, req.body.load.portfolio.name],
+					[req.body.userDecoded.id, load.name],
 				);
 
 				res.status(201).send("Created portfolio");
@@ -80,18 +82,20 @@ export default (mySQLPool: mysql.Pool): Router =>
 		*/
 		"/update",
 		user(),
-		async (req: Request, res: Response) =>
+		async (req: express.Request, res: express.Response) =>
 		{
+			const load: PortfolioUpdate = req.body.load;
+
 			try
 			{
-				if (!req.body.load.portfolio.id)
+				if (!load.id)
 				{
 					res.status(400).send("No portfolio id provided");
 
 					return;
 				}
 
-				if (!req.body.load.portfolio.name)
+				if (!load.name)
 				{
 					res.status(400).send("No portfolio name provided");
 
@@ -100,7 +104,7 @@ export default (mySQLPool: mysql.Pool): Router =>
 
 				await mySQLPool.promise().query(
 					"UPDATE portfolio SET name = ? WHERE user_id = ? AND id = ?;",
-					[req.body.load.portfolio.name, req.body.userDecoded.id, req.body.load.portfolio.id]
+					[load.name, req.body.userDecoded.id, load.id]
 				);
 
 				res.status(201).send("Updated portfolio");
@@ -122,7 +126,7 @@ export default (mySQLPool: mysql.Pool): Router =>
 		*/
 		"/delete",
 		user(),
-		async (req: Request, res: Response) =>
+		async (req: express.Request, res: express.Response) =>
 		{
 			try
 			{
