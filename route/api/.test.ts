@@ -7,23 +7,20 @@ import routeApi from "./index";
 let app: Express = express().use(express.json()).use("/api", routeApi());
 
 
-describe("ROUTE: /api", () =>
+describe("Request: GET", () =>
 {
-	describe("GET", () =>
+	describe("Route: /api/", () =>
 	{
-		describe("/", () =>
+		test("Should return status 200..", async () =>
 		{
-			test("Should return status 200..", async () =>
-			{
-				const response = await request(app).get("/api/");
+			const response = await request(app).get("/api/");
 
-				expect(response.statusCode).toBe(200);
-			});
+			expect(response.statusCode).toBe(200);
 		});
+	});
 
-		describe("/recover-account", () =>
-		{
-			//test("Should be able to receive email from server")
-		});
+	describe("/api/recover-account", () =>
+	{
+		//test("Should be able to receive email from server")
 	});
 });

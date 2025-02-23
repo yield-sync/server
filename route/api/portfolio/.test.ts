@@ -87,9 +87,9 @@ beforeEach(async () =>
 
 
 // [test]
-describe("ROUTE: /api/portfolio", () =>
+describe("Request: GET", () =>
 {
-	describe("GET /create", () =>
+	describe("Route: /api/portfolio/create", () =>
 	{
 		describe("Expected Failures", () =>
 		{
@@ -173,175 +173,175 @@ describe("ROUTE: /api/portfolio", () =>
 		});
 	});
 
-	describe("GET /update", () =>
+	describe("Route: /api/portfolio/update", () =>
+	{
+		test("[auth] Should require a user token to update portfolio into DB..", async () =>
 		{
-			test("[auth] Should require a user token to update portfolio into DB..", async () =>
-			{
-				await request(app).get("/api/portfolio/update").send({
-					load: {
-						name: PORTFOLIO_NAME
-					}
-				}).expect(401);
-			});
-
-			test("Should fail if no portfolio id passed..", async () =>
-			{
-				const PORTFOLIO_NAME: string = "my-portfolio";
-
-				const RES_PORTFOLIO_CREATE = await request(app).get("/api/portfolio/create").set(
-					'authorization',
-					`Bearer ${token}`
-				).send({
-					load: {
-						name: PORTFOLIO_NAME
-					}
-				});
-
-				expect(RES_PORTFOLIO_CREATE.statusCode).toBe(201);
-
-				const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio;");
-
-				if (!Array.isArray(results))
-				{
-					throw new Error("Expected result is not Array");
+			await request(app).get("/api/portfolio/update").send({
+				load: {
+					name: PORTFOLIO_NAME
 				}
-
-				expect(results.length).toBeGreaterThan(0);
-
-				if (!("name" in results[0]))
-				{
-					throw new Error("Expected result is not Array");
-				}
-
-				expect(results[0].name).toBe(PORTFOLIO_NAME);
-
-				await request(app).get("/api/portfolio/update").set(
-					'authorization',
-					`Bearer ${token}`
-				).send({
-					load: {
-						id: undefined,
-						name: undefined
-					}
-				}).expect(400);
-
-				await request(app).get("/api/portfolio/update").set(
-					'authorization',
-					`Bearer ${token}`
-				).send({
-					load: {
-						id: undefined,
-						name: "with name"
-					}
-				}).expect(400);
-			});
-
-			test("Should fail if no portfolio name passed..", async () =>
-			{
-				const PORTFOLIO_NAME: string = "my-portfolio";
-
-				const RES_PORTFOLIO_CREATE = await request(app).get("/api/portfolio/create").set(
-					'authorization',
-					`Bearer ${token}`
-				).send({
-					load: {
-						name: PORTFOLIO_NAME
-					}
-				});
-
-				expect(RES_PORTFOLIO_CREATE.statusCode).toBe(201);
-
-				const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio;");
-
-				if (!Array.isArray(results))
-				{
-					throw new Error("Expected result is not Array");
-				}
-
-				expect(results.length).toBeGreaterThan(0);
-
-				if (!("name" in results[0]))
-				{
-					throw new Error("Expected result is not Array");
-				}
-
-				expect(results[0].name).toBe(PORTFOLIO_NAME);
-
-				await request(app).get("/api/portfolio/update").set(
-					'authorization',
-					`Bearer ${token}`
-				).send({
-					load: {
-						id: results[0].id,
-						name: undefined
-					}
-				}).expect(400);
-			});
-
-			test("Should update portfolio into database..", async () =>
-			{
-				const PORTFOLIO_NAME: string = "my-portfolio";
-
-				const RES_PORTFOLIO_CREATE = await request(app).get("/api/portfolio/create").set(
-					'authorization',
-					`Bearer ${token}`
-				).send({
-					load: {
-						name: PORTFOLIO_NAME
-					}
-				});
-
-				expect(RES_PORTFOLIO_CREATE.statusCode).toBe(201);
-
-				const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio;");
-
-				if (!Array.isArray(results))
-				{
-					throw new Error("Expected result is not Array");
-				}
-
-				expect(results.length).toBeGreaterThan(0);
-
-				if (!("name" in results[0]))
-				{
-					throw new Error("Expected result is not Array");
-				}
-
-				expect(results[0].name).toBe(PORTFOLIO_NAME);
-
-				const PORTFOLIO_NAME_NEW: string = "new-name"
-
-				const RES_PORTFOLIO_UPDATE = await request(app).get("/api/portfolio/update").set(
-					'authorization',
-					`Bearer ${token}`
-				).send({
-					load: {
-						id: results[0].id,
-						name: PORTFOLIO_NAME_NEW
-					}
-				});
-
-				expect(RES_PORTFOLIO_UPDATE.statusCode).toBe(201);
-
-				const [resultsAfter]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio;");
-
-				if (!Array.isArray(resultsAfter))
-				{
-					throw new Error("Expected result is not Array");
-				}
-
-				expect(resultsAfter.length).toBeGreaterThan(0);
-
-				if (!("name" in resultsAfter[0]))
-				{
-					throw new Error("Expected result is not Array");
-				}
-
-				expect(resultsAfter[0].name).toBe(PORTFOLIO_NAME_NEW);
-			});
+			}).expect(401);
 		});
 
-	describe("GET /", () =>
+		test("Should fail if no portfolio id passed..", async () =>
+		{
+			const PORTFOLIO_NAME: string = "my-portfolio";
+
+			const RES_PORTFOLIO_CREATE = await request(app).get("/api/portfolio/create").set(
+				'authorization',
+				`Bearer ${token}`
+			).send({
+				load: {
+					name: PORTFOLIO_NAME
+				}
+			});
+
+			expect(RES_PORTFOLIO_CREATE.statusCode).toBe(201);
+
+			const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio;");
+
+			if (!Array.isArray(results))
+			{
+				throw new Error("Expected result is not Array");
+			}
+
+			expect(results.length).toBeGreaterThan(0);
+
+			if (!("name" in results[0]))
+			{
+				throw new Error("Expected result is not Array");
+			}
+
+			expect(results[0].name).toBe(PORTFOLIO_NAME);
+
+			await request(app).get("/api/portfolio/update").set(
+				'authorization',
+				`Bearer ${token}`
+			).send({
+				load: {
+					id: undefined,
+					name: undefined
+				}
+			}).expect(400);
+
+			await request(app).get("/api/portfolio/update").set(
+				'authorization',
+				`Bearer ${token}`
+			).send({
+				load: {
+					id: undefined,
+					name: "with name"
+				}
+			}).expect(400);
+		});
+
+		test("Should fail if no portfolio name passed..", async () =>
+		{
+			const PORTFOLIO_NAME: string = "my-portfolio";
+
+			const RES_PORTFOLIO_CREATE = await request(app).get("/api/portfolio/create").set(
+				'authorization',
+				`Bearer ${token}`
+			).send({
+				load: {
+					name: PORTFOLIO_NAME
+				}
+			});
+
+			expect(RES_PORTFOLIO_CREATE.statusCode).toBe(201);
+
+			const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio;");
+
+			if (!Array.isArray(results))
+			{
+				throw new Error("Expected result is not Array");
+			}
+
+			expect(results.length).toBeGreaterThan(0);
+
+			if (!("name" in results[0]))
+			{
+				throw new Error("Expected result is not Array");
+			}
+
+			expect(results[0].name).toBe(PORTFOLIO_NAME);
+
+			await request(app).get("/api/portfolio/update").set(
+				'authorization',
+				`Bearer ${token}`
+			).send({
+				load: {
+					id: results[0].id,
+					name: undefined
+				}
+			}).expect(400);
+		});
+
+		test("Should update portfolio into database..", async () =>
+		{
+			const PORTFOLIO_NAME: string = "my-portfolio";
+
+			const RES_PORTFOLIO_CREATE = await request(app).get("/api/portfolio/create").set(
+				'authorization',
+				`Bearer ${token}`
+			).send({
+				load: {
+					name: PORTFOLIO_NAME
+				}
+			});
+
+			expect(RES_PORTFOLIO_CREATE.statusCode).toBe(201);
+
+			const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio;");
+
+			if (!Array.isArray(results))
+			{
+				throw new Error("Expected result is not Array");
+			}
+
+			expect(results.length).toBeGreaterThan(0);
+
+			if (!("name" in results[0]))
+			{
+				throw new Error("Expected result is not Array");
+			}
+
+			expect(results[0].name).toBe(PORTFOLIO_NAME);
+
+			const PORTFOLIO_NAME_NEW: string = "new-name"
+
+			const RES_PORTFOLIO_UPDATE = await request(app).get("/api/portfolio/update").set(
+				'authorization',
+				`Bearer ${token}`
+			).send({
+				load: {
+					id: results[0].id,
+					name: PORTFOLIO_NAME_NEW
+				}
+			});
+
+			expect(RES_PORTFOLIO_UPDATE.statusCode).toBe(201);
+
+			const [resultsAfter]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio;");
+
+			if (!Array.isArray(resultsAfter))
+			{
+				throw new Error("Expected result is not Array");
+			}
+
+			expect(resultsAfter.length).toBeGreaterThan(0);
+
+			if (!("name" in resultsAfter[0]))
+			{
+				throw new Error("Expected result is not Array");
+			}
+
+			expect(resultsAfter[0].name).toBe(PORTFOLIO_NAME_NEW);
+		});
+	});
+
+	describe("Route: /api/portfolio/", () =>
 	{
 		test("Should be able to retrieve portfolio(s) from database..", async () =>
 		{
@@ -368,7 +368,7 @@ describe("ROUTE: /api/portfolio", () =>
 		});
 	});
 
-	describe("GET /delete", () =>
+	describe("Route: /api/portfolio/delete", () =>
 	{
 		test("Should be able to delete portfolio from database..", async () =>
 			{

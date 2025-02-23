@@ -76,31 +76,28 @@ beforeEach(async () =>
 });
 
 
-describe("ROUTE: /api/asset", () =>
+describe("Request: GET", () =>
 {
-	describe("GET", () =>
+	describe("Route: /api/asset/create", () =>
 	{
-		describe("/create", () =>
+		test("[auth] Should require a user token insert asset into DB..", async () =>
 		{
-			test("[auth] Should require a user token insert asset into DB..", async () =>
-			{
-				await request(app).get("/api/asset/create").send({
-					load: {
-						asset: {
-							name: PORTFOLIO_NAME
-						}
+			await request(app).get("/api/asset/create").send({
+				load: {
+					asset: {
+						name: PORTFOLIO_NAME
 					}
-				}).expect(401);
-
-				const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM asset;");
-
-				if (!Array.isArray(results))
-				{
-					throw new Error("Expected result is not Array");
 				}
+			}).expect(401);
 
-				expect(results.length).toBe(0);
-			});
+			const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM asset;");
+
+			if (!Array.isArray(results))
+			{
+				throw new Error("Expected result is not Array");
+			}
+
+			expect(results.length).toBe(0);
 		});
 	});
 });

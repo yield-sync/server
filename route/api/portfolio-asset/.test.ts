@@ -134,9 +134,9 @@ beforeEach(async () =>
 });
 
 
-describe("ROUTE: /api/portfolio-asset", () =>
+describe("Request: GET", () =>
 {
-	describe("GET /", () =>
+	describe("Route: /api/portfolio-asset/", () =>
 	{
 		describe("Expected Failures", () =>
 		{
