@@ -13,11 +13,17 @@ const dBBuilder = async (mySQLPool: mysql.Pool, dBName: string, reset: boolean =
 {
 	if (reset)
 	{
-		await mySQLPool.promise().query("DROP DATABASE IF EXISTS ??;", [dBName]);
+		await mySQLPool.promise().query("DROP DATABASE IF EXISTS ??;", [
+			dBName,
+		]);
 	}
 
-	await mySQLPool.promise().query("CREATE DATABASE ??;", [dBName]);
-	await mySQLPool.promise().query("USE ??;", [dBName]);
+	await mySQLPool.promise().query("CREATE DATABASE ??;", [
+		dBName,
+	]);
+	await mySQLPool.promise().query("USE ??;", [
+		dBName,
+	]);
 
 
 	// user
@@ -42,11 +48,19 @@ const dBBuilder = async (mySQLPool: mysql.Pool, dBName: string, reset: boolean =
 		`
 			CREATE TABLE asset (
 				id INT NOT NULL AUTO_INCREMENT,
-				symbol VARCHAR(255) NOT NULL,
-				name VARCHAR(255) NOT NULL,
-				exchange VARCHAR(255),
+				symbol VARCHAR(255),
+				name VARCHAR(255),
+				network VARCHAR(10) NOT NULL CHECK (
+					network IN ('arbitrum', 'base', 'ethereum', 'nasdaq', 'nyse', 'op-mainnet', 'solana')
+				),
+				address VARCHAR(255) UNIQUE,
+				isin VARCHAR(12) UNIQUE,
+				CHECK (
+					(network IN ('nasdaq', 'nyse') AND isin IS NOT NULL) OR
+					(network IN ('arbitrum', 'base', 'ethereum', 'op-mainnet', 'solana') AND address IS NOT NULL)
+				),
 				PRIMARY KEY (id)
-			)
+			);
 		`
 	);
 
@@ -56,10 +70,10 @@ const dBBuilder = async (mySQLPool: mysql.Pool, dBName: string, reset: boolean =
 		`
 			CREATE TABLE asset_industry (
 				id INT NOT NULL AUTO_INCREMENT,
-				asset_id INT NOT NULL,
+				assetId INT NOT NULL,
 				industry VARCHAR(255),
 				PRIMARY KEY (id),
-				FOREIGN KEY (asset_id) REFERENCES asset(id) ON DELETE CASCADE
+				FOREIGN KEY (assetId) REFERENCES asset(id) ON DELETE CASCADE
 			)
 		`
 	);
@@ -69,10 +83,10 @@ const dBBuilder = async (mySQLPool: mysql.Pool, dBName: string, reset: boolean =
 		`
 			CREATE TABLE asset_sector (
 				id INT NOT NULL AUTO_INCREMENT,
-				asset_id INT NOT NULL,
+				assetId INT NOT NULL,
 				sector VARCHAR(255),
 				PRIMARY KEY (id),
-				FOREIGN KEY (asset_id) REFERENCES asset(id) ON DELETE CASCADE
+				FOREIGN KEY (assetId) REFERENCES asset(id) ON DELETE CASCADE
 			)
 		`
 	);
@@ -97,11 +111,11 @@ const dBBuilder = async (mySQLPool: mysql.Pool, dBName: string, reset: boolean =
 			CREATE TABLE portfolio_asset (
 				id INT NOT NULL AUTO_INCREMENT,
 				portfolio_id INT NOT NULL,
-				asset_id INT NOT NULL,
+				assetId INT NOT NULL,
 				created DATETIME DEFAULT CURRENT_TIMESTAMP,
 				PRIMARY KEY (id),
 				FOREIGN KEY (portfolio_id) REFERENCES portfolio(id) ON DELETE CASCADE,
-				FOREIGN KEY (asset_id) REFERENCES asset(id) ON DELETE CASCADE
+				FOREIGN KEY (assetId) REFERENCES asset(id) ON DELETE CASCADE
 			)
 		`
 	);
@@ -127,7 +141,9 @@ export default dBBuilder;
 
 export const dropDB = async (dBName: string, mySQLPool: mysql.Pool) =>
 {
-	await mySQLPool.promise().query("DROP DATABASE IF EXISTS ??;", [dBName]);
+	await mySQLPool.promise().query("DROP DATABASE IF EXISTS ??;", [
+		dBName,
+	]);
 };
 
 /**

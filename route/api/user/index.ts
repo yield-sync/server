@@ -28,17 +28,24 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		{
 			try
 			{
-				const [users]: [IUser[], FieldPacket[]] = await mySQLPool.promise().query<IUser[]>(
-					"SELECT * FROM user WHERE email = ?;",
-					[req.body.userDecoded.email]
-				);
+				const [
+					users,]: [IUser[], FieldPacket[]
+] = await mySQLPool.promise().query<IUser[]>(
+	"SELECT * FROM user WHERE email = ?;",
+	[
+		req.body.userDecoded.email,
+	]
+);
 
-				const normalizedUsers = users.map(user => ({
-					...user,
-					// Convert Buffer to boolean
-					admin: user.admin[0] === 1,
-					verified: user.verified[0] === 1,
-				}));
+				const normalizedUsers = users.map((user) => 
+				{
+					return {
+						...user,
+						// Convert Buffer to boolean
+						admin: user.admin[0] === 1,
+						verified: user.verified[0] === 1,
+					};
+				});
 
 				res.status(HTTPStatus.OK).send({
 					email: normalizedUsers[0].email,
@@ -83,10 +90,14 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				}
 
 				// Check email available
-				const [users]: [IUser[], FieldPacket[]] = await mySQLPool.promise().query<IUser[]>(
-					"SELECT * FROM user WHERE email = ?;",
-					[load.email]
-				);
+				const [
+					users,]: [IUser[], FieldPacket[]
+] = await mySQLPool.promise().query<IUser[]>(
+	"SELECT * FROM user WHERE email = ?;",
+	[
+		load.email,
+	]
+);
 
 				if (users.length > 0)
 				{
@@ -97,7 +108,10 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				await mySQLPool.promise().query(
 					"INSERT INTO user (email, password) VALUES (?, ?);",
-					[load.email, await bcrypt.hash(load.password, 10)]
+					[
+						load.email,
+						await bcrypt.hash(load.password, 10),
+					]
 				);
 
 				// Send Email
@@ -130,10 +144,14 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 			try
 			{
-				const [users]: [IUser[], FieldPacket[]] = await mySQLPool.promise().query<IUser[]>(
-					"SELECT * FROM user WHERE email = ?;",
-					[req.body.userDecoded.email]
-				);
+				const [
+					users,]: [IUser[], FieldPacket[]
+] = await mySQLPool.promise().query<IUser[]>(
+	"SELECT * FROM user WHERE email = ?;",
+	[
+		req.body.userDecoded.email,
+	]
+);
 
 				if (!bcrypt.compareSync(load.password, users[0].password))
 				{
@@ -144,12 +162,15 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				await mySQLPool.promise().query(
 					"UPDATE user SET password = ? WHERE id = ?;",
-					[await bcrypt.hash(load.passwordNew, 10), req.body.userDecoded.id]
+					[
+						await bcrypt.hash(load.passwordNew, 10),
+						req.body.userDecoded.id,
+					]
 				);
 
 				res.status(HTTPStatus.OK).send("Updated password.");
 
-				return
+				return;
 			}
 			catch (error)
 			{
@@ -173,10 +194,14 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 			try
 			{
-				const [users]: [IUser[], FieldPacket[]] = await mySQLPool.promise().query<IUser[]>(
-					"SELECT * FROM user WHERE email = ?;",
-					[load.email]
-				);
+				const [
+					users,]: [IUser[], FieldPacket[]
+] = await mySQLPool.promise().query<IUser[]>(
+	"SELECT * FROM user WHERE email = ?;",
+	[
+		load.email,
+	]
+);
 
 				if (users.length != 1)
 				{
@@ -228,7 +253,9 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 			try
 			{
-				res.status(HTTPStatus.OK).json({ message: "Verified" })
+				res.status(HTTPStatus.OK).json({
+					message: "Verified" 
+				});
 			}
 			catch (error)
 			{

@@ -22,7 +22,9 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				const RES_PORTFOLIO = await mySQLPool.promise().query(
 					"SELECT id, name FROM portfolio WHERE user_id = ?;",
-					[req.body.userDecoded.id]
+					[
+						req.body.userDecoded.id,
+					]
 				);
 
 				res.status(HTTPStatus.OK).send(RES_PORTFOLIO[0]);
@@ -61,7 +63,10 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				await mySQLPool.promise().query(
 					"INSERT INTO portfolio (user_id, name) VALUES (?, ?);",
-					[req.body.userDecoded.id, load.name],
+					[
+						req.body.userDecoded.id,
+						load.name,
+					]
 				);
 
 				res.status(HTTPStatus.CREATED).send("Created portfolio");
@@ -107,7 +112,11 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				await mySQLPool.promise().query(
 					"UPDATE portfolio SET name = ? WHERE user_id = ? AND id = ?;",
-					[load.name, req.body.userDecoded.id, load.id]
+					[
+						load.name,
+						req.body.userDecoded.id,
+						load.id,
+					]
 				);
 
 				res.status(HTTPStatus.CREATED).send("Updated portfolio");
@@ -144,7 +153,10 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				await mySQLPool.promise().query(
 					"DELETE FROM portfolio WHERE user_id = ? AND id = ?;",
-					[req.body.userDecoded.id, req.body.load.portfolio_id],
+					[
+						req.body.userDecoded.id,
+						req.body.load.portfolio_id,
+					]
 				);
 
 				res.status(HTTPStatus.CREATED).send("Deleted portfolio");

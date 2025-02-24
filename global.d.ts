@@ -8,26 +8,32 @@ declare global
 	type QueryResult = QueryResult;
 
 	// Types
-	type Load = {};
+	type Load = object;
 
 	type AssetCreate = Load & {
-		symbol: string,
-		name: string,
+		symbol?: string;
+		name?: string;
+		network: string;
+		isin?: string;
+		address?: string;
 	};
 
 	type AssetUpdate = Load & {
-		asset_id: string,
-		name: string,
-		symbol: string,
+		assetId: string;
+		symbol?: string;
+		name?: string;
+		network: string;
+		isin?: string;
+		address?: string;
 	};
 
 	type AssetDelete = Load & {
-		asset_id: string,
+		assetId: string,
 	};
 
 	type PortfolioAssetCreate = Load & {
 		portfolio_id: string,
-		asset_id: string,
+		assetId: string,
 	};
 
 	type PortfolioCreate = Load & {
@@ -69,7 +75,9 @@ declare global
 		id: number;
 		name: string;
 		symbol: string;
-		ssid: string;
+		network: string;
+		isin: string | null;
+		address: string | null;
 	}
 
 	interface IUser extends
@@ -81,6 +89,5 @@ declare global
 		admin: number;
 		verified: number;
 		created: Date;
-		ssid: string;
 	}
 }

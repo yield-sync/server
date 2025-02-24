@@ -11,7 +11,7 @@ describe("Request: GET", () =>
 {
 	describe("Route: /api/", () =>
 	{
-		test("Should return status 200..", async () =>
+		it("Should return status 200..", async () =>
 		{
 			const response = await request(app).get("/api/");
 
@@ -21,6 +21,6 @@ describe("Request: GET", () =>
 
 	describe("/api/recover-account", () =>
 	{
-		//test("Should be able to receive email from server")
+		//it("Should be able to receive email from server")
 	});
 });

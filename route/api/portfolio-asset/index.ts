@@ -22,25 +22,30 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 			try
 			{
-				if (!load.asset_id)
+				if (!load.assetId)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send("No asset_id received")
+					res.status(HTTPStatus.BAD_REQUEST).send("No assetId received");
 
 					return;
 				}
 
 				if (!load.portfolio_id)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send("No portfolio_id received")
+					res.status(HTTPStatus.BAD_REQUEST).send("No portfolio_id received");
 
 					return;
 				}
 
 				// First determine that the portfolio belongs to the user
-				const [portfolios]: MySQLQueryResult = await mySQLPool.promise().query(
-					"SELECT * FROM portfolio WHERE id = ? AND user_id = ?;",
-					[load.portfolio_id, req.body.userDecoded.id],
-				);
+				const [
+					portfolios,]:
+MySQLQueryResult = await mySQLPool.promise().query(
+	"SELECT * FROM portfolio WHERE id = ? AND user_id = ?;",
+	[
+		load.portfolio_id,
+		req.body.userDecoded.id,
+	]
+);
 
 				if (!Array.isArray(portfolios))
 				{
@@ -58,8 +63,11 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				// Insert into portfolio_asset
 				await mySQLPool.promise().query(
-					"INSERT INTO portfolio_asset (portfolio_id, asset_id) VALUES (?, ?);",
-					[load.portfolio_id, load.asset_id]
+					"INSERT INTO portfolio_asset (portfolio_id, assetId) VALUES (?, ?);",
+					[
+						load.portfolio_id,
+						load.assetId,
+					]
 				);
 
 				res.status(HTTPStatus.CREATED).send("Portfolio asset created.");

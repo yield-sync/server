@@ -1,9 +1,8 @@
-// [import-personal]
 //import config from "../config"
-import { validateEmail } from "./validation"
+import { validateEmail } from "./validation";
 
 // [require]
-const brevo = require('@getbrevo/brevo');
+const brevo = require("@getbrevo/brevo");
 
 
 //const defaultClient = brevo.ApiClient.instance;
@@ -45,10 +44,11 @@ export const sendRecoveryEmail = (to: string) =>
 	sendSmtpEmail.to = [
 		{
 			"email": to
-		}
+		},
 	];
 
-	sendSmtpEmail.bcc = [];
+	sendSmtpEmail.bcc = [
+	];
 
 	sendSmtpEmail.replyTo = {
 		"email": "replyto@domain.com",
@@ -78,4 +78,5 @@ export const sendRecoveryEmail = (to: string) =>
 
 export const setVerificationEmail = (to: string) =>
 {
+	return;
 };

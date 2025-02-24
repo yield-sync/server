@@ -1,6 +1,6 @@
 import express from "express";
 
-import config from '../config';
+import config from "../config";
 import { HTTPStatus } from "../constants/HTTPStatus";
 
 
@@ -41,14 +41,18 @@ export const userMiddleware = (requireAdmin: boolean = false) =>
 
 		if (!decoded)
 		{
-			res.status(HTTPStatus.UNAUTHORIZED).json({ message: "Access denied: Invalid or missing token" });
+			res.status(HTTPStatus.UNAUTHORIZED).json({
+				message: "Access denied: Invalid or missing token" 
+			});
 
 			return;
 		}
 
 		if (requireAdmin && decoded.admin.data[0] !== 1)
 		{
-			res.status(HTTPStatus.FORBIDDEN).json({ message: "Access denied: You are not an admin" });
+			res.status(HTTPStatus.FORBIDDEN).json({
+				message: "Access denied: You are not an admin" 
+			});
 
 			return;
 		}
@@ -60,6 +64,12 @@ export const userMiddleware = (requireAdmin: boolean = false) =>
 	};
 };
 
-export const user = () => userMiddleware(false);
+export const user = () => 
+{
+	return userMiddleware(false);
+};
 
-export const userAdmin = () => userMiddleware(true);
+export const userAdmin = () => 
+{
+	return userMiddleware(true);
+};

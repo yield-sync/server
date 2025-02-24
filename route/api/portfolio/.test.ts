@@ -92,7 +92,7 @@ describe("Request: POST (1/2)", () =>
 	{
 		describe("Expected Failure", () =>
 		{
-			test("[auth] Should require a user token..", async () =>
+			it("[auth] Should require a user token..", async () =>
 			{
 				await request(app).post("/api/portfolio/create").send().expect(401);
 
@@ -108,7 +108,7 @@ describe("Request: POST (1/2)", () =>
 				expect(results.length).toBe(0);
 			});
 
-			test("Should fail if no portfolio name passed..", async () =>
+			it("Should fail if no portfolio name passed..", async () =>
 			{
 				const RES = await request(app).post("/api/portfolio/create").set(
 					'authorization',
@@ -134,7 +134,7 @@ describe("Request: POST (1/2)", () =>
 
 		describe("Expected Success", () =>
 		{
-			test("Should insert portfolio into database..", async () =>
+			it("Should insert portfolio into database..", async () =>
 				{
 				const PORTFOLIO_NAME: string = "my-portfolio";
 
@@ -175,7 +175,7 @@ describe("Request: GET", () =>
 	{
 		describe("Expected Success", () =>
 		{
-			test("Should be able to retrieve portfolio(s) from database..", async () =>
+			it("Should be able to retrieve portfolio(s) from database..", async () =>
 			{
 				const PORTFOLIO_NAME: string = "my-portfolio";
 
@@ -210,12 +210,12 @@ describe("Request: POST (2/2)", () =>
 	{
 		describe("Expected Failure", () =>
 		{
-			test("[auth] Should require a user token..", async () =>
+			it("[auth] Should require a user token..", async () =>
 			{
 				await request(app).post("/api/portfolio/update").send().expect(401);
 			});
 
-			test("Should fail if no portfolio id passed..", async () =>
+			it("Should fail if no portfolio id passed..", async () =>
 			{
 				const PORTFOLIO_NAME: string = "my-portfolio";
 
@@ -267,7 +267,7 @@ describe("Request: POST (2/2)", () =>
 				}).expect(400);
 			});
 
-			test("Should fail if no portfolio name passed..", async () =>
+			it("Should fail if no portfolio name passed..", async () =>
 			{
 				const PORTFOLIO_NAME: string = "my-portfolio";
 
@@ -312,7 +312,7 @@ describe("Request: POST (2/2)", () =>
 
 		describe("Expected Success", () =>
 		{
-			test("Should update portfolio into database..", async () =>
+			it("Should update portfolio into database..", async () =>
 			{
 				const PORTFOLIO_NAME: string = "my-portfolio";
 
@@ -380,7 +380,7 @@ describe("Request: POST (2/2)", () =>
 	{
 		describe("Expected Success", () =>
 		{
-			test("Should be able to delete portfolio from database..", async () =>
+			it("Should be able to delete portfolio from database..", async () =>
 			{
 				const PORTFOLIO_NAME: string = "my-portfolio";
 

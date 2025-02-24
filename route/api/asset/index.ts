@@ -6,6 +6,17 @@ import { userAdmin } from "../../../middleware/token";
 import { HTTPStatus } from "../../../constants/HTTPStatus";
 
 
+const validNetworks = [
+	"arbitrum",
+	"base",
+	"ethereum",
+	"nasdaq",
+	"nyse",
+	"op-mainnet",
+	"solana",
+];
+
+
 export default (mySQLPool: mysql.Pool): express.Router =>
 {
 	return express.Router().get(
@@ -19,9 +30,12 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		{
 			try
 			{
-				const [assets]: [IAsset[], FieldPacket[]] = await mySQLPool.promise().query<IAsset[]>(
-					"SELECT * FROM asset;", []
-				);
+				const [
+					assets,]: [IAsset[], FieldPacket[]
+] = await mySQLPool.promise().query<IAsset[]>(
+	"SELECT * FROM asset;", [
+	]
+);
 
 				res.status(HTTPStatus.OK).send(assets);
 
@@ -48,93 +62,189 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		userAdmin(),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const load: AssetCreate = req.body.load;
+			const { name, symbol, network, isin, address }: AssetCreate = req.body.load;
 
 			try
 			{
-				if (!load.name)
+				if (!network || !validNetworks.includes(network))
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send("No asset name provided");
+					res.status(HTTPStatus.BAD_REQUEST).send("Invalid or missing network.");
 
 					return;
 				}
 
-				if (!load.symbol)
+				// Validate ISIN and Address based on network type
+				if ([
+					"nasdaq",
+					"nyse",
+				].includes(network) && !isin)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send("No asset symbol provided");
-
+					res.status(HTTPStatus.BAD_REQUEST).send("ISIN is required for stock assets.");
 					return;
 				}
 
+				if ([
+					"arbitrum",
+					"base",
+					"ethereum",
+					"op-mainnet",
+					"solana",
+				].includes(network) && !address)
+				{
+					res.status(HTTPStatus.BAD_REQUEST).send("Address is required for blockchain assets.");
+					return;
+				}
+
+				// Ensure uniqueness of ISIN and Address
+				if (isin)
+				{
+					const [
+						existingISIN,
+					] = await mySQLPool.promise().query("SELECT id FROM asset WHERE isin = ?;", [
+						isin,
+					]);
+					if ((existingISIN as any[]).length > 0)
+					{
+						res.status(HTTPStatus.CONFLICT).send("ISIN already exists.");
+						return;
+					}
+				}
+
+				if (address)
+				{
+					const [
+						existingAddress,
+					] = await mySQLPool.promise().query("SELECT id FROM asset WHERE address = ?;", [
+						address,
+					]);
+					if ((existingAddress as any[]).length > 0)
+					{
+						res.status(HTTPStatus.CONFLICT).send("Address already exists.");
+						return;
+					}
+				}
+
+				// Insert the asset
 				await mySQLPool.promise().query(
-					"INSERT INTO asset (symbol, name) VALUES (?, ?);",
-					[load.symbol, load.name]
+					"INSERT INTO asset (symbol, name, network, isin, address) VALUES (?, ?, ?, ?, ?);",
+					[
+						symbol,
+						name,
+						network,
+						isin,
+						address,
+					]
 				);
 
-				res.status(HTTPStatus.CREATED).send("Created asset");
-
-				return;
+				res.status(HTTPStatus.CREATED).send("Created asset.");
 			}
 			catch (error)
 			{
+				console.log(error);
 				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).send(
-					config.nodeENV == "production" ? "Internal server error" : error
+					config.nodeENV === "production" ? "Internal server error" : error
 				);
-
-				return;
 			}
 		}
 	).post(
 		/**
 		* @route POST /api/asset/update
-		* @desc Update assset
-		* @access authorized:admin
+		* @desc Update an asset
+		* @access Admin only
 		*/
 		"/update",
 		userAdmin(),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const load: AssetUpdate = req.body.load;
+			const { assetId, name, symbol, network, isin, address }: AssetUpdate = req.body.load;
 
 			try
 			{
-				if (!load.asset_id)
+				if (!assetId)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send("No asset_id provided");
-
+					res.status(HTTPStatus.BAD_REQUEST).send("Asset ID is required.");
 					return;
 				}
 
-				if (!load.name)
-				{
-					res.status(HTTPStatus.BAD_REQUEST).send("No asset name provided");
+				const [
+					existingAsset,]: [IAsset[], FieldPacket[]
+] = await mySQLPool.promise().query<IAsset[]>(
+	"SELECT * FROM asset WHERE id = ?;",
+	[
+		assetId,
+	]
+);
 
+				if ((existingAsset as any[]).length === 0)
+				{
+					res.status(HTTPStatus.NOT_FOUND).send("Asset not found.");
 					return;
 				}
 
-				if (!load.symbol)
+				if (network && !validNetworks.includes(network))
+				{
+					res.status(HTTPStatus.BAD_REQUEST).send("Invalid network.");
+					return;
+				}
+
+				if (isin)
+				{
+					const [
+						existingISIN,
+					] = await mySQLPool.promise().query(
+						"SELECT id FROM asset WHERE isin = ? AND id != ?;",
+						[
+							isin,
+							assetId,
+						]
+					);
+
+					if ((existingISIN as any[]).length > 0)
 					{
-						res.status(HTTPStatus.BAD_REQUEST).send("No asset symbol provided");
-
+						res.status(HTTPStatus.CONFLICT).send("ISIN already exists.");
 						return;
 					}
+				}
 
+				if (address)
+				{
+					const [
+						existingAddress,
+					] = await mySQLPool.promise().query(
+						"SELECT id FROM asset WHERE address = ? AND id != ?;",
+						[
+							address,
+							assetId,
+						]
+					);
+
+					if ((existingAddress as any[]).length > 0)
+					{
+						res.status(HTTPStatus.CONFLICT).send("Address already exists.");
+						return;
+					}
+				}
+
+				// Update the asset
 				await mySQLPool.promise().query(
-					"UPDATE asset SET name = ?, symbol = ? WHERE id = ?;",
-					[load.name, load.symbol, load.asset_id]
+					"UPDATE asset SET name = ?, symbol = ?, network = ?, isin = ?, address = ? WHERE id = ?;",
+					[
+						name,
+						symbol,
+						network,
+						isin,
+						address,
+						assetId,
+					]
 				);
 
-				res.status(HTTPStatus.CREATED).send("Updated asset");
-
-				return;
+				res.status(HTTPStatus.OK).send("Updated asset.");
 			}
 			catch (error)
 			{
 				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).send(
-					config.nodeENV == "production" ? "Internal server error" : error
+					config.nodeENV === "production" ? "Internal server error" : error
 				);
-
-				return;
 			}
 		}
 	).post(
@@ -147,30 +257,43 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		userAdmin(),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const load: AssetDelete = req.body.load;
+			const { assetId }: AssetDelete = req.body.load;
 
 			try
 			{
-				if (!load.asset_id)
+				if (!assetId)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send("No asset_id provided");
-
+					res.status(HTTPStatus.BAD_REQUEST).send("Asset ID is required.");
 					return;
 				}
 
-				await mySQLPool.promise().query("DELETE FROM asset WHERE id = ?;", [load.asset_id]);
+				// Ensure asset exists
+				const [
+					existingAsset,
+				] = await mySQLPool.promise().query(
+					"SELECT id FROM asset WHERE id = ?;",
+					[
+						assetId,
+					]
+				);
 
-				res.status(HTTPStatus.CREATED).send("Deleted asset");
+				if ((existingAsset as any[]).length === 0)
+				{
+					res.status(HTTPStatus.NOT_FOUND).send("Asset not found.");
+					return;
+				}
 
-				return;
+				await mySQLPool.promise().query("DELETE FROM asset WHERE id = ?;", [
+					assetId,
+				]);
+
+				res.status(HTTPStatus.OK).send("Deleted asset.");
 			}
 			catch (error)
 			{
 				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).send(
-					config.nodeENV == "production" ? "Internal server error" : error
+					config.nodeENV === "production" ? "Internal server error" : error
 				);
-
-				return;
 			}
 		}
 	);

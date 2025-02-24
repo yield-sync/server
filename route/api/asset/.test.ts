@@ -8,12 +8,11 @@ import routeApiUser from "../user/index";
 import config from "../../../config";
 import DBBuilder, { dropDB } from "../../../sql/db-builder";
 
-
-const ASSET_NAME: string = "Asset";
-const ASSET_SYMBOL: string = "A";
-const DB_NAME: string = "mock_db_asset";
-const EMAIL: string = "testemail@example.com";
-const PASSWORD: string = "testpassword!";
+const ASSET_NAME = "Asset";
+const ASSET_SYMBOL = "A";
+const DB_NAME = "mock_db_asset";
+const EMAIL = "testemail@example.com";
+const PASSWORD = "testpassword!";
 
 let token: string;
 
@@ -21,12 +20,9 @@ let app: express.Express;
 let mySQLPool: mysql.Pool;
 
 
-
-
 afterAll(async () =>
 {
 	await dropDB(DB_NAME, mySQLPool);
-
 	await mySQLPool.end();
 });
 
@@ -76,7 +72,7 @@ beforeEach(async () =>
 		} as UserLogin
 	}).expect(200);
 
-	token = (JSON.parse(resLogin.text)).token;
+	token = JSON.parse(resLogin.text).token;
 
 	expect(typeof token).toBe("string");
 });
@@ -88,62 +84,81 @@ describe("Request: POST", () =>
 	{
 		describe("Expected Failure", () =>
 		{
-			test("[auth] Should require a user token..", async () =>
+			it("[auth] Should require a user token.", async () =>
 			{
 				await request(app).post("/api/asset/create").send().expect(401);
 
-				const [assets]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM asset;");
+				const [assets]: any[] = await mySQLPool.promise().query("SELECT * FROM asset;");
 
-				if (!Array.isArray(assets))
-				{
-					throw new Error("SQL result assets is not an Array");
-				}
+				expect(Array.isArray(assets)).toBe(true);
 
 				expect(assets.length).toBe(0);
+			});
+
+			it("Should fail if required fields are missing..", async () =>
+			{
+				// Missing network
+				await request(app).post("/api/asset/create").set("authorization", `Bearer ${token}`).send({
+					load: { name: ASSET_NAME, symbol: ASSET_SYMBOL }
+				}).expect(400);
+			});
+
+			it("Should fail if ISIN is missing for a stock asset..", async () =>
+			{
+				await request(app).post("/api/asset/create").set("authorization", `Bearer ${token}`).send({
+					load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, network: "nasdaq" }
+				}).expect(400);
+			});
+
+			it("Should fail if address is missing for a crypto asset..", async () =>
+			{
+				await request(app).post("/api/asset/create").set("authorization", `Bearer ${token}`).send({
+					load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, network: "ethereum" }
+				}).expect(400);
 			});
 		});
 
 		describe("Expected Success", () =>
 		{
-			it("Should create an asset..", async () =>
+			it("Should create a stock asset..", async () =>
 			{
-				// Create an asset
-				const resAssetCreate = await request(app).post("/api/asset/create").set(
-					"authorization",
-					`Bearer ${token}`
-				).send({
-					load: {
-						name: ASSET_NAME,
-						symbol: ASSET_SYMBOL,
-					} as AssetCreate
+				const res = await request(app).post("/api/asset/create").set("authorization", `Bearer ${token}`).send({
+					load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, network: "nasdaq", isin: "US0378331005" }
 				});
 
-				expect(resAssetCreate.statusCode).toBe(201);
+				expect(res.statusCode).toBe(201);
 
-				const [assets]: MySQLQueryResult = await mySQLPool.promise().query(
-					"SELECT * FROM asset WHERE name = ?;", [ASSET_NAME]
+				const [assets]: any[] = await mySQLPool.promise().query(
+					"SELECT * FROM asset WHERE isin = ?;",
+					["US0378331005"]
 				);
 
-				if (!Array.isArray(assets))
-				{
-					throw new Error("Expected assets to be an Array");
-				}
+				expect(Array.isArray(assets)).toBe(true);
 
-				expect(assets.length).toBeGreaterThan(0);
+				expect(assets.length).toBe(1);
 
-				if (!("name" in assets[0]))
-				{
-					throw new Error("Expected assets array element to have key 'name'");
-				}
+				expect(assets[0].network).toBe("nasdaq");
 
-				expect(assets[0].name).toBe(ASSET_NAME);
+				expect(assets[0].isin).toBe("US0378331005");
+			});
 
-				if (!("symbol" in assets[0]))
-				{
-					throw new Error("Expected assets array element to have key 'symbol'");
-				}
+			it("Should create a crypto asset..", async () =>
+			{
+				const res = await request(app).post("/api/asset/create").set("authorization", `Bearer ${token}`).send({
+					load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, network: "ethereum", address: "0xabcdef123456" }
+				});
 
-				expect(assets[0].symbol).toBe(ASSET_SYMBOL);
+				expect(res.statusCode).toBe(201);
+
+				const [assets]: any[] = await mySQLPool.promise().query("SELECT * FROM asset WHERE address = ?;", ["0xabcdef123456"]);
+
+				expect(Array.isArray(assets)).toBe(true);
+
+				expect(assets.length).toBe(1);
+
+				expect(assets[0].network).toBe("ethereum");
+
+				expect(assets[0].address).toBe("0xabcdef123456");
 			});
 		});
 	});
@@ -152,7 +167,7 @@ describe("Request: POST", () =>
 	{
 		describe("Expected Failure", () =>
 		{
-			test("[auth] Should require a user token..", async () =>
+			it("[auth] Should require a user token..", async () =>
 			{
 				await request(app).post("/api/asset/update").send().expect(401);
 			});
@@ -163,7 +178,7 @@ describe("Request: POST", () =>
 	{
 		describe("Expected Failure", () =>
 		{
-			test("[auth] Should require a user token..", async () =>
+			it("[auth] Should require a user token..", async () =>
 			{
 				await request(app).post("/api/asset/delete").send().expect(401);
 			});

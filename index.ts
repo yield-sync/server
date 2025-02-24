@@ -27,7 +27,9 @@ const MYSQL_POOL: mysql.Pool = mysql.createPool({
 
 
 http.createServer(
-	express().use(bodyParser.json()).use(bodyParser.urlencoded({ extended: false })).use(cors()).use(
+	express().use(bodyParser.json()).use(bodyParser.urlencoded({
+		extended: false 
+	})).use(cors()).use(
 		express.static(__dirname + "/static")
 	).use(
 		rateLimiter.global
@@ -71,6 +73,6 @@ http.createServer(
 	config.port,
 	() =>
 	{
-		console.log(`Server Running on Port: ${config.port}`)
+		console.log(`Server Running on Port: ${config.port}`);
 	}
 );

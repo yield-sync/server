@@ -67,7 +67,7 @@ describe("Request: GET", () =>
 	describe("Route: /api/user/", () =>
 	{
 		describe("Expected Failure", () => {
-			test("Should NOT allow creating a user with invalid email..", async () =>
+			it("Should NOT allow creating a user with invalid email..", async () =>
 			{
 				const response = await request(app).get("/api/user/").send();
 
@@ -79,7 +79,7 @@ describe("Request: GET", () =>
 		});
 
 		describe("Expected Success", () => {
-			test("Should return JSON of user profile..", async () =>
+			it("Should return JSON of user profile..", async () =>
 			{
 				const EMAIL: string = "testemail@example.com";
 				const PASSWORD: string = "testpassword!";
@@ -126,7 +126,7 @@ describe("Request: POST", () =>
 	describe("Route: /api/user/create", () =>
 	{
 		describe("Expected Failure", () => {
-			test("Should NOT allow creating a user with invalid email..", async () =>
+			it("Should NOT allow creating a user with invalid email..", async () =>
 			{
 				const email = "notemail";
 				const password = "testtest123!@";
@@ -149,7 +149,7 @@ describe("Request: POST", () =>
 				expect(results).toStrictEqual([]);
 			});
 
-			test("Should NOT allow creating a user with short password..",
+			it("Should NOT allow creating a user with short password..",
 			async () =>
 			{
 				const email = "testemail@example.com";
@@ -173,7 +173,7 @@ describe("Request: POST", () =>
 				expect(results).toStrictEqual([]);
 			});
 
-			test("Should NOT allow password without special characters..", async () =>
+			it("Should NOT allow password without special characters..", async () =>
 			{
 				const email = "testemail@example.com";
 				const password = "12345678";
@@ -196,7 +196,7 @@ describe("Request: POST", () =>
 				expect(results).toStrictEqual([]);
 			});
 
-			test("Should NOT allow creating a user with non-ASCII password..", async () =>
+			it("Should NOT allow creating a user with non-ASCII password..", async () =>
 			{
 				const email = "testemail@example.com";
 
@@ -243,7 +243,7 @@ describe("Request: POST", () =>
 				[results] = await mySQLPool.promise().query("SELECT * FROM user;");
 			});
 
-			test("Should allow creating a user..", async () =>
+			it("Should allow creating a user..", async () =>
 			{
 				expect(results[0].email).toBe(email);
 
@@ -251,7 +251,7 @@ describe("Request: POST", () =>
 				expect(results[0].password).not.toBe(password);
 			});
 
-			test("Should be able to decode password..", async () =>
+			it("Should be able to decode password..", async () =>
 			{
 				const invalidPassword = "invalidPassword";
 
@@ -261,7 +261,7 @@ describe("Request: POST", () =>
 				expect(bcrypt.compareSync(invalidPassword, results[0].password)).toBe(false);
 			});
 
-			test("Should only allow UNIQUE emails..", async () =>
+			it("Should only allow UNIQUE emails..", async () =>
 			{
 				const response = await request(app).post("/api/user/create").send({
 					load: {
@@ -290,7 +290,7 @@ describe("Request: POST", () =>
 
 	describe("Route: /api/user/login", () =>
 	{
-		test("Should allow user to receive a decodable token..", async () =>
+		it("Should allow user to receive a decodable token..", async () =>
 		{
 			const email: string = "testemail@example.com";
 			const password: string = "testpassword!";
@@ -341,7 +341,7 @@ describe("Request: POST", () =>
 
 	describe("Route: /api/user/password-update", () =>
 	{
-		test("Should not allow user to change password given invalid current password..", async () =>
+		it("Should not allow user to change password given invalid current password..", async () =>
 		{
 			const email: string = "testemail@example.com";
 			const password: string = "testpassword!";
@@ -380,7 +380,7 @@ describe("Request: POST", () =>
 			}).expect(401);
 		});
 
-		test("Should allow user to change password given old one..", async () =>
+		it("Should allow user to change password given old one..", async () =>
 		{
 			const email: string = "testemail@example.com";
 			const password: string = "testpassword!";

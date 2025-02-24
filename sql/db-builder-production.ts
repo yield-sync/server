@@ -1,1 +1,4 @@
-import("./db-builder").then(({ dBBuilderProduction }) => dBBuilderProduction());
+import("./db-builder").then(({ dBBuilderProduction }) => 
+{
+	return dBBuilderProduction();
+});

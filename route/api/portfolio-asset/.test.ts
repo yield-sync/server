@@ -22,7 +22,7 @@ const PORTFOLIO_NAME: string = "my-portfolio";
 const TICKER: string = "PS";
 
 let token: string;
-let asset_id: string;
+let assetId: string;
 let portfolio_id: string;
 let app: express.Express;
 let mySQLPool: mysql.Pool;
@@ -116,15 +116,8 @@ beforeEach(async () =>
 
 	portfolio_id = portfolios[0].id;
 
-	// Create an asset
-	const resAssetCreate = await request(app).post("/api/asset/create").set(
-		'authorization',
-		`Bearer ${token}`
-	).send({
-		load: {
-			name: ASSET_NAME,
-			symbol: ASSET_SYMBOL,
-		} as AssetCreate
+	const resAssetCreate = await request(app).post("/api/asset/create").set("authorization", `Bearer ${token}`).send({
+		load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, network: "ethereum", address: "0xabcdef123456" }
 	});
 
 	expect(resAssetCreate.statusCode).toBe(201);
@@ -133,7 +126,7 @@ beforeEach(async () =>
 		"SELECT id FROM asset WHERE name = ?;", [ASSET_NAME]
 	);
 
-	asset_id = assets[0].id;
+	assetId = assets[0].id;
 });
 
 
@@ -143,12 +136,12 @@ describe("Request: GET", () =>
 	{
 		describe("Expected Failure", () =>
 		{
-			test("[auth] Should require a user token to insert portfolio asset into DB..", async () =>
+			it("[auth] Should require a user token to insert portfolio asset into DB..", async () =>
 			{
 				await request(app).post("/api/portfolio-asset/create").send({
 					load: {
 						portfolio_id,
-						asset_id,
+						assetId,
 					} as PortfolioAssetCreate
 				}).expect(401);
 
@@ -162,14 +155,14 @@ describe("Request: GET", () =>
 				expect(results.length).toBe(0);
 			});
 
-			test("Should fail if no portfolio_id passed..", async () =>
+			it("Should fail if no portfolio_id passed..", async () =>
 			{
 				const RES = await request(app).post("/api/portfolio-asset/create").set(
 					'authorization',
 					`Bearer ${token}`
 				).send({
 					load: {
-						asset_id: asset_id,
+						assetId: assetId,
 					}
 				}).expect(400);
 
@@ -185,7 +178,7 @@ describe("Request: GET", () =>
 				expect(results.length).toBe(0);
 			});
 
-			test("Should fail if no portfolio asset ticker passed..", async () =>
+			it("Should fail if no portfolio asset ticker passed..", async () =>
 			{
 				const RES = await request(app).post("/api/portfolio-asset/create").set(
 					'authorization',
@@ -196,7 +189,7 @@ describe("Request: GET", () =>
 					}
 				}).expect(400);
 
-				expect(RES.text).toBe("No asset_id received");
+				expect(RES.text).toBe("No assetId received");
 
 				const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio_asset;");
 
@@ -211,7 +204,7 @@ describe("Request: GET", () =>
 
 		describe("Expected Success", () =>
 		{
-			test("Should insert portfolio asset into database..", async () =>
+			it("Should insert portfolio asset into database..", async () =>
 			{
 				const RES_PORTFOLIO_ASSET = await request(app).post("/api/portfolio-asset/create").set(
 					'authorization',
@@ -219,7 +212,7 @@ describe("Request: GET", () =>
 				).send({
 					load: {
 						portfolio_id: portfolio_id,
-						asset_id: asset_id,
+						assetId: assetId,
 					} as PortfolioAssetCreate
 				});
 
@@ -234,12 +227,12 @@ describe("Request: GET", () =>
 
 				expect(portfolioAssests.length).toBeGreaterThan(0);
 
-				if (!("asset_id" in portfolioAssests[0]))
+				if (!("assetId" in portfolioAssests[0]))
 				{
-					throw new Error("Key 'asset_id' not in portfolioAssets");
+					throw new Error("Key 'assetId' not in portfolioAssets");
 				}
 
-				expect(portfolioAssests[0].asset_id).toBe(asset_id);
+				expect(portfolioAssests[0].assetId).toBe(assetId);
 
 				if (!("portfolio_id" in portfolioAssests[0]))
 				{
