@@ -28,14 +28,16 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		{
 			try
 			{
-				const [
-					users,]: [IUser[], FieldPacket[]
-] = await mySQLPool.promise().query<IUser[]>(
-	"SELECT * FROM user WHERE email = ?;",
-	[
-		req.body.userDecoded.email,
-	]
-);
+				let users: IUser[];
+
+				[
+					users,
+				] = await mySQLPool.promise().query<IUser[]>(
+					"SELECT * FROM user WHERE email = ?;",
+					[
+						req.body.userDecoded.email,
+					]
+				);
 
 				const normalizedUsers = users.map((user) =>
 				{
@@ -90,14 +92,16 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				}
 
 				// Check email available
-				const [
-					users,]: [IUser[], FieldPacket[]
-] = await mySQLPool.promise().query<IUser[]>(
-	"SELECT * FROM user WHERE email = ?;",
-	[
-		load.email,
-	]
-);
+				let users: IUser[];
+
+				[
+					users,
+				] = await mySQLPool.promise().query<IUser[]>(
+					"SELECT * FROM user WHERE email = ?;",
+					[
+						load.email,
+					]
+				);
 
 				if (users.length > 0)
 				{
@@ -144,14 +148,16 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 			try
 			{
-				const [
-					users,]: [IUser[], FieldPacket[]
-] = await mySQLPool.promise().query<IUser[]>(
-	"SELECT * FROM user WHERE email = ?;",
-	[
-		req.body.userDecoded.email,
-	]
-);
+				let users: IUser[];
+
+				[
+					users,
+				] = await mySQLPool.promise().query<IUser[]>(
+					"SELECT * FROM user WHERE email = ?;",
+					[
+						req.body.userDecoded.email,
+					]
+				);
 
 				if (!bcrypt.compareSync(load.password, users[0].password))
 				{
@@ -194,14 +200,16 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 			try
 			{
-				const [
-					users,]: [IUser[], FieldPacket[]
-] = await mySQLPool.promise().query<IUser[]>(
-	"SELECT * FROM user WHERE email = ?;",
-	[
-		load.email,
-	]
-);
+				let users: IUser[];
+
+				[
+					users,
+				] = await mySQLPool.promise().query<IUser[]>(
+					"SELECT * FROM user WHERE email = ?;",
+					[
+						load.email,
+					]
+				);
 
 				if (users.length != 1)
 				{

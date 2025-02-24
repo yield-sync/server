@@ -19,9 +19,11 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		{
 			try
 			{
-				const [assets]: [IAsset[], FieldPacket[]] = await mySQLPool.promise().query<IAsset[]>(
-					"SELECT * FROM asset;"
-				);
+				let assets: IAsset[];
+
+				[
+					assets,
+				] = await mySQLPool.promise().query<IAsset[]>("SELECT * FROM asset;");
 
 				res.status(hTTPStatus.OK).send(assets);
 
@@ -150,14 +152,16 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				const [
-					existingAsset,]: [IAsset[], FieldPacket[]
-] = await mySQLPool.promise().query<IAsset[]>(
-	"SELECT * FROM asset WHERE id = ?;",
-	[
-		assetId,
-	]
-);
+				let existingAsset: IAsset[];
+
+				[
+					existingAsset,
+				] = await mySQLPool.promise().query<IAsset[]>(
+					"SELECT * FROM asset WHERE id = ?;",
+					[
+						assetId,
+					]
+				);
 
 				if ((existingAsset as any[]).length === 0)
 				{
