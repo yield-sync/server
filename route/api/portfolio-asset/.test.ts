@@ -19,7 +19,6 @@ const DB_NAME: string = "mock_db_portfolio_asset";
 const EMAIL: string = "testemail@example.com";
 const PASSWORD: string = "testpassword!";
 const PORTFOLIO_NAME: string = "my-portfolio";
-const TICKER: string = "PS";
 
 let token: string;
 let assetId: string;
@@ -177,7 +176,7 @@ describe("Request: GET", () =>
 				expect(results.length).toBe(0);
 			});
 
-			it("Should fail if no portfolio asset ticker passed..", async () =>
+			it("Should fail if no portfolio asset_id passed..", async () =>
 			{
 				const RES = await request(app).post("/api/portfolio-asset/create").set(
 					'authorization',
