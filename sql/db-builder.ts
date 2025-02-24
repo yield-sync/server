@@ -48,6 +48,7 @@ const dBBuilder = async (mySQLPool: mysql.Pool, dBName: string, reset: boolean =
 		`
 			CREATE TABLE asset (
 				id INT NOT NULL AUTO_INCREMENT,
+				native_token BIT(1) NOT NULL DEFAULT 0,
 				symbol VARCHAR(255),
 				name VARCHAR(255),
 				network VARCHAR(10) NOT NULL CHECK (
@@ -57,7 +58,12 @@ const dBBuilder = async (mySQLPool: mysql.Pool, dBName: string, reset: boolean =
 				isin VARCHAR(12) UNIQUE,
 				CHECK (
 					(network IN ('nasdaq', 'nyse') AND isin IS NOT NULL) OR
-					(network IN ('arbitrum', 'base', 'ethereum', 'op-mainnet', 'solana') AND address IS NOT NULL)
+					(
+						network IN ('arbitrum', 'base', 'ethereum', 'op-mainnet', 'solana') AND (
+							(native_token = 0 AND address IS NOT NULL) OR
+							(native_token = 1 AND address IS NULL)
+						)
+					)
 				),
 				PRIMARY KEY (id)
 			);
