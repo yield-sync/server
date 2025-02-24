@@ -1,4 +1,10 @@
-export const HTTPStatus = {
+export const blockchainNetworks = ["arbitrum", "base", "ethereum", "op-mainnet", "solana"];
+
+export const stockMarkets = ["nasdaq", "nyse"];
+
+export const allNetworks = [...blockchainNetworks, ...stockMarkets];
+
+export const hTTPStatus = {
 	OK: 200,
 	CREATED: 201,
 	ACCEPTED: 202,
@@ -14,6 +20,3 @@ export const HTTPStatus = {
 	SERVICE_UNAVAILABLE: 503,
 	GATEWAY_TIMEOUT: 504,
 } as const;
-
-
-export type HTTPStatusCode = (typeof HTTPStatus)[keyof typeof HTTPStatus];

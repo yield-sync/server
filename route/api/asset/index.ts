@@ -3,18 +3,7 @@ import mysql from "mysql2";
 
 import config from "../../../config";
 import { userAdmin } from "../../../middleware/token";
-import { HTTPStatus } from "../../../constants/HTTPStatus";
-
-
-const validNetworks = [
-	"arbitrum",
-	"base",
-	"ethereum",
-	"nasdaq",
-	"nyse",
-	"op-mainnet",
-	"solana",
-];
+import { hTTPStatus, allNetworks } from "../../../constants";
 
 
 export default (mySQLPool: mysql.Pool): express.Router =>
@@ -30,22 +19,17 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		{
 			try
 			{
-				const [
-					assets,]: [IAsset[], FieldPacket[]
-] = await mySQLPool.promise().query<IAsset[]>(
-	"SELECT * FROM asset;", [
-	]
-);
+				const [assets]: [IAsset[], FieldPacket[]] = await mySQLPool.promise().query<IAsset[]>(
+					"SELECT * FROM asset;"
+				);
 
-				res.status(HTTPStatus.OK).send(assets);
+				res.status(hTTPStatus.OK).send(assets);
 
 				return;
 			}
 			catch (error)
 			{
-				console.log(error);
-
-				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).send(
+				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(
 					config.nodeENV == "production" ? "Internal server error" : error
 				);
 
@@ -66,9 +50,9 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 			try
 			{
-				if (!network || !validNetworks.includes(network))
+				if (!network || !allNetworks.includes(network))
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send("Invalid or missing network.");
+					res.status(hTTPStatus.BAD_REQUEST).send("Invalid or missing network.");
 
 					return;
 				}
@@ -79,7 +63,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					"nyse",
 				].includes(network) && !isin)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send("ISIN is required for stock assets.");
+					res.status(hTTPStatus.BAD_REQUEST).send("ISIN is required for stock assets.");
 					return;
 				}
 
@@ -91,7 +75,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					"solana",
 				].includes(network) && !address)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send("Address is required for blockchain assets.");
+					res.status(hTTPStatus.BAD_REQUEST).send("Address is required for blockchain assets.");
 					return;
 				}
 
@@ -105,7 +89,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					]);
 					if ((existingISIN as any[]).length > 0)
 					{
-						res.status(HTTPStatus.CONFLICT).send("ISIN already exists.");
+						res.status(hTTPStatus.CONFLICT).send("ISIN already exists.");
 						return;
 					}
 				}
@@ -119,7 +103,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					]);
 					if ((existingAddress as any[]).length > 0)
 					{
-						res.status(HTTPStatus.CONFLICT).send("Address already exists.");
+						res.status(hTTPStatus.CONFLICT).send("Address already exists.");
 						return;
 					}
 				}
@@ -136,12 +120,12 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					]
 				);
 
-				res.status(HTTPStatus.CREATED).send("Created asset.");
+				res.status(hTTPStatus.CREATED).send("Created asset.");
 			}
 			catch (error)
 			{
 				console.log(error);
-				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).send(
+				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(
 					config.nodeENV === "production" ? "Internal server error" : error
 				);
 			}
@@ -162,7 +146,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				if (!assetId)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send("Asset ID is required.");
+					res.status(hTTPStatus.BAD_REQUEST).send("Asset ID is required.");
 					return;
 				}
 
@@ -177,13 +161,13 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				if ((existingAsset as any[]).length === 0)
 				{
-					res.status(HTTPStatus.NOT_FOUND).send("Asset not found.");
+					res.status(hTTPStatus.NOT_FOUND).send("Asset not found.");
 					return;
 				}
 
-				if (network && !validNetworks.includes(network))
+				if (network && !allNetworks.includes(network))
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send("Invalid network.");
+					res.status(hTTPStatus.BAD_REQUEST).send("Invalid network.");
 					return;
 				}
 
@@ -201,7 +185,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 					if ((existingISIN as any[]).length > 0)
 					{
-						res.status(HTTPStatus.CONFLICT).send("ISIN already exists.");
+						res.status(hTTPStatus.CONFLICT).send("ISIN already exists.");
 						return;
 					}
 				}
@@ -220,7 +204,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 					if ((existingAddress as any[]).length > 0)
 					{
-						res.status(HTTPStatus.CONFLICT).send("Address already exists.");
+						res.status(hTTPStatus.CONFLICT).send("Address already exists.");
 						return;
 					}
 				}
@@ -238,11 +222,11 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					]
 				);
 
-				res.status(HTTPStatus.OK).send("Updated asset.");
+				res.status(hTTPStatus.OK).send("Updated asset.");
 			}
 			catch (error)
 			{
-				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).send(
+				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(
 					config.nodeENV === "production" ? "Internal server error" : error
 				);
 			}
@@ -263,7 +247,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				if (!assetId)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send("Asset ID is required.");
+					res.status(hTTPStatus.BAD_REQUEST).send("Asset ID is required.");
 					return;
 				}
 
@@ -279,7 +263,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				if ((existingAsset as any[]).length === 0)
 				{
-					res.status(HTTPStatus.NOT_FOUND).send("Asset not found.");
+					res.status(hTTPStatus.NOT_FOUND).send("Asset not found.");
 					return;
 				}
 
@@ -287,11 +271,11 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					assetId,
 				]);
 
-				res.status(HTTPStatus.OK).send("Deleted asset.");
+				res.status(hTTPStatus.OK).send("Deleted asset.");
 			}
 			catch (error)
 			{
-				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).send(
+				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(
 					config.nodeENV === "production" ? "Internal server error" : error
 				);
 			}
