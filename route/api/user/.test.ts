@@ -21,15 +21,12 @@ let mySQLPool: mysql.Pool;
 
 afterAll(async () =>
 {
-	// Drop the database (should await)
 	await dBDrop(DB_NAME, mySQLPool);
 
-	// Close connection (should await)
 	await mySQLPool.end();
 });
 
 beforeAll(async () => {
-	// [mysql] Database connection configuration
 	mySQLPool = mysql.createPool({
 		host: config.app.database.host,
 		user: config.app.database.user,
@@ -39,13 +36,10 @@ beforeAll(async () => {
 		queueLimit: 0
 	});
 
-	// [mysql] Connect
 	await mySQLPool.promise().getConnection();
 
-	// [mock-db] drop and recreate
 	await DBBuilder(mySQLPool, DB_NAME, true);
 
-	// [mysql] Select the recreated database
 	await mySQLPool.promise().query("USE ??;", [DB_NAME]);
 
 	app = express().use(express.json()).use("/api", routeApi()).use("/api/user", routeApiUser(mySQLPool));
@@ -53,15 +47,12 @@ beforeAll(async () => {
 
 beforeEach(async () =>
 {
-	// Drop the database
 	await dBDrop(DB_NAME, mySQLPool);
 
-	// [mock-db] drop and recreate
 	await DBBuilder(mySQLPool, DB_NAME, true);
 });
 
 
-// [test]
 describe("Request: GET", () =>
 {
 	describe("Route: /api/user/", () =>
@@ -92,7 +83,7 @@ describe("Request: GET", () =>
 					}
 				}).expect(201);
 
-				// Send a login request
+
 				const resLogin = await request(app).post("/api/user/login").send({
 					load: {
 						email: EMAIL,
@@ -303,7 +294,6 @@ describe("Request: POST", () =>
 				}
 			});
 
-			// Send a login request
 			const response = await request(app).post("/api/user/login").send({
 				load: {
 					email: email,
@@ -355,7 +345,6 @@ describe("Request: POST", () =>
 				}
 			});
 
-			// Send a login request
 			const response = await request(app).post("/api/user/login").send({
 				load: {
 					email: email,
@@ -394,7 +383,6 @@ describe("Request: POST", () =>
 				}
 			});
 
-			// Send a login request
 			const response = await request(app).post("/api/user/login").send({
 				load: {
 					email: email,
@@ -418,7 +406,6 @@ describe("Request: POST", () =>
 				}
 			}).expect(200);
 
-			// Send a login request
 			const RESPONSE_LOGIN_NEW = await request(app).post("/api/user/login").send({
 				load: {
 					email: email,
