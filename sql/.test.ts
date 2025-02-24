@@ -4,11 +4,9 @@ import dBBuilder, { dropDB } from "./db-builder";
 import config from "../config";
 
 
-// Test Database Name
 const TEST_DB_NAME = "test_db";
 
 
-// Create a test MySQL Pool
 const testMySQLPool: mysql.Pool = mysql.createPool({
 	host: config.app.database.host,
 	user: config.app.database.user,
@@ -26,7 +24,6 @@ beforeAll(async () =>
 
 beforeEach(async () =>
 {
-	// Ensure test_db is clean before each test
 	await testMySQLPool.promise().query("DELETE FROM asset;");
 });
 
@@ -39,7 +36,7 @@ afterAll(async () =>
 
 describe("Database Initialization", () =>
 {
-	it("Database and tables are created..", async () =>
+	it("Should create the database and tables..", async () =>
 	{
 		const [rows] = await testMySQLPool.promise().query("SHOW TABLES;");
 
@@ -75,7 +72,7 @@ describe("Asset Table Constraints", () =>
 				await expect(
 					testMySQLPool.promise().query(
 						"INSERT INTO asset (symbol, name, address) VALUES (?, ?, ?);",
-						["ETH", "Ethereum", "0x1234"]
+						["ETH", "Ethereum", "0x123"]
 					)
 				).rejects.toThrow("Field 'network' doesn't have a default value");
 			});
@@ -85,7 +82,7 @@ describe("Asset Table Constraints", () =>
 				await expect(
 					testMySQLPool.promise().query(
 						"INSERT INTO asset (symbol, name, network, address) VALUES (?, ?, ?, ?);",
-						["ETH", "Ethereum", "invalid", "0x1234"]
+						["ETH", "Ethereum", "invalid", "0x123"]
 					)
 				).rejects.toThrow("CONSTRAINT `asset.network` failed for `test_db`.`asset`");
 			});
@@ -114,9 +111,9 @@ describe("Asset Table Constraints", () =>
 				await expect(
 					testMySQLPool.promise().query(
 						"INSERT INTO asset (symbol, name, network, isin) VALUES (?, ?, ?, ?);",
-						["MSFT", "Microsoft Corp.", "nasdaq", "US0378331005"]
+						["AAPL", "Apple Inc.", "nasdaq", "US0378331005"]
 					)
-				).resolves.not.toThrow()
+				).resolves.not.toThrow();
 			});
 		});
 
@@ -129,6 +126,7 @@ describe("Asset Table Constraints", () =>
 					["AAPL", "Apple Inc.", "nasdaq", "US0378331005"]
 				);
 
+				// Even though the name and symbol are different, the isin already in use
 				await expect(
 					testMySQLPool.promise().query(
 						"INSERT INTO asset (symbol, name, network, isin) VALUES (?, ?, ?, ?);",
@@ -143,7 +141,7 @@ describe("Asset Table Constraints", () =>
 	{
 		describe("Expected Failure", () =>
 		{
-			it("Should fail when inserting blockchain asset without address and native_token..", async () =>
+			it("Should fail when inserting blockchain asset without address or native_token = 1..", async () =>
 			{
 				await expect(
 					testMySQLPool.promise().query(
@@ -152,23 +150,39 @@ describe("Asset Table Constraints", () =>
 					)
 				).rejects.toThrow("CONSTRAINT `CONSTRAINT_1` failed for `test_db`.`asset`");
 			});
+		});
 
-			it("Should fail when inserting duplicate address", async () =>
+		describe("Expected Success", () =>
+		{
+			it("Should allows inserting a blockchain asset with network..", async () =>
+			{
+				await expect(
+					testMySQLPool.promise().query(
+						"INSERT INTO asset (symbol, name, network, address) VALUES (?, ?, ?, ?);",
+						["USDC", "USDC", "ethereum", "0x123"]
+					)
+				).resolves.not.toThrow();
+			});
+		});
+
+		describe("Expected Failure Part 2", () =>
+		{
+			it("Should fail when inserting duplicate address..", async () =>
 			{
 				await testMySQLPool.promise().query(
 					"INSERT INTO asset (symbol, name, network, address) VALUES (?, ?, ?, ?);",
-					["ETH", "Ethereum", "ethereum", "0x1234"]
+					["USDC", "USDC", "ethereum", "0x123"]
 				);
 
 				await expect(
 					testMySQLPool.promise().query(
 						"INSERT INTO asset (symbol, name, network, address) VALUES (?, ?, ?, ?);",
-						["USDC", "USD Coin", "ethereum", "0x1234"]
+						["USDC", "USDC", "ethereum", "0x123"]
 					)
 				).rejects.toThrow(/Duplicate entry/);
 			});
 
-			it("Should fail when inserting a blockchain asset without address and native_token = 0", async () =>
+			it("Should fail when inserting a blockchain asset without address and native_token = 0..", async () =>
 			{
 				await expect(
 					testMySQLPool.promise().query(
@@ -178,7 +192,7 @@ describe("Asset Table Constraints", () =>
 				).rejects.toThrow("CONSTRAINT `CONSTRAINT_1` failed for `test_db`.`asset`");
 			});
 
-			it("Should fail when inserting a native token with an address", async () =>
+			it("Should fail when inserting a blockchain native asset with native_token = 1 and an address..", async () =>
 			{
 				await expect(
 					testMySQLPool.promise().query(
@@ -189,9 +203,9 @@ describe("Asset Table Constraints", () =>
 			});
 		});
 
-		describe("Expected Success", () =>
+		describe("Expected Success part 2", () =>
 		{
-			it("Allows inserting a native blockchain token with native_token = 1 and no address value..", async () =>
+			it("Should allows inserting a blockchain native asset with native_token = 1 AND no address..", async () =>
 			{
 				await expect(
 					testMySQLPool.promise().query(
