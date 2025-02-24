@@ -125,9 +125,7 @@ describe("Request: POST (1/2)", () =>
 		describe("Expected Success", () =>
 		{
 			it("Should insert portfolio into database..", async () =>
-				{
-				const PORTFOLIO_NAME: string = "my-portfolio";
-
+			{
 				const RES_PORTFOLIO_CREATE = await request(app).post("/api/portfolio/create").set(
 					'authorization',
 					`Bearer ${token}`
@@ -167,8 +165,6 @@ describe("Request: GET", () =>
 		{
 			it("Should be able to retrieve portfolio(s) from database..", async () =>
 			{
-				const PORTFOLIO_NAME: string = "my-portfolio";
-
 				const RES_PORTFOLIO_CREATE = await request(app).post("/api/portfolio/create").set(
 					'authorization',
 					`Bearer ${token}`
@@ -207,8 +203,6 @@ describe("Request: POST (2/2)", () =>
 
 			it("Should fail if no portfolio id passed..", async () =>
 			{
-				const PORTFOLIO_NAME: string = "my-portfolio";
-
 				const RES_PORTFOLIO_CREATE = await request(app).post("/api/portfolio/create").set(
 					'authorization',
 					`Bearer ${token}`
@@ -259,8 +253,6 @@ describe("Request: POST (2/2)", () =>
 
 			it("Should fail if no portfolio name passed..", async () =>
 			{
-				const PORTFOLIO_NAME: string = "my-portfolio";
-
 				const RES_PORTFOLIO_CREATE = await request(app).post("/api/portfolio/create").set(
 					'authorization',
 					`Bearer ${token}`
@@ -304,8 +296,6 @@ describe("Request: POST (2/2)", () =>
 		{
 			it("Should update portfolio into database..", async () =>
 			{
-				const PORTFOLIO_NAME: string = "my-portfolio";
-
 				const RES_PORTFOLIO_CREATE = await request(app).post("/api/portfolio/create").set(
 					'authorization',
 					`Bearer ${token}`
@@ -372,8 +362,6 @@ describe("Request: POST (2/2)", () =>
 		{
 			it("Should be able to delete portfolio from database..", async () =>
 			{
-				const PORTFOLIO_NAME: string = "my-portfolio";
-
 				const RES_PORTFOLIO_CREATE = await request(app).post("/api/portfolio/create").set(
 					'authorization',
 					`Bearer ${token}`
