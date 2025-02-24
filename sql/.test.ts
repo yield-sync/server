@@ -181,38 +181,64 @@ describe("Asset Table Constraints", () =>
 					)
 				).rejects.toThrow(/Duplicate entry/);
 			});
-
-			it("Should fail when inserting a blockchain asset without address and native_token = 0..", async () =>
-			{
-				await expect(
-					testMySQLPool.promise().query(
-						"INSERT INTO asset (symbol, name, network, native_token) VALUES (?, ?, ?, ?);",
-						["ETH", "Ethereum", "ethereum", 0]
-					)
-				).rejects.toThrow("CONSTRAINT `CONSTRAINT_1` failed for `test_db`.`asset`");
-			});
-
-			it("Should fail when inserting a blockchain native asset with native_token = 1 and an address..", async () =>
-			{
-				await expect(
-					testMySQLPool.promise().query(
-						"INSERT INTO asset (symbol, name, network, address, native_token) VALUES (?, ?, ?, ?, ?);",
-						["ETH", "Ethereum", "ethereum", "0x000", 1]
-					)
-				).rejects.toThrow("CONSTRAINT `CONSTRAINT_1` failed for `test_db`.`asset`");
-			});
 		});
 
-		describe("Expected Success part 2", () =>
+		describe("Native Asset", () =>
 		{
-			it("Should allows inserting a blockchain native asset with native_token = 1 AND no address..", async () =>
+			describe("Expected Failure", () =>
 			{
-				await expect(
-					testMySQLPool.promise().query(
-						"INSERT INTO asset (symbol, name, network, native_token) VALUES (?, ?, ?, ?);",
-						["ETH", "Ethereum", "ethereum", 1]
-					)
-				).resolves.not.toThrow();
+				it("Should fail when inserting a blockchain native asset without address and native_token = 0..", async () =>
+				{
+					await expect(
+						testMySQLPool.promise().query(
+							"INSERT INTO asset (symbol, name, network, native_token) VALUES (?, ?, ?, ?);",
+							["ETH", "Ethereum", "ethereum", 0]
+						)
+					).rejects.toThrow("CONSTRAINT `CONSTRAINT_1` failed for `test_db`.`asset`");
+				});
+
+				it("Should fail when inserting a blockchain native asset with native_token = 1 and an address..", async () =>
+				{
+					await expect(
+						testMySQLPool.promise().query(
+							"INSERT INTO asset (symbol, name, network, address, native_token) VALUES (?, ?, ?, ?, ?);",
+							["ETH", "Ethereum", "ethereum", "0x000", 1]
+						)
+					).rejects.toThrow("CONSTRAINT `CONSTRAINT_1` failed for `test_db`.`asset`");
+				});
+			});
+
+			describe("Expected Success", () =>
+			{
+				it("Should allows inserting a blockchain native asset with native_token = 1 AND no address..", async () =>
+				{
+					await expect(
+						testMySQLPool.promise().query(
+							"INSERT INTO asset (symbol, name, network, native_token) VALUES (?, ?, ?, ?);",
+							["ETH", "Ethereum", "ethereum", 1]
+						)
+					).resolves.not.toThrow();
+				});
+			});
+
+			describe("Expected Failure Part 2", () =>
+			{
+				it("Should fail when inserting duplicate address..", async () =>
+				{
+					await expect(
+						testMySQLPool.promise().query(
+							"INSERT INTO asset (symbol, name, network, native_token) VALUES (?, ?, ?, ?);",
+							["ETH", "Ethereum", "ethereum", 1]
+						)
+					).resolves.not.toThrow();
+
+					await expect(
+						testMySQLPool.promise().query(
+							"INSERT INTO asset (symbol, name, network, native_token) VALUES (?, ?, ?, ?);",
+							["ETH2", "Ethereum2", "ethereum", 1]
+						)
+					).rejects.toThrow(/Duplicate entry/);
+				});
 			});
 		});
 	});

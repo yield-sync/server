@@ -80,7 +80,8 @@ const dBBuilder = async (mySQLPool: mysql.Pool, dBName: string, reset: boolean =
 							(native_token = 1 AND address IS NULL)
 						)
 					)
-				)
+				),
+				UNIQUE KEY unique_native_token_per_network (network, native_token)
 			);
 		`
 	);
