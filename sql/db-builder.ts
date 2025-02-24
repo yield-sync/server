@@ -56,6 +56,7 @@ const dBBuilder = async (mySQLPool: mysql.Pool, dBName: string, reset: boolean =
 				),
 				address VARCHAR(255) UNIQUE,
 				isin VARCHAR(12) UNIQUE,
+				PRIMARY KEY (id),
 				CHECK (
 					(network IN ('nasdaq', 'nyse') AND isin IS NOT NULL) OR
 					(
@@ -64,8 +65,7 @@ const dBBuilder = async (mySQLPool: mysql.Pool, dBName: string, reset: boolean =
 							(native_token = 1 AND address IS NULL)
 						)
 					)
-				),
-				PRIMARY KEY (id)
+				)
 			);
 		`
 	);
