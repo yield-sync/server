@@ -3,7 +3,7 @@ import mysql from "mysql2";
 
 import config from "../../../config";
 import { userAdmin } from "../../../middleware/token";
-import { hTTPStatus, allNetworks } from "../../../constants";
+import { allNetworks, blockchainNetworks, hTTPStatus, stockMarkets } from "../../../constants";
 
 
 export default (mySQLPool: mysql.Pool): express.Router =>
@@ -60,22 +60,13 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				}
 
 				// Validate ISIN and Address based on network type
-				if ([
-					"nasdaq",
-					"nyse",
-				].includes(network) && !isin)
+				if (stockMarkets.includes(network) && !isin)
 				{
 					res.status(hTTPStatus.BAD_REQUEST).send("ISIN is required for stock assets.");
 					return;
 				}
 
-				if ([
-					"arbitrum",
-					"base",
-					"ethereum",
-					"op-mainnet",
-					"solana",
-				].includes(network) && !address)
+				if (blockchainNetworks.includes(network) && !address)
 				{
 					res.status(hTTPStatus.BAD_REQUEST).send("Address is required for blockchain assets.");
 					return;
