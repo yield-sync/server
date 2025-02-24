@@ -1,8 +1,20 @@
-export const blockchainNetworks = ["arbitrum", "base", "ethereum", "op-mainnet", "solana"];
+export const blockchainNetworks = [
+	"arbitrum",
+	"base",
+	"ethereum",
+	"op-mainnet",
+	"solana",
+];
 
-export const stockMarkets = ["nasdaq", "nyse"];
+export const stockMarkets = [
+	"nasdaq",
+	"nyse",
+];
 
-export const allNetworks = [...blockchainNetworks, ...stockMarkets];
+export const allNetworks = [
+	...blockchainNetworks,
+	...stockMarkets,
+];
 
 export const hTTPStatus = {
 	OK: 200,

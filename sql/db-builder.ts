@@ -1,10 +1,23 @@
 import mysql from "mysql2";
 
 import config from "../config";
-import { blockchainNetworks, stockMarkets, allNetworks } from "../constants"
+import { blockchainNetworks, stockMarkets, allNetworks } from "../constants";
 
 
-const networkEnumSQL = allNetworks.map(n => `'${n}'`).join(", ");
+const sQLFriendlyListAllNetwork: string = allNetworks.map((n) =>
+{
+	return `'${n}'`;
+}).join(", ");
+
+const sQLFriendlyListBlockchain: string = blockchainNetworks.map((n) =>
+{
+	return `'${n}'`;
+}).join(", ");
+
+const sQLFriendlyListStockMarket: string = stockMarkets.map((n) =>
+{
+	return `'${n}'`;
+}).join(", ");
 
 
 /**
@@ -55,14 +68,14 @@ const dBBuilder = async (mySQLPool: mysql.Pool, dBName: string, reset: boolean =
 				native_token BIT(1) NOT NULL DEFAULT 0,
 				symbol VARCHAR(255),
 				name VARCHAR(255),
-				network VARCHAR(10) NOT NULL CHECK (network IN (${networkEnumSQL})),
+				network VARCHAR(10) NOT NULL CHECK (network IN (${sQLFriendlyListAllNetwork})),
 				address VARCHAR(255) UNIQUE,
 				isin VARCHAR(12) UNIQUE,
 				PRIMARY KEY (id),
 				CHECK (
-					(network IN (${stockMarkets.map(n => `'${n}'`).join(", ")}) AND isin IS NOT NULL) OR
+					(network IN (${sQLFriendlyListStockMarket}) AND isin IS NOT NULL) OR
 					(
-						network IN (${blockchainNetworks.map(n => `'${n}'`).join(", ")}) AND (
+						network IN (${sQLFriendlyListBlockchain}) AND (
 							(native_token = 0 AND address IS NOT NULL) OR
 							(native_token = 1 AND address IS NULL)
 						)
