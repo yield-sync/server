@@ -19,19 +19,21 @@ const testMySQLPool: mysql.Pool = mysql.createPool({
 });
 
 
+beforeAll(async () =>
+{
+	await dBBuilder(testMySQLPool, TEST_DB_NAME, true);
+});
+
+
+afterAll(async () =>
+{
+	await dropDB(TEST_DB_NAME, testMySQLPool);
+	testMySQLPool.end();
+});
+
+
 describe("Database Initialization", () => {
-	beforeAll(async () =>
-	{
-		await dBBuilder(testMySQLPool, TEST_DB_NAME, true);
-	});
-
-	afterAll(async () =>
-	{
-		await dropDB(TEST_DB_NAME, testMySQLPool);
-		testMySQLPool.end();
-	});
-
-	test("Database and tables are created", async () =>
+	it("Database and tables are created", async () =>
 	{
 		const [rows] = await testMySQLPool.promise().query("SHOW TABLES;");
 
@@ -54,4 +56,77 @@ describe("Database Initialization", () => {
 			])
 		);
 	});
-})
+});
+
+describe("Asset Table Constraints", () => {
+	beforeEach(async () => {
+		// Ensure test_db is clean before each test
+		await testMySQLPool.promise().query("DELETE FROM asset;");
+	});
+
+	it("Should fail when inserting asset without network..", async () =>
+	{
+		await expect(
+			testMySQLPool.promise().query(
+				"INSERT INTO asset (symbol, name, address) VALUES (?, ?, ?);",
+				["ETH", "Ethereum", "0x1234"]
+			)
+		).rejects.toThrow("Field 'network' doesn't have a default value");
+	});
+
+	it("Should fail when inserting asset with invalid network..", async () =>
+	{
+		await expect(
+			testMySQLPool.promise().query(
+				"INSERT INTO asset (symbol, name, network, address) VALUES (?, ?, ?, ?);",
+				["ETH", "Ethereum", "invalid", "0x1234"]
+			)
+		).rejects.toThrow("CONSTRAINT `asset.network` failed for `test_db`.`asset`");
+	});
+
+	it("Should fail when inserting stock asset without ISIN..", async () => {
+		await expect(
+			testMySQLPool.promise().query(
+				"INSERT INTO asset (symbol, name, network) VALUES (?, ?, ?);",
+				["AAPL", "Apple Inc.", "nasdaq"]
+			)
+		).rejects.toThrow("CONSTRAINT `CONSTRAINT_1` failed for `test_db`.`asset`");
+	});
+
+	it("Should fail when inserting blockchain asset without address..", async () => {
+		await expect(
+			testMySQLPool.promise().query(
+				"INSERT INTO asset (symbol, name, network) VALUES (?, ?, ?);",
+				["ETH", "Ethereum", "ethereum"]
+			)
+		).rejects.toThrow("CONSTRAINT `CONSTRAINT_1` failed for `test_db`.`asset`");
+	});
+
+	it("Fails when inserting duplicate ISIN", async () => {
+		await testMySQLPool.promise().query(
+			"INSERT INTO asset (symbol, name, network, isin) VALUES (?, ?, ?, ?);",
+			["AAPL", "Apple Inc.", "nasdaq", "US0378331005"]
+		);
+
+		await expect(
+			testMySQLPool.promise().query(
+				"INSERT INTO asset (symbol, name, network, isin) VALUES (?, ?, ?, ?);",
+				["MSFT", "Microsoft Corp.", "nasdaq", "US0378331005"]
+			)
+		).rejects.toThrow(/Duplicate entry/);
+	});
+
+	it("Fails when inserting duplicate address", async () => {
+		await testMySQLPool.promise().query(
+			"INSERT INTO asset (symbol, name, network, address) VALUES (?, ?, ?, ?);",
+			["ETH", "Ethereum", "ethereum", "0x1234"]
+		);
+
+		await expect(
+			testMySQLPool.promise().query(
+				"INSERT INTO asset (symbol, name, network, address) VALUES (?, ?, ?, ?);",
+				["USDC", "USD Coin", "ethereum", "0x1234"]
+			)
+		).rejects.toThrow(/Duplicate entry/);
+	});
+});
