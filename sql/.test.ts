@@ -187,7 +187,7 @@ describe("Asset Table Constraints", () =>
 		{
 			describe("Expected Failure", () =>
 			{
-				it("Should fail when inserting a blockchain native asset without address and native_token = 0..", async () =>
+				it("Should fail when inserting a blockchain native asset with native_token = 0 and no address ..", async () =>
 				{
 					await expect(
 						testMySQLPool.promise().query(
