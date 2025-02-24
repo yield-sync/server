@@ -1,6 +1,6 @@
 import mysql from "mysql2";
 
-import dBBuilder, { dropDB } from "./db-builder";
+import dBBuilder, { dBDrop } from "./db-builder";
 import config from "../config";
 
 
@@ -29,7 +29,7 @@ beforeEach(async () =>
 
 afterAll(async () =>
 {
-	await dropDB(TEST_DB_NAME, testMySQLPool);
+	await dBDrop(TEST_DB_NAME, testMySQLPool);
 	testMySQLPool.end();
 });
 

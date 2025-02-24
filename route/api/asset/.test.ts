@@ -6,7 +6,7 @@ import routeAPIAsset from "./index";
 import routeApi from "../index";
 import routeApiUser from "../user/index";
 import config from "../../../config";
-import DBBuilder, { dropDB } from "../../../sql/db-builder";
+import DBBuilder, { dBDrop } from "../../../sql/db-builder";
 
 const ASSET_NAME = "Asset";
 const ASSET_SYMBOL = "A";
@@ -22,7 +22,7 @@ let mySQLPool: mysql.Pool;
 
 afterAll(async () =>
 {
-	await dropDB(DB_NAME, mySQLPool);
+	await dBDrop(DB_NAME, mySQLPool);
 	await mySQLPool.end();
 });
 
@@ -51,7 +51,7 @@ beforeAll(async () =>
 
 beforeEach(async () =>
 {
-	await dropDB(DB_NAME, mySQLPool);
+	await dBDrop(DB_NAME, mySQLPool);
 
 	await DBBuilder(mySQLPool, DB_NAME, true);
 

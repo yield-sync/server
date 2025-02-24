@@ -6,7 +6,7 @@ import routeApiPortfolio from "./index";
 import routeApi from "../index";
 import routeApiUser from "../user/index";
 import config from "../../../config";
-import DBBuilder, { dropDB } from "../../../sql/db-builder";
+import DBBuilder, { dBDrop } from "../../../sql/db-builder";
 
 
 const DB_NAME: string = "mock_db_portfolio";
@@ -23,7 +23,7 @@ let mySQLPool: mysql.Pool;
 afterAll(async () =>
 {
 	// Drop the database (should await)
-	await dropDB(DB_NAME, mySQLPool);
+	await dBDrop(DB_NAME, mySQLPool);
 
 	// Close connection (should await)
 	await mySQLPool.end();
@@ -59,7 +59,7 @@ beforeAll(async () =>
 beforeEach(async () =>
 {
 	// Drop the database
-	await dropDB(DB_NAME, mySQLPool);
+	await dBDrop(DB_NAME, mySQLPool);
 
 	// [mock-db] drop and recreate
 	await DBBuilder(mySQLPool, DB_NAME, true);

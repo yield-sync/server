@@ -7,7 +7,7 @@ import routeApiAsset from "../asset/index";
 import routeApiPortfolio from "../portfolio/index";
 import routeApiUser from "../user/index";
 import config from "../../../config";
-import DBBuilder, { dropDB } from "../../../sql/db-builder";
+import DBBuilder, { dBDrop } from "../../../sql/db-builder";
 
 
 const request = require('supertest');
@@ -30,7 +30,7 @@ let mySQLPool: mysql.Pool;
 
 afterAll(async () =>
 {
-	await dropDB(DB_NAME, mySQLPool);
+	await dBDrop(DB_NAME, mySQLPool);
 
 	await mySQLPool.end();
 });
@@ -70,7 +70,7 @@ beforeAll(async () =>
 beforeEach(async () =>
 {
 	// Drop the database
-	await dropDB(DB_NAME, mySQLPool);
+	await dBDrop(DB_NAME, mySQLPool);
 
 	// [mock-db] drop and recreate
 	await DBBuilder(mySQLPool, DB_NAME, true);
