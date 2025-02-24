@@ -24,6 +24,11 @@ beforeAll(async () =>
 	await dBBuilder(testMySQLPool, TEST_DB_NAME, true);
 });
 
+beforeEach(async () =>
+{
+	// Ensure test_db is clean before each test
+	await testMySQLPool.promise().query("DELETE FROM asset;");
+});
 
 afterAll(async () =>
 {
@@ -61,115 +66,140 @@ describe("Database Initialization", () =>
 
 describe("Asset Table Constraints", () =>
 {
-	beforeEach(async () =>
+	describe("Any", () =>
 	{
-		// Ensure test_db is clean before each test
-		await testMySQLPool.promise().query("DELETE FROM asset;");
+		describe("Expected Failure", () =>
+		{
+			it("Should fail when inserting asset without network..", async () =>
+			{
+				await expect(
+					testMySQLPool.promise().query(
+						"INSERT INTO asset (symbol, name, address) VALUES (?, ?, ?);",
+						["ETH", "Ethereum", "0x1234"]
+					)
+				).rejects.toThrow("Field 'network' doesn't have a default value");
+			});
+
+			it("Should fail when inserting asset with invalid network..", async () =>
+			{
+				await expect(
+					testMySQLPool.promise().query(
+						"INSERT INTO asset (symbol, name, network, address) VALUES (?, ?, ?, ?);",
+						["ETH", "Ethereum", "invalid", "0x1234"]
+					)
+				).rejects.toThrow("CONSTRAINT `asset.network` failed for `test_db`.`asset`");
+			});
+		});
 	});
 
-	describe("Expected Failure", () =>
+	describe("Stock", () =>
 	{
-		it("Should fail when inserting asset without network..", async () =>
+		describe("Expected Failure", () =>
 		{
-			await expect(
-				testMySQLPool.promise().query(
-					"INSERT INTO asset (symbol, name, address) VALUES (?, ?, ?);",
-					["ETH", "Ethereum", "0x1234"]
-				)
-			).rejects.toThrow("Field 'network' doesn't have a default value");
+			it("Should fail when inserting stock asset without ISIN..", async () =>
+			{
+				await expect(
+					testMySQLPool.promise().query(
+						"INSERT INTO asset (symbol, name, network) VALUES (?, ?, ?);",
+						["AAPL", "Apple Inc.", "nasdaq"]
+					)
+				).rejects.toThrow("CONSTRAINT `CONSTRAINT_1` failed for `test_db`.`asset`");
+			});
 		});
 
-		it("Should fail when inserting asset with invalid network..", async () =>
+		describe("Expected Success", () =>
 		{
-			await expect(
-				testMySQLPool.promise().query(
-					"INSERT INTO asset (symbol, name, network, address) VALUES (?, ?, ?, ?);",
-					["ETH", "Ethereum", "invalid", "0x1234"]
-				)
-			).rejects.toThrow("CONSTRAINT `asset.network` failed for `test_db`.`asset`");
+			it("Should allows inserting a stock token with ISIN..", async () =>
+			{
+				await expect(
+					testMySQLPool.promise().query(
+						"INSERT INTO asset (symbol, name, network, isin) VALUES (?, ?, ?, ?);",
+						["MSFT", "Microsoft Corp.", "nasdaq", "US0378331005"]
+					)
+				).resolves.not.toThrow()
+			});
 		});
 
-		it("Should fail when inserting stock asset without ISIN..", async () =>
+		describe("Expected Failure Part 2", () =>
 		{
-			await expect(
-				testMySQLPool.promise().query(
-					"INSERT INTO asset (symbol, name, network) VALUES (?, ?, ?);",
-					["AAPL", "Apple Inc.", "nasdaq"]
-				)
-			).rejects.toThrow("CONSTRAINT `CONSTRAINT_1` failed for `test_db`.`asset`");
-		});
-
-		it("Should fail when inserting blockchain asset without address and native_token..", async () =>
-		{
-			await expect(
-				testMySQLPool.promise().query(
-					"INSERT INTO asset (symbol, name, network) VALUES (?, ?, ?);",
-					["ETH", "Ethereum", "ethereum"]
-				)
-			).rejects.toThrow("CONSTRAINT `CONSTRAINT_1` failed for `test_db`.`asset`");
-		});
-
-		it("Should fail when inserting duplicate ISIN..", async () =>
-		{
-			await testMySQLPool.promise().query(
-				"INSERT INTO asset (symbol, name, network, isin) VALUES (?, ?, ?, ?);",
-				["AAPL", "Apple Inc.", "nasdaq", "US0378331005"]
-			);
-
-			await expect(
-				testMySQLPool.promise().query(
+			it("Should fail when inserting duplicate ISIN..", async () =>
+			{
+				await testMySQLPool.promise().query(
 					"INSERT INTO asset (symbol, name, network, isin) VALUES (?, ?, ?, ?);",
-					["MSFT", "Microsoft Corp.", "nasdaq", "US0378331005"]
-				)
-			).rejects.toThrow(/Duplicate entry/);
-		});
+					["AAPL", "Apple Inc.", "nasdaq", "US0378331005"]
+				);
 
-		it("Should fail when inserting duplicate address", async () =>
-		{
-			await testMySQLPool.promise().query(
-				"INSERT INTO asset (symbol, name, network, address) VALUES (?, ?, ?, ?);",
-				["ETH", "Ethereum", "ethereum", "0x1234"]
-			);
-
-			await expect(
-				testMySQLPool.promise().query(
-					"INSERT INTO asset (symbol, name, network, address) VALUES (?, ?, ?, ?);",
-					["USDC", "USD Coin", "ethereum", "0x1234"]
-				)
-			).rejects.toThrow(/Duplicate entry/);
-		});
-
-		it("Should fail when inserting a blockchain asset without address and native_token = 0", async () =>
-		{
-			await expect(
-				testMySQLPool.promise().query(
-					"INSERT INTO asset (symbol, name, network, native_token) VALUES (?, ?, ?, ?);",
-					["ETH", "Ethereum", "ethereum", 0]
-				)
-			).rejects.toThrow("CONSTRAINT `CONSTRAINT_1` failed for `test_db`.`asset`");
-		});
-
-		it("Should fail when inserting a native token with an address", async () =>
-		{
-			await expect(
-				testMySQLPool.promise().query(
-					"INSERT INTO asset (symbol, name, network, address, native_token) VALUES (?, ?, ?, ?, ?);",
-					["ETH", "Ethereum", "ethereum", "0x000", 1]
-				)
-			).rejects.toThrow("CONSTRAINT `CONSTRAINT_1` failed for `test_db`.`asset`");
+				await expect(
+					testMySQLPool.promise().query(
+						"INSERT INTO asset (symbol, name, network, isin) VALUES (?, ?, ?, ?);",
+						["MSFT", "Microsoft Corp.", "nasdaq", "US0378331005"]
+					)
+				).rejects.toThrow(/Duplicate entry/);
+			});
 		});
 	});
 
-	describe("Expected Success", () =>
+	describe("Blockchain Asset", () =>
 	{
-		it("Allows inserting a native blockchain token without an address but with native_token = 1", async () =>
+		describe("Expected Failure", () =>
 		{
-			await expect(
-				testMySQLPool.promise().query(
-					"INSERT INTO asset (symbol, name, network, native_token) VALUES (?, ?, ?, ?);",
-					["ETH", "Ethereum", "ethereum", 1]
-				)
-			).resolves.not.toThrow();
+			it("Should fail when inserting blockchain asset without address and native_token..", async () =>
+			{
+				await expect(
+					testMySQLPool.promise().query(
+						"INSERT INTO asset (symbol, name, network) VALUES (?, ?, ?);",
+						["ETH", "Ethereum", "ethereum"]
+					)
+				).rejects.toThrow("CONSTRAINT `CONSTRAINT_1` failed for `test_db`.`asset`");
+			});
+
+			it("Should fail when inserting duplicate address", async () =>
+			{
+				await testMySQLPool.promise().query(
+					"INSERT INTO asset (symbol, name, network, address) VALUES (?, ?, ?, ?);",
+					["ETH", "Ethereum", "ethereum", "0x1234"]
+				);
+
+				await expect(
+					testMySQLPool.promise().query(
+						"INSERT INTO asset (symbol, name, network, address) VALUES (?, ?, ?, ?);",
+						["USDC", "USD Coin", "ethereum", "0x1234"]
+					)
+				).rejects.toThrow(/Duplicate entry/);
+			});
+
+			it("Should fail when inserting a blockchain asset without address and native_token = 0", async () =>
+			{
+				await expect(
+					testMySQLPool.promise().query(
+						"INSERT INTO asset (symbol, name, network, native_token) VALUES (?, ?, ?, ?);",
+						["ETH", "Ethereum", "ethereum", 0]
+					)
+				).rejects.toThrow("CONSTRAINT `CONSTRAINT_1` failed for `test_db`.`asset`");
+			});
+
+			it("Should fail when inserting a native token with an address", async () =>
+			{
+				await expect(
+					testMySQLPool.promise().query(
+						"INSERT INTO asset (symbol, name, network, address, native_token) VALUES (?, ?, ?, ?, ?);",
+						["ETH", "Ethereum", "ethereum", "0x000", 1]
+					)
+				).rejects.toThrow("CONSTRAINT `CONSTRAINT_1` failed for `test_db`.`asset`");
+			});
+		});
+
+		describe("Expected Success", () =>
+		{
+			it("Allows inserting a native blockchain token with native_token = 1 and no address value..", async () =>
+			{
+				await expect(
+					testMySQLPool.promise().query(
+						"INSERT INTO asset (symbol, name, network, native_token) VALUES (?, ?, ?, ?);",
+						["ETH", "Ethereum", "ethereum", 1]
+					)
+				).resolves.not.toThrow();
+			});
 		});
 	});
 });
