@@ -33,9 +33,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			}
 			catch (error)
 			{
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(
-					config.nodeENV == "production" ? "Internal server error" : error
-				);
+				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(error);
 
 				return;
 			}
@@ -75,9 +73,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			}
 			catch (error)
 			{
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(
-					config.nodeENV == "production" ? "Internal server error" : error
-				);
+				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(error);
 
 				return;
 			}
@@ -125,9 +121,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			}
 			catch (error)
 			{
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(
-					config.nodeENV == "production" ? "Internal server error" : error
-				);
+				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(error);
 
 				return;
 			}
@@ -165,9 +159,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			}
 			catch (error)
 			{
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(
-					config.nodeENV == "production" ? "Internal server error" : error
-				);
+				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(error);
 
 				return;
 			}

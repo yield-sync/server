@@ -31,9 +31,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			}
 			catch (error)
 			{
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(
-					config.nodeENV == "production" ? "Internal server error" : error
-				);
+				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(error);
 
 				return;
 			}
@@ -48,7 +46,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		userAdmin(),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const { name, symbol, network, isin, address }: AssetCreate = req.body.load;
+			const { name, symbol, network, isin, address, native_token }: AssetCreate = req.body.load;
 
 			try
 			{
@@ -66,10 +64,51 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				if (blockchainNetworks.includes(network) && !address)
+				if (blockchainNetworks.includes(network))
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("Address is required for blockchain assets.");
-					return;
+					if (!address && !native_token)
+					{
+						res.status(hTTPStatus.BAD_REQUEST).send("Address is required for blockchain assets.");
+						return;
+					}
+
+					if (address && native_token)
+					{
+						res.status(hTTPStatus.BAD_REQUEST).send("Native tokens should not have an address.");
+						return;
+					}
+
+					const [
+						assetOnNetworkAndAddress,
+					] = await mySQLPool.promise().query(
+						"SELECT id FROM asset WHERE network = ? AND address = ?;",
+						[
+							network,
+							address,
+						]
+					);
+
+					if ((assetOnNetworkAndAddress as any[]).length > 0)
+					{
+						res.status(hTTPStatus.CONFLICT).send("Address already exists.");
+						return;
+					}
+
+					const [
+						assetOnNetworkNativeToken,
+					] = await mySQLPool.promise().query(
+						"SELECT id FROM asset WHERE network = ? AND native_token = 1;",
+						[
+							network,
+							address,
+						]
+					);
+
+					if ((assetOnNetworkNativeToken as any[]).length > 0)
+					{
+						res.status(hTTPStatus.CONFLICT).send("Native token on network already exists.");
+						return;
+					}
 				}
 
 				// Ensure uniqueness of ISIN and Address
@@ -91,7 +130,8 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				{
 					const [
 						existingAddress,
-					] = await mySQLPool.promise().query("SELECT id FROM asset WHERE address = ?;", [
+					] = await mySQLPool.promise().query("SELECT id FROM asset WHERE network = ? AND address = ?;", [
+						network,
 						address,
 					]);
 					if ((existingAddress as any[]).length > 0)
@@ -118,9 +158,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			catch (error)
 			{
 				console.log(error);
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(
-					config.nodeENV === "production" ? "Internal server error" : error
-				);
+				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(error);
 			}
 		}
 	).post(
@@ -221,9 +259,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			}
 			catch (error)
 			{
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(
-					config.nodeENV === "production" ? "Internal server error" : error
-				);
+				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(error);
 			}
 		}
 	).post(
@@ -270,9 +306,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			}
 			catch (error)
 			{
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(
-					config.nodeENV === "production" ? "Internal server error" : error
-				);
+				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(error);
 			}
 		}
 	);

@@ -95,7 +95,7 @@ describe("Request: POST", () =>
 				expect(assets.length).toBe(0);
 			});
 
-			it("Should fail if required fields are missing..", async () =>
+			it("Should fail if network is missing..", async () =>
 			{
 				// Missing network
 				await request(app).post("/api/asset/create").set("authorization", `Bearer ${token}`).send({
@@ -103,64 +103,109 @@ describe("Request: POST", () =>
 				}).expect(400);
 			});
 
-			it("Should fail if ISIN is missing for a stock asset..", async () =>
+			describe("Stock", () =>
 			{
-				await request(app).post("/api/asset/create").set("authorization", `Bearer ${token}`).send({
-					load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, network: "nasdaq" }
-				}).expect(400);
+				it("Should fail if ISIN is missing..", async () =>
+				{
+					await request(app).post("/api/asset/create").set("authorization", `Bearer ${token}`).send({
+						load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, network: "nasdaq" }
+					}).expect(400);
+				});
 			});
 
-			it("Should fail if address is missing for a crypto asset..", async () =>
+			describe("Crypto", () =>
 			{
-				await request(app).post("/api/asset/create").set("authorization", `Bearer ${token}`).send({
-					load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, network: "ethereum" }
-				}).expect(400);
+				it("Should fail if address is missing..", async () =>
+				{
+					await request(app).post("/api/asset/create").set("authorization", `Bearer ${token}`).send({
+						load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, network: "ethereum" }
+					}).expect(400);
+				});
 			});
 		});
 
 		describe("Expected Success", () =>
 		{
-			it("Should create a stock asset..", async () =>
+			describe("Stock", () =>
 			{
-				const res = await request(app).post("/api/asset/create").set("authorization", `Bearer ${token}`).send({
-					load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, network: "nasdaq", isin: "US0378331005" }
+				it("Should create asset..", async () =>
+				{
+					const res = await request(app).post("/api/asset/create").set("authorization", `Bearer ${token}`).send({
+						load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, network: "nasdaq", isin: "US0378331005" }
+					});
+
+					expect(res.statusCode).toBe(201);
+
+					const [assets]: any[] = await mySQLPool.promise().query(
+						"SELECT * FROM asset WHERE isin = ?;",
+						["US0378331005"]
+					);
+
+					expect(Array.isArray(assets)).toBe(true);
+
+					expect(assets.length).toBe(1);
+
+					expect(assets[0].network).toBe("nasdaq");
+
+					expect(assets[0].isin).toBe("US0378331005");
 				});
-
-				expect(res.statusCode).toBe(201);
-
-				const [assets]: any[] = await mySQLPool.promise().query(
-					"SELECT * FROM asset WHERE isin = ?;",
-					["US0378331005"]
-				);
-
-				expect(Array.isArray(assets)).toBe(true);
-
-				expect(assets.length).toBe(1);
-
-				expect(assets[0].network).toBe("nasdaq");
-
-				expect(assets[0].isin).toBe("US0378331005");
 			});
 
-			it("Should create a crypto asset..", async () =>
+			describe("Crypto", () =>
 			{
-				const res = await request(app).post("/api/asset/create").set("authorization", `Bearer ${token}`).send({
-					load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, network: "ethereum", address: "0xabcdef123456" }
+				it("Should create asset..", async () =>
+				{
+					const res = await request(app).post("/api/asset/create").set("authorization", `Bearer ${token}`).send({
+						load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, network: "ethereum", address: "0xabcdef123456" }
+					});
+
+					expect(res.statusCode).toBe(201);
+
+					const [assets]: any[] = await mySQLPool.promise().query("SELECT * FROM asset WHERE address = ?;", ["0xabcdef123456"]);
+
+					expect(Array.isArray(assets)).toBe(true);
+
+					expect(assets.length).toBe(1);
+
+					expect(assets[0].network).toBe("ethereum");
+
+					expect(assets[0].address).toBe("0xabcdef123456");
 				});
-
-				expect(res.statusCode).toBe(201);
-
-				const [assets]: any[] = await mySQLPool.promise().query("SELECT * FROM asset WHERE address = ?;", ["0xabcdef123456"]);
-
-				expect(Array.isArray(assets)).toBe(true);
-
-				expect(assets.length).toBe(1);
-
-				expect(assets[0].network).toBe("ethereum");
-
-				expect(assets[0].address).toBe("0xabcdef123456");
 			});
 		});
+
+		describe("Expected Failure Part 2", () =>
+			{
+				describe("Stock", () =>
+				{
+					it("Should create asset..", async () =>
+					{
+						await request(app).post("/api/asset/create").set("authorization", `Bearer ${token}`).send({
+							load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, network: "nasdaq", isin: "US0378331005" }
+						});
+
+
+					});
+				});
+
+				describe("Crypto", () =>
+				{
+					it("Should not allow duplciate addresses on an network..", async () =>
+					{
+						await request(app).post("/api/asset/create").set("authorization", `Bearer ${token}`).send({
+							load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, network: "ethereum", address: "0xabcdef123456" }
+						});
+
+						const res = await request(app).post("/api/asset/create").set("authorization", `Bearer ${token}`).send({
+							load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, network: "ethereum", address: "0xabcdef123456" }
+						});
+
+						expect(res.statusCode).toBe(409);
+
+						expect(res.error.text).toBe("Address already exists.");
+					});
+				});
+			});
 	});
 
 	describe("Route: /api/asset/update", () =>

@@ -11,6 +11,7 @@ declare global
 	type Load = object;
 
 	type AssetCreate = Load & {
+		native_token?: boolean;
 		symbol?: string;
 		name?: string;
 		network: string;

@@ -41,7 +41,7 @@ const queries: string[] = [
 			symbol VARCHAR(255),
 			name VARCHAR(255),
 			network VARCHAR(10) NOT NULL CHECK (network IN (${sQLFriendlyListAllNetwork})),
-			address VARCHAR(255) UNIQUE,
+			address VARCHAR(255),
 			isin VARCHAR(12) UNIQUE,
 			PRIMARY KEY (id),
 			CHECK (
@@ -51,8 +51,9 @@ const queries: string[] = [
 					(native_token = 1 AND address IS NULL)
 				))
 			),
-			UNIQUE KEY unique_native_token_per_network (network, native_token)
-		)
+			UNIQUE KEY unique_native_token_per_network (network, native_token),
+			UNIQUE KEY unique_address_per_network (network, address)
+		);
 	`,
 	// asset_industry table
 	`
@@ -107,7 +108,7 @@ const queries: string[] = [
 			PRIMARY KEY (id),
 			FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
 		)
-	`
+	`,
 ];
 
 

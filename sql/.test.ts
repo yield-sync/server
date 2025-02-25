@@ -29,7 +29,7 @@ beforeEach(async () =>
 
 afterAll(async () =>
 {
-	await dBDrop(TEST_DB_NAME, testMySQLPool);
+	//await dBDrop(TEST_DB_NAME, testMySQLPool);
 	testMySQLPool.end();
 });
 
@@ -163,12 +163,27 @@ describe("Asset Table Constraints", () =>
 					)
 				).resolves.not.toThrow();
 			});
+
+			it("Should allow inserting 2 assets with same address but different networks..", async () => {
+				await expect(
+					testMySQLPool.promise().query(
+						"INSERT INTO asset (symbol, name, network, address) VALUES (?, ?, ?, ?);",
+						["USDC", "USDC", "ethereum", "0x123"]
+					)
+				).resolves.not.toThrow();
+
+				await expect(
+					testMySQLPool.promise().query(
+						"INSERT INTO asset (symbol, name, network, address) VALUES (?, ?, ?, ?);",
+						["USDC", "USDC", "base", "0x123"] // Same address, different network
+					)
+				).resolves.not.toThrow();
+			});
 		});
 
 		describe("Expected Failure Part 2", () =>
 		{
-			it("Should fail when inserting duplicate address..", async () =>
-			{
+			it("Should not allow inserting 2 assets with same address and same network..", async () => {
 				await testMySQLPool.promise().query(
 					"INSERT INTO asset (symbol, name, network, address) VALUES (?, ?, ?, ?);",
 					["USDC", "USDC", "ethereum", "0x123"]
@@ -177,7 +192,7 @@ describe("Asset Table Constraints", () =>
 				await expect(
 					testMySQLPool.promise().query(
 						"INSERT INTO asset (symbol, name, network, address) VALUES (?, ?, ?, ?);",
-						["USDC", "USDC", "ethereum", "0x123"]
+						["USDT", "Tether", "ethereum", "0x123"] // Same network, same address
 					)
 				).rejects.toThrow(/Duplicate entry/);
 			});
@@ -223,7 +238,7 @@ describe("Asset Table Constraints", () =>
 
 			describe("Expected Failure Part 2", () =>
 			{
-				it("Should fail when inserting duplicate address..", async () =>
+				it("Should fail when inserting duplicate native_token = 1..", async () =>
 				{
 					await expect(
 						testMySQLPool.promise().query(

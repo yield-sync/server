@@ -77,9 +77,7 @@ MySQLQueryResult = await mySQLPool.promise().query(
 			}
 			catch (error)
 			{
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(
-					config.nodeENV == "production" ? "Internal server error" : error
-				);
+				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(error);
 
 				return;
 			}
