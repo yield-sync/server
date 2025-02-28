@@ -184,4 +184,94 @@ describe("Request: POST", () =>
 			});
 		});
 	});
+
+	describe("Route: /api/stock/update", () =>
+	{
+		describe("Expected Failure", () =>
+		{
+			it("Should fail if stockId is missing..", async () =>
+			{
+				const res = await request(app).post("/api/stock/update").set("authorization", `Bearer ${token}`).send({
+					load: { exchange: "nasdaq", isin: "US0378331005", name: ASSET_NAME, symbol: ASSET_SYMBOL }
+				});
+
+				expect(res.statusCode).toBe(400);
+				expect(res.text).toBe("stockId is required");
+			});
+		});
+
+		describe("Expected Success", () =>
+		{
+			it("Should update stock..", async () =>
+			{
+				const createRes = await request(app).post("/api/stock/create").set("authorization", `Bearer ${token}`).send({
+					load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, exchange: "nasdaq", isin: "US0378331005" }
+				});
+
+				expect(createRes.statusCode).toBe(201);
+
+				const [assets]: any[] = await mySQLPool.promise().query(
+					"SELECT * FROM stock WHERE isin = ?;",
+					["US0378331005"]
+				);
+
+				expect(assets.length).toBe(1);
+
+				const updateRes = await request(app).post("/api/stock/update").set("authorization", `Bearer ${token}`).send({
+					load: { stockId: assets[0].id, name: "New Name", symbol: "NEW", exchange: "nasdaq", isin: "US0378331005" }
+				});
+
+				expect(updateRes.statusCode).toBe(200);
+				expect(updateRes.text).toBe("Updated stock");
+
+				const [updated]: any[] = await mySQLPool.promise().query("SELECT * FROM stock WHERE id = ?;", [assets[0].id]);
+
+				expect(updated[0].name).toBe("New Name");
+				expect(updated[0].symbol).toBe("NEW");
+			});
+		});
+	});
+
+	describe("Route: /api/stock/delete", () =>
+	{
+		describe("Expected Failure", () =>
+		{
+			it("Should fail if stockId is missing..", async () =>
+			{
+				const res = await request(app).post("/api/stock/delete").set("authorization", `Bearer ${token}`).send({
+					load: {}
+				});
+
+				expect(res.statusCode).toBe(400);
+				expect(res.text).toBe("Stock ID is required");
+			});
+		});
+
+		describe("Expected Success", () =>
+		{
+			it("Should delete stock..", async () =>
+			{
+				const createRes = await request(app).post("/api/stock/create").set("authorization", `Bearer ${token}`).send({
+					load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, exchange: "nasdaq", isin: "US0378331005" }
+				});
+
+				expect(createRes.statusCode).toBe(201);
+
+				const [assets]: any[] = await mySQLPool.promise().query("SELECT * FROM stock;");
+
+				expect(assets.length).toBe(1);
+
+				const deleteRes = await request(app).post("/api/stock/delete").set("authorization", `Bearer ${token}`).send({
+					load: { stockId: assets[0].id }
+				});
+
+				expect(deleteRes.statusCode).toBe(200);
+				expect(deleteRes.text).toBe("Deleted stock");
+
+				const [deleted]: any[] = await mySQLPool.promise().query("SELECT * FROM stock;");
+
+				expect(deleted.length).toBe(0);
+			});
+		});
+	});
 });

@@ -111,7 +111,20 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				if (!stockId)
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("stockId is required.");
+					res.status(hTTPStatus.BAD_REQUEST).send("stockId is required");
+					return;
+				}
+
+				if (!exchange || !stockExchanges.includes(exchange))
+				{
+					res.status(hTTPStatus.BAD_REQUEST).send("Invalid or missing exchange");
+
+					return;
+				}
+
+				if (!isin)
+				{
+					res.status(hTTPStatus.BAD_REQUEST).send("ISIN is required for stock");
 					return;
 				}
 
@@ -128,13 +141,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				if ((existingStock as any[]).length === 0)
 				{
-					res.status(hTTPStatus.NOT_FOUND).send("Stock not found.");
-					return;
-				}
-
-				if (!exchange && !stockExchanges.includes(exchange))
-				{
-					res.status(hTTPStatus.BAD_REQUEST).send("Invalid exchange.");
+					res.status(hTTPStatus.NOT_FOUND).send("Stock not found");
 					return;
 				}
 
@@ -150,30 +157,12 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				if ((existingISIN as any[]).length > 0)
 				{
-					res.status(hTTPStatus.CONFLICT).send("ISIN already exists.");
+					res.status(hTTPStatus.CONFLICT).send("ISIN already exists");
 					return;
 				}
 
-
-				const [
-					existingAddress,
-				] = await mySQLPool.promise().query(
-					"SELECT id FROM stock WHERE address = ? AND id != ?;",
-					[
-						exchange,
-						stockId,
-					]
-				);
-
-				if ((existingAddress as any[]).length > 0)
-				{
-					res.status(hTTPStatus.CONFLICT).send("Address already exists.");
-					return;
-				}
-
-				// Update the stock
 				await mySQLPool.promise().query(
-					"UPDATE stock SET name = ?, symbol = ?, network = ?, isin = ?, address = ? WHERE id = ?;",
+					"UPDATE stock SET name = ?, symbol = ?, exchange = ?, isin = ? WHERE id = ?;",
 					[
 						name,
 						symbol,
@@ -183,10 +172,12 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					]
 				);
 
-				res.status(hTTPStatus.OK).send("Updated stock.");
+				res.status(hTTPStatus.OK).send("Updated stock");
 			}
 			catch (error)
 			{
+				console.log(error);
+
 				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(error);
 			}
 		}
@@ -206,7 +197,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				if (!stockId)
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("Stock ID is required.");
+					res.status(hTTPStatus.BAD_REQUEST).send("Stock ID is required");
 					return;
 				}
 
@@ -222,15 +213,18 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				if ((existingStock as any[]).length === 0)
 				{
-					res.status(hTTPStatus.NOT_FOUND).send("Stock not found.");
+					res.status(hTTPStatus.NOT_FOUND).send("Stock not found");
 					return;
 				}
 
-				await mySQLPool.promise().query("DELETE FROM stock WHERE id = ?;", [
-					stockId,
-				]);
+				await mySQLPool.promise().query(
+					"DELETE FROM stock WHERE id = ?;",
+					[
+						stockId,
+					]
+				);
 
-				res.status(hTTPStatus.OK).send("Deleted stock.");
+				res.status(hTTPStatus.OK).send("Deleted stock");
 			}
 			catch (error)
 			{
