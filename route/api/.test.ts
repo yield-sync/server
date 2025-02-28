@@ -20,7 +20,5 @@ describe("Request: GET", () =>
 	});
 
 	describe("/api/recover-account", () =>
-	{
-		//it("Should be able to receive email from server")
-	});
+	{});
 });

@@ -158,11 +158,7 @@ describe("Request: GET", () =>
 				const RES = await request(app).post("/api/portfolio-asset/create").set(
 					'authorization',
 					`Bearer ${token}`
-				).send({
-					load: {
-						stockId: stockId,
-					}
-				}).expect(400);
+				).send({ load: { stockId, } }).expect(400);
 
 				expect(RES.text).toBe("No portfolioId received");
 

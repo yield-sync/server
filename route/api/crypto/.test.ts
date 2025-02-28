@@ -8,8 +8,8 @@ import routeApiUser from "../user/index";
 import config from "../../../config";
 import DBBuilder, { dBDrop } from "../../../sql/db-builder";
 
-const ASSET_NAME = "Asset";
-const ASSET_SYMBOL = "A";
+const ASSET_NAME = "US Dollar Coin";
+const ASSET_SYMBOL = "USDC";
 const DB_NAME = "mock_db_crypto";
 const EMAIL = "testemail@example.com";
 const PASSWORD = "testpassword!";
