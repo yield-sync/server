@@ -14,7 +14,7 @@ const sQLStockExchanges: string = stockExchanges.map((n) =>
 }).join(", ");
 
 const queries: string[] = [
-	// user table
+	// user
 	`
 		CREATE TABLE user (
 			id INT NOT NULL AUTO_INCREMENT,
@@ -55,7 +55,7 @@ const queries: string[] = [
 			)
 		);
 	`,
-	// stock_industry table
+	// stock_industry
 	`
 		CREATE TABLE stock_industry (
 			id INT NOT NULL AUTO_INCREMENT,
@@ -65,7 +65,7 @@ const queries: string[] = [
 			FOREIGN KEY (stockId) REFERENCES stock(id) ON DELETE CASCADE
 		)
 	`,
-	// stock_sector table
+	// stock_sector
 	`
 		CREATE TABLE stock_sector (
 			id INT NOT NULL AUTO_INCREMENT,
@@ -75,7 +75,7 @@ const queries: string[] = [
 			FOREIGN KEY (stockId) REFERENCES stock(id) ON DELETE CASCADE
 		)
 	`,
-	// portfolio table
+	// portfolio
 	`
 		CREATE TABLE portfolio (
 			id INT NOT NULL AUTO_INCREMENT,
@@ -86,7 +86,7 @@ const queries: string[] = [
 			FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
 		)
 	`,
-	// portfolio_asset table
+	// portfolio_asset
 	`
 		CREATE TABLE portfolio_asset (
 			id INT NOT NULL AUTO_INCREMENT,
@@ -98,7 +98,7 @@ const queries: string[] = [
 			FOREIGN KEY (stockId) REFERENCES stock(id) ON DELETE CASCADE
 		)
 	`,
-	// verification table
+	// verification
 	`
 		CREATE TABLE verification (
 			id INT NOT NULL AUTO_INCREMENT,
