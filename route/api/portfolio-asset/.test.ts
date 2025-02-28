@@ -22,7 +22,7 @@ const PORTFOLIO_NAME: string = "my-portfolio";
 
 let token: string;
 let stockId: string;
-let portfolio_id: string;
+let portfolioId: string;
 let app: express.Express;
 let mySQLPool: mysql.Pool;
 
@@ -112,7 +112,7 @@ beforeEach(async () =>
 		"SELECT id FROM portfolio WHERE name = ?;", [PORTFOLIO_NAME]
 	);
 
-	portfolio_id = portfolios[0].id;
+	portfolioId = portfolios[0].id;
 
 	const resAssetCreate = await request(app).post("/api/stock/create").set("authorization", `Bearer ${token}`).send({
 		load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, exchange: "nasdaq", isin: "123" }
@@ -138,7 +138,7 @@ describe("Request: GET", () =>
 			{
 				await request(app).post("/api/portfolio-asset/create").send({
 					load: {
-						portfolio_id,
+						portfolioId,
 						stockId,
 					} as PortfolioAssetCreate
 				}).expect(401);
@@ -153,7 +153,7 @@ describe("Request: GET", () =>
 				expect(results.length).toBe(0);
 			});
 
-			it("Should fail if no portfolio_id passed..", async () =>
+			it("Should fail if no portfolioId passed..", async () =>
 			{
 				const RES = await request(app).post("/api/portfolio-asset/create").set(
 					'authorization',
@@ -164,7 +164,7 @@ describe("Request: GET", () =>
 					}
 				}).expect(400);
 
-				expect(RES.text).toBe("No portfolio_id received");
+				expect(RES.text).toBe("No portfolioId received");
 
 				const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio_asset;");
 
@@ -183,7 +183,7 @@ describe("Request: GET", () =>
 					`Bearer ${token}`
 				).send({
 					load: {
-						portfolio_id: portfolio_id,
+						portfolioId: portfolioId,
 					}
 				}).expect(400);
 
@@ -209,7 +209,7 @@ describe("Request: GET", () =>
 					`Bearer ${token}`
 				).send({
 					load: {
-						portfolio_id: portfolio_id,
+						portfolioId: portfolioId,
 						stockId: stockId,
 					} as PortfolioAssetCreate
 				});
@@ -232,12 +232,12 @@ describe("Request: GET", () =>
 
 				expect(portfolioAssests[0].stockId).toBe(stockId);
 
-				if (!("portfolio_id" in portfolioAssests[0]))
+				if (!("portfolioId" in portfolioAssests[0]))
 				{
-					throw new Error("Key 'portfolio_id' not in portfolioAssets");
+					throw new Error("Key 'portfolioId' not in portfolioAssets");
 				}
 
-				expect(portfolioAssests[0].portfolio_id).toBe(portfolio_id);
+				expect(portfolioAssests[0].portfolioId).toBe(portfolioId);
 			});
 		});
 	});

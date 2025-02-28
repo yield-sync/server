@@ -90,11 +90,11 @@ const queries: string[] = [
 	`
 		CREATE TABLE portfolio_asset (
 			id INT NOT NULL AUTO_INCREMENT,
-			portfolio_id INT NOT NULL,
+			portfolioId INT NOT NULL,
 			stockId INT,
 			created DATETIME DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
-			FOREIGN KEY (portfolio_id) REFERENCES portfolio(id) ON DELETE CASCADE,
+			FOREIGN KEY (portfolioId) REFERENCES portfolio(id) ON DELETE CASCADE,
 			FOREIGN KEY (stockId) REFERENCES stock(id) ON DELETE CASCADE
 		)
 	`,

@@ -138,7 +138,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		{
 			try
 			{
-				if (!req.body.load.portfolio_id)
+				if (!req.body.load.portfolioId)
 				{
 					res.status(hTTPStatus.BAD_REQUEST).send("No portfolio id provided");
 
@@ -149,7 +149,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					"DELETE FROM portfolio WHERE user_id = ? AND id = ?;",
 					[
 						req.body.userDecoded.id,
-						req.body.load.portfolio_id,
+						req.body.load.portfolioId,
 					]
 				);
 

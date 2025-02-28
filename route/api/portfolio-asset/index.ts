@@ -29,9 +29,9 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				if (!load.portfolio_id)
+				if (!load.portfolioId)
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("No portfolio_id received");
+					res.status(hTTPStatus.BAD_REQUEST).send("No portfolioId received");
 
 					return;
 				}
@@ -42,7 +42,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 MySQLQueryResult = await mySQLPool.promise().query(
 	"SELECT * FROM portfolio WHERE id = ? AND user_id = ?;",
 	[
-		load.portfolio_id,
+		load.portfolioId,
 		req.body.userDecoded.id,
 	]
 );
@@ -56,16 +56,16 @@ MySQLQueryResult = await mySQLPool.promise().query(
 
 				if (portfolios.length == 0)
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("Invalid portfolio_id");
+					res.status(hTTPStatus.BAD_REQUEST).send("Invalid portfolioId");
 
 					return;
 				}
 
 				// Insert into portfolio_asset
 				await mySQLPool.promise().query(
-					"INSERT INTO portfolio_asset (portfolio_id, stockId) VALUES (?, ?);",
+					"INSERT INTO portfolio_asset (portfolioId, stockId) VALUES (?, ?);",
 					[
-						load.portfolio_id,
+						load.portfolioId,
 						load.stockId,
 					]
 				);

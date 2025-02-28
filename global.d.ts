@@ -40,7 +40,7 @@ declare global
 	};
 
 	type PortfolioAssetCreate = Load & {
-		portfolio_id: string,
+		portfolioId: string,
 		stockId: string,
 	};
 

@@ -407,7 +407,7 @@ describe("Request: POST (2/2)", () =>
 					`Bearer ${token}`
 				).send({
 					load: {
-						portfolio_id: portfolio[0].id
+						portfolioId: portfolio[0].id
 					}
 				});
 
