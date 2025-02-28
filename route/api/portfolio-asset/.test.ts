@@ -3,7 +3,7 @@ import mysql from "mysql2";
 
 import routeApiPortfolioAsset from "./index";
 import routeApi from "../index";
-import routeApiAsset from "../asset/index";
+import routeApiAsset from "../stock/index";
 import routeApiPortfolio from "../portfolio/index";
 import routeApiUser from "../user/index";
 import config from "../../../config";
@@ -21,7 +21,7 @@ const PASSWORD: string = "testpassword!";
 const PORTFOLIO_NAME: string = "my-portfolio";
 
 let token: string;
-let assetId: string;
+let stockId: string;
 let portfolio_id: string;
 let app: express.Express;
 let mySQLPool: mysql.Pool;
@@ -52,7 +52,7 @@ beforeAll(async () =>
 	await mySQLPool.promise().query("USE ??;", [DB_NAME]);
 
 	app = express().use(express.json()).use("/api", routeApi()).use(
-		"/api/asset",
+		"/api/stock",
 		routeApiAsset(mySQLPool)
 	).use(
 		"/api/user",
@@ -114,17 +114,17 @@ beforeEach(async () =>
 
 	portfolio_id = portfolios[0].id;
 
-	const resAssetCreate = await request(app).post("/api/asset/create").set("authorization", `Bearer ${token}`).send({
-		load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, network: "ethereum", address: "0xabcdef123456" }
+	const resAssetCreate = await request(app).post("/api/stock/create").set("authorization", `Bearer ${token}`).send({
+		load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, exchange: "nasdaq", isin: "123" }
 	});
 
 	expect(resAssetCreate.statusCode).toBe(201);
 
 	const [assets]: MySQLQueryResult = await mySQLPool.promise().query(
-		"SELECT id FROM asset WHERE name = ?;", [ASSET_NAME]
+		"SELECT id FROM stock WHERE name = ?;", [ASSET_NAME]
 	);
 
-	assetId = assets[0].id;
+	stockId = assets[0].id;
 });
 
 
@@ -139,7 +139,7 @@ describe("Request: GET", () =>
 				await request(app).post("/api/portfolio-asset/create").send({
 					load: {
 						portfolio_id,
-						assetId,
+						stockId,
 					} as PortfolioAssetCreate
 				}).expect(401);
 
@@ -160,7 +160,7 @@ describe("Request: GET", () =>
 					`Bearer ${token}`
 				).send({
 					load: {
-						assetId: assetId,
+						stockId: stockId,
 					}
 				}).expect(400);
 
@@ -187,7 +187,7 @@ describe("Request: GET", () =>
 					}
 				}).expect(400);
 
-				expect(RES.text).toBe("No assetId received");
+				expect(RES.text).toBe("No stockId received");
 
 				const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio_asset;");
 
@@ -210,7 +210,7 @@ describe("Request: GET", () =>
 				).send({
 					load: {
 						portfolio_id: portfolio_id,
-						assetId: assetId,
+						stockId: stockId,
 					} as PortfolioAssetCreate
 				});
 
@@ -225,12 +225,12 @@ describe("Request: GET", () =>
 
 				expect(portfolioAssests.length).toBeGreaterThan(0);
 
-				if (!("assetId" in portfolioAssests[0]))
+				if (!("stockId" in portfolioAssests[0]))
 				{
-					throw new Error("Key 'assetId' not in portfolioAssets");
+					throw new Error("Key 'stockId' not in portfolioAssets");
 				}
 
-				expect(portfolioAssests[0].assetId).toBe(assetId);
+				expect(portfolioAssests[0].stockId).toBe(stockId);
 
 				if (!("portfolio_id" in portfolioAssests[0]))
 				{

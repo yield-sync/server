@@ -1,20 +1,14 @@
 import mysql from "mysql2";
 
 import config from "../config";
-import { blockchainNetworks, stockMarkets, allNetworks } from "../constants";
+import { blockchainNetworks, stockExchanges } from "../constants";
 
-
-const sQLFriendlyListAllNetwork: string = allNetworks.map((n) =>
+const sQLBlockchainNetworks: string = blockchainNetworks.map((n) =>
 {
 	return `'${n}'`;
 }).join(", ");
 
-const sQLFriendlyListBlockchain: string = blockchainNetworks.map((n) =>
-{
-	return `'${n}'`;
-}).join(", ");
-
-const sQLFriendlyListStockMarket: string = stockMarkets.map((n) =>
+const sQLStockExchanges: string = stockExchanges.map((n) =>
 {
 	return `'${n}'`;
 }).join(", ");
@@ -33,46 +27,52 @@ const queries: string[] = [
 			UNIQUE(email)
 		)
 	`,
-	// asset table
+	// stock
 	`
-		CREATE TABLE asset (
-			id INT NOT NULL AUTO_INCREMENT,
-			native_token BIT(1) NOT NULL DEFAULT 0,
-			symbol VARCHAR(255),
-			name VARCHAR(255),
-			network VARCHAR(10) NOT NULL CHECK (network IN (${sQLFriendlyListAllNetwork})),
-			address VARCHAR(255),
-			isin VARCHAR(12) UNIQUE,
-			PRIMARY KEY (id),
-			CHECK (
-				(network IN (${sQLFriendlyListStockMarket}) AND isin IS NOT NULL) OR
-				(network IN (${sQLFriendlyListBlockchain}) AND (
-					(native_token = 0 AND address IS NOT NULL) OR
-					(native_token = 1 AND address IS NULL)
-				))
-			),
-			UNIQUE KEY unique_native_token_per_network (network, native_token),
-			UNIQUE KEY unique_address_per_network (network, address)
+		CREATE TABLE stock (
+			id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+			isin VARCHAR(12) NOT NULL UNIQUE,
+			exchange VARCHAR(10) NOT NULL CHECK (exchange IN (${sQLStockExchanges})),
+			name VARCHAR(255) NOT NULL,
+			symbol VARCHAR(255) NOT NULL
 		);
 	`,
-	// asset_industry table
+	// crypto
 	`
-		CREATE TABLE asset_industry (
+		CREATE TABLE crypto (
+			id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+			native_token BIT(1) NOT NULL DEFAULT 0,
+			network VARCHAR(10) NOT NULL CHECK (network IN (${sQLBlockchainNetworks})),
+			isin VARCHAR(12) UNIQUE,
+			address VARCHAR(255),
+			name VARCHAR(255) NOT NULL,
+			symbol VARCHAR(255) NOT NULL,
+			UNIQUE KEY unique_native_token_per_network (network, native_token),
+			UNIQUE KEY unique_address_per_network (network, address),
+			CHECK (
+				(address IS NOT NULL AND native_token = 0) OR
+				(address IS NULL AND native_token = 1)
+			)
+		);
+	`,
+	// stock_industry table
+	`
+		CREATE TABLE stock_industry (
 			id INT NOT NULL AUTO_INCREMENT,
-			assetId INT NOT NULL,
+			stockId INT NOT NULL,
 			industry VARCHAR(255),
 			PRIMARY KEY (id),
-			FOREIGN KEY (assetId) REFERENCES asset(id) ON DELETE CASCADE
+			FOREIGN KEY (stockId) REFERENCES stock(id) ON DELETE CASCADE
 		)
 	`,
-	// asset_sector table
+	// stock_sector table
 	`
-		CREATE TABLE asset_sector (
+		CREATE TABLE stock_sector (
 			id INT NOT NULL AUTO_INCREMENT,
-			assetId INT NOT NULL,
+			stockId INT NOT NULL,
 			sector VARCHAR(255),
 			PRIMARY KEY (id),
-			FOREIGN KEY (assetId) REFERENCES asset(id) ON DELETE CASCADE
+			FOREIGN KEY (stockId) REFERENCES stock(id) ON DELETE CASCADE
 		)
 	`,
 	// portfolio table
@@ -91,11 +91,11 @@ const queries: string[] = [
 		CREATE TABLE portfolio_asset (
 			id INT NOT NULL AUTO_INCREMENT,
 			portfolio_id INT NOT NULL,
-			assetId INT NOT NULL,
+			stockId INT,
 			created DATETIME DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
 			FOREIGN KEY (portfolio_id) REFERENCES portfolio(id) ON DELETE CASCADE,
-			FOREIGN KEY (assetId) REFERENCES asset(id) ON DELETE CASCADE
+			FOREIGN KEY (stockId) REFERENCES stock(id) ON DELETE CASCADE
 		)
 	`,
 	// verification table

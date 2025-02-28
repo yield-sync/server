@@ -10,31 +10,38 @@ declare global
 	// Types
 	type Load = object;
 
-	type AssetCreate = Load & {
+
+	type CryptoCreate = Load & {
+		address?: string;
+		isin?: string;
+		name?: string;
 		native_token?: boolean;
-		symbol?: string;
-		name?: string;
 		network: string;
-		isin?: string;
-		address?: string;
+		symbol?: string;
 	};
 
-	type AssetUpdate = Load & {
-		assetId: string;
-		symbol?: string;
+	type StockCreate = Load & {
+		exchange: string;
+		isin: string;
 		name?: string;
-		network: string;
-		isin?: string;
-		address?: string;
+		symbol?: string;
 	};
 
-	type AssetDelete = Load & {
-		assetId: string,
+	type StockUpdate = Load & {
+		stockId: string;
+		exchange: string;
+		isin: string;
+		name?: string;
+		symbol?: string;
+	};
+
+	type StockDelete = Load & {
+		stockId: string,
 	};
 
 	type PortfolioAssetCreate = Load & {
 		portfolio_id: string,
-		assetId: string,
+		stockId: string,
 	};
 
 	type PortfolioCreate = Load & {
@@ -70,15 +77,14 @@ declare global
 	type MySQLQueryResult = [QueryResult, FieldPacket[]];
 
 	// Interfaces
-	interface IAsset extends
+	interface IStock extends
 		RowDataPacket
 	{
 		id: number;
 		name: string;
 		symbol: string;
-		network: string;
+		exchange: string;
 		isin: string | null;
-		address: string | null;
 	}
 
 	interface IUser extends

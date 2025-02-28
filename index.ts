@@ -9,9 +9,9 @@ import path from "path";
 import config from "./config";
 import rateLimiter from "./rate-limiter";
 import routeApi from "./route/api";
-import routeApiAsset from "./route/api/asset";
 import routeApiPortfolio from "./route/api/portfolio";
 import routeApiPortfolioAsset from "./route/api/portfolio-asset";
+import routeApiStock from "./route/api/stock";
 import routeApiUser from "./route/api/user";
 
 
@@ -28,7 +28,7 @@ const MYSQL_POOL: mysql.Pool = mysql.createPool({
 
 http.createServer(
 	express().use(bodyParser.json()).use(bodyParser.urlencoded({
-		extended: false 
+		extended: false
 	})).use(cors()).use(
 		express.static(__dirname + "/static")
 	).use(
@@ -49,14 +49,14 @@ http.createServer(
 		"/api",
 		routeApi()
 	).use(
-		"/api/asset",
-		routeApiAsset(MYSQL_POOL)
-	).use(
 		"/api/portfolio",
 		routeApiPortfolio(MYSQL_POOL)
 	).use(
 		"/api/portfolio-asset",
 		routeApiPortfolioAsset(MYSQL_POOL)
+	).use(
+		"/api/stock",
+		routeApiStock(MYSQL_POOL)
 	).use(
 		"/api/user",
 		routeApiUser(MYSQL_POOL)

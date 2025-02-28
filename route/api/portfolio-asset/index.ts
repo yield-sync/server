@@ -22,9 +22,9 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 			try
 			{
-				if (!load.assetId)
+				if (!load.stockId)
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("No assetId received");
+					res.status(hTTPStatus.BAD_REQUEST).send("No stockId received");
 
 					return;
 				}
@@ -63,10 +63,10 @@ MySQLQueryResult = await mySQLPool.promise().query(
 
 				// Insert into portfolio_asset
 				await mySQLPool.promise().query(
-					"INSERT INTO portfolio_asset (portfolio_id, assetId) VALUES (?, ?);",
+					"INSERT INTO portfolio_asset (portfolio_id, stockId) VALUES (?, ?);",
 					[
 						load.portfolio_id,
-						load.assetId,
+						load.stockId,
 					]
 				);
 

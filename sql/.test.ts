@@ -24,7 +24,8 @@ beforeAll(async () =>
 
 beforeEach(async () =>
 {
-	await testMySQLPool.promise().query("DELETE FROM asset;");
+	await testMySQLPool.promise().query("DELETE FROM stock;");
+	await testMySQLPool.promise().query("DELETE FROM crypto;");
 });
 
 afterAll(async () =>
@@ -49,133 +50,181 @@ describe("Database Initialization", () =>
 
 		expect(tables).toEqual(
 			expect.arrayContaining([
-				"user",
-				"asset",
-				"asset_industry",
-				"asset_sector",
+				"stock_industry",
+				"stock_sector",
+				"crypto",
 				"portfolio",
 				"portfolio_asset",
+				"user",
+				"stock",
 				"verification"
 			])
 		);
 	});
 });
 
-describe("Asset Table Constraints", () =>
+describe("Stock", () =>
 {
-	describe("Any", () =>
+	describe("Expected Failure", () =>
 	{
-		describe("Expected Failure", () =>
+		it("Should fail when inserting crypto without network..", async () =>
 		{
-			it("Should fail when inserting asset without network..", async () =>
-			{
-				await expect(
-					testMySQLPool.promise().query(
-						"INSERT INTO asset (symbol, name, address) VALUES (?, ?, ?);",
-						["ETH", "Ethereum", "0x123"]
-					)
-				).rejects.toThrow("Field 'network' doesn't have a default value");
-			});
+			await expect(
+				testMySQLPool.promise().query(
+					"INSERT INTO stock (symbol, name, isin) VALUES (?, ?, ?);",
+					["AAPl", "Apple Inc.", "US0378331005"]
+				)
+			).rejects.toThrow("Field 'exchange' doesn't have a default value");
+		});
 
-			it("Should fail when inserting asset with invalid network..", async () =>
-			{
-				await expect(
-					testMySQLPool.promise().query(
-						"INSERT INTO asset (symbol, name, network, address) VALUES (?, ?, ?, ?);",
-						["ETH", "Ethereum", "invalid", "0x123"]
-					)
-				).rejects.toThrow("CONSTRAINT `asset.network` failed for `test_db`.`asset`");
-			});
+		it("Should fail when inserting crypto with invalid network..", async () =>
+		{
+			await expect(
+				testMySQLPool.promise().query(
+					"INSERT INTO crypto (symbol, name, network, address) VALUES (?, ?, ?, ?);",
+					["AAPl", "Apple Inc.", "invalid", "US0378331005"]
+				)
+			).rejects.toThrow("CONSTRAINT `crypto.network` failed for `test_db`.`crypto`");
+		});
+
+		it("Should fail when inserting stock crypto without ISIN..", async () =>
+		{
+			await expect(
+				testMySQLPool.promise().query(
+					"INSERT INTO stock (symbol, name, exchange) VALUES (?, ?, ?);",
+					["AAPL", "Apple Inc.", "nasdaq"]
+				)
+			).rejects.toThrow("Field 'isin' doesn't have a default value");
 		});
 	});
 
-	describe("Stock", () =>
+	describe("Expected Success", () =>
 	{
-		describe("Expected Failure", () =>
+		it("Should allows inserting a stock with ISIN..", async () =>
 		{
-			it("Should fail when inserting stock asset without ISIN..", async () =>
-			{
-				await expect(
-					testMySQLPool.promise().query(
-						"INSERT INTO asset (symbol, name, network) VALUES (?, ?, ?);",
-						["AAPL", "Apple Inc.", "nasdaq"]
-					)
-				).rejects.toThrow("CONSTRAINT `CONSTRAINT_1` failed for `test_db`.`asset`");
-			});
-		});
-
-		describe("Expected Success", () =>
-		{
-			it("Should allows inserting a stock token with ISIN..", async () =>
-			{
-				await expect(
-					testMySQLPool.promise().query(
-						"INSERT INTO asset (symbol, name, network, isin) VALUES (?, ?, ?, ?);",
-						["AAPL", "Apple Inc.", "nasdaq", "US0378331005"]
-					)
-				).resolves.not.toThrow();
-			});
-		});
-
-		describe("Expected Failure Part 2", () =>
-		{
-			it("Should fail when inserting duplicate ISIN..", async () =>
-			{
-				await testMySQLPool.promise().query(
-					"INSERT INTO asset (symbol, name, network, isin) VALUES (?, ?, ?, ?);",
+			await expect(
+				testMySQLPool.promise().query(
+					"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
 					["AAPL", "Apple Inc.", "nasdaq", "US0378331005"]
-				);
-
-				// Even though the name and symbol are different, the isin already in use
-				await expect(
-					testMySQLPool.promise().query(
-						"INSERT INTO asset (symbol, name, network, isin) VALUES (?, ?, ?, ?);",
-						["MSFT", "Microsoft Corp.", "nasdaq", "US0378331005"]
-					)
-				).rejects.toThrow(/Duplicate entry/);
-			});
+				)
+			).resolves.not.toThrow();
 		});
 	});
 
-	describe("Blockchain Asset", () =>
+	describe("Expected Failure Part 2", () =>
+	{
+		it("Should fail when inserting duplicate ISIN..", async () =>
+		{
+			await testMySQLPool.promise().query(
+				"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
+				["AAPL", "Apple Inc.", "nasdaq", "US0378331005"]
+			)
+
+			// Even though the name and symbol are different, the isin already in use
+			await expect(
+				testMySQLPool.promise().query(
+					"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
+					["MSFT", "Microsoft Corp.", "nasdaq", "US0378331005"]
+				)
+			).rejects.toThrow(/Duplicate entry/);
+		});
+	});
+});
+
+describe("Crypto", () =>
+{
+	describe("Expected Failure", () =>
+	{
+		it("Should fail when inserting crypto without address or native_token = 1..", async () =>
+		{
+			await expect(
+				testMySQLPool.promise().query(
+					"INSERT INTO crypto (symbol, name, network) VALUES (?, ?, ?);",
+					["ETH", "Ethereum", "ethereum"]
+				)
+			).rejects.toThrow("CONSTRAINT `CONSTRAINT_1` failed for `test_db`.`crypto`");
+		});
+	});
+
+	describe("Expected Success", () =>
+	{
+		it("Should allows inserting a crypto with network..", async () =>
+		{
+			await expect(
+				testMySQLPool.promise().query(
+					"INSERT INTO crypto (symbol, name, network, address) VALUES (?, ?, ?, ?);",
+					["USDC", "USDC", "ethereum", "0x123"]
+				)
+			).resolves.not.toThrow();
+		});
+
+		it("Should allow inserting 2 cryptos with same address but different networks..", async () => {
+			await expect(
+				testMySQLPool.promise().query(
+					"INSERT INTO crypto (symbol, name, network, address) VALUES (?, ?, ?, ?);",
+					["USDC", "USDC", "ethereum", "0x123"]
+				)
+			).resolves.not.toThrow();
+
+			await expect(
+				testMySQLPool.promise().query(
+					"INSERT INTO crypto (symbol, name, network, address) VALUES (?, ?, ?, ?);",
+					["USDC", "USDC", "base", "0x123"] // Same address, different network
+				)
+			).resolves.not.toThrow();
+		});
+	});
+
+	describe("Expected Failure Part 2", () =>
+	{
+		it("Should not allow inserting 2 cryptos with same address and same network..", async () => {
+			await testMySQLPool.promise().query(
+				"INSERT INTO crypto (symbol, name, network, address) VALUES (?, ?, ?, ?);",
+				["USDC", "USDC", "ethereum", "0x123"]
+			);
+
+			await expect(
+				testMySQLPool.promise().query(
+					"INSERT INTO crypto (symbol, name, network, address) VALUES (?, ?, ?, ?);",
+					["USDT", "Tether", "ethereum", "0x123"] // Same network, same address
+				)
+			).rejects.toThrow(/Duplicate entry/);
+		});
+	});
+
+	describe("Native Token", () =>
 	{
 		describe("Expected Failure", () =>
 		{
-			it("Should fail when inserting blockchain asset without address or native_token = 1..", async () =>
+			it("Should fail when inserting a blockchain native crypto with native_token = 0 and no address ..", async () =>
 			{
 				await expect(
 					testMySQLPool.promise().query(
-						"INSERT INTO asset (symbol, name, network) VALUES (?, ?, ?);",
-						["ETH", "Ethereum", "ethereum"]
+						"INSERT INTO crypto (symbol, name, network, native_token) VALUES (?, ?, ?, ?);",
+						["ETH", "Ethereum", "ethereum", 0]
 					)
-				).rejects.toThrow("CONSTRAINT `CONSTRAINT_1` failed for `test_db`.`asset`");
+				).rejects.toThrow("CONSTRAINT `CONSTRAINT_1` failed for `test_db`.`crypto`");
+			});
+
+			it("Should fail when inserting a blockchain native crypto with native_token = 1 and an address..", async () =>
+			{
+				await expect(
+					testMySQLPool.promise().query(
+						"INSERT INTO crypto (symbol, name, network, address, native_token) VALUES (?, ?, ?, ?, ?);",
+						["ETH", "Ethereum", "ethereum", "0x000", 1]
+					)
+				).rejects.toThrow("CONSTRAINT `CONSTRAINT_1` failed for `test_db`.`crypto`");
 			});
 		});
 
 		describe("Expected Success", () =>
 		{
-			it("Should allows inserting a blockchain asset with network..", async () =>
+			it("Should allows inserting a blockchain native crypto with native_token = 1 AND no address..", async () =>
 			{
 				await expect(
 					testMySQLPool.promise().query(
-						"INSERT INTO asset (symbol, name, network, address) VALUES (?, ?, ?, ?);",
-						["USDC", "USDC", "ethereum", "0x123"]
-					)
-				).resolves.not.toThrow();
-			});
-
-			it("Should allow inserting 2 assets with same address but different networks..", async () => {
-				await expect(
-					testMySQLPool.promise().query(
-						"INSERT INTO asset (symbol, name, network, address) VALUES (?, ?, ?, ?);",
-						["USDC", "USDC", "ethereum", "0x123"]
-					)
-				).resolves.not.toThrow();
-
-				await expect(
-					testMySQLPool.promise().query(
-						"INSERT INTO asset (symbol, name, network, address) VALUES (?, ?, ?, ?);",
-						["USDC", "USDC", "base", "0x123"] // Same address, different network
+						"INSERT INTO crypto (symbol, name, network, native_token) VALUES (?, ?, ?, ?);",
+						["ETH", "Ethereum", "ethereum", 1]
 					)
 				).resolves.not.toThrow();
 			});
@@ -183,77 +232,21 @@ describe("Asset Table Constraints", () =>
 
 		describe("Expected Failure Part 2", () =>
 		{
-			it("Should not allow inserting 2 assets with same address and same network..", async () => {
-				await testMySQLPool.promise().query(
-					"INSERT INTO asset (symbol, name, network, address) VALUES (?, ?, ?, ?);",
-					["USDC", "USDC", "ethereum", "0x123"]
-				);
+			it("Should fail when inserting duplicate native_token = 1..", async () =>
+			{
+				await expect(
+					testMySQLPool.promise().query(
+						"INSERT INTO crypto (symbol, name, network, native_token) VALUES (?, ?, ?, ?);",
+						["ETH", "Ethereum", "ethereum", 1]
+					)
+				).resolves.not.toThrow();
 
 				await expect(
 					testMySQLPool.promise().query(
-						"INSERT INTO asset (symbol, name, network, address) VALUES (?, ?, ?, ?);",
-						["USDT", "Tether", "ethereum", "0x123"] // Same network, same address
+						"INSERT INTO crypto (symbol, name, network, native_token) VALUES (?, ?, ?, ?);",
+						["ETH2", "Ethereum2", "ethereum", 1]
 					)
 				).rejects.toThrow(/Duplicate entry/);
-			});
-		});
-
-		describe("Native Asset", () =>
-		{
-			describe("Expected Failure", () =>
-			{
-				it("Should fail when inserting a blockchain native asset with native_token = 0 and no address ..", async () =>
-				{
-					await expect(
-						testMySQLPool.promise().query(
-							"INSERT INTO asset (symbol, name, network, native_token) VALUES (?, ?, ?, ?);",
-							["ETH", "Ethereum", "ethereum", 0]
-						)
-					).rejects.toThrow("CONSTRAINT `CONSTRAINT_1` failed for `test_db`.`asset`");
-				});
-
-				it("Should fail when inserting a blockchain native asset with native_token = 1 and an address..", async () =>
-				{
-					await expect(
-						testMySQLPool.promise().query(
-							"INSERT INTO asset (symbol, name, network, address, native_token) VALUES (?, ?, ?, ?, ?);",
-							["ETH", "Ethereum", "ethereum", "0x000", 1]
-						)
-					).rejects.toThrow("CONSTRAINT `CONSTRAINT_1` failed for `test_db`.`asset`");
-				});
-			});
-
-			describe("Expected Success", () =>
-			{
-				it("Should allows inserting a blockchain native asset with native_token = 1 AND no address..", async () =>
-				{
-					await expect(
-						testMySQLPool.promise().query(
-							"INSERT INTO asset (symbol, name, network, native_token) VALUES (?, ?, ?, ?);",
-							["ETH", "Ethereum", "ethereum", 1]
-						)
-					).resolves.not.toThrow();
-				});
-			});
-
-			describe("Expected Failure Part 2", () =>
-			{
-				it("Should fail when inserting duplicate native_token = 1..", async () =>
-				{
-					await expect(
-						testMySQLPool.promise().query(
-							"INSERT INTO asset (symbol, name, network, native_token) VALUES (?, ?, ?, ?);",
-							["ETH", "Ethereum", "ethereum", 1]
-						)
-					).resolves.not.toThrow();
-
-					await expect(
-						testMySQLPool.promise().query(
-							"INSERT INTO asset (symbol, name, network, native_token) VALUES (?, ?, ?, ?);",
-							["ETH2", "Ethereum2", "ethereum", 1]
-						)
-					).rejects.toThrow(/Duplicate entry/);
-				});
 			});
 		});
 	});

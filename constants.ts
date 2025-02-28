@@ -6,14 +6,9 @@ export const blockchainNetworks = [
 	"solana",
 ];
 
-export const stockMarkets = [
+export const stockExchanges = [
 	"nasdaq",
 	"nyse",
-];
-
-export const allNetworks = [
-	...blockchainNetworks,
-	...stockMarkets,
 ];
 
 export const hTTPStatus = {
