@@ -45,7 +45,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		userAdmin(),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const { name, symbol, network, isin, address, native_token }: CryptoCreate = req.body.load;
+			const { name, symbol, network, isin, address, nativeToken }: CryptoCreate = req.body.load;
 
 			try
 			{
@@ -56,13 +56,13 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				if (!address && !native_token)
+				if (!address && !nativeToken)
 				{
 					res.status(hTTPStatus.BAD_REQUEST).send("Address is required for blockchain assets.");
 					return;
 				}
 
-				if (address && native_token)
+				if (address && nativeToken)
 				{
 					res.status(hTTPStatus.BAD_REQUEST).send("Native tokens should not have an address.");
 					return;
@@ -87,7 +87,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					}
 				}
 
-				if (native_token)
+				if (nativeToken)
 				{
 					const [
 						assetOnNetworkNativeToken,

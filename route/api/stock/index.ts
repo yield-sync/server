@@ -92,7 +92,6 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			}
 			catch (error)
 			{
-				console.log(error)
 				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(error);
 			}
 		}

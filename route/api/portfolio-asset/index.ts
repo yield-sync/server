@@ -36,16 +36,18 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
+				let portfolios;
+
 				// First determine that the portfolio belongs to the user
-				const [
-					portfolios,]:
-MySQLQueryResult = await mySQLPool.promise().query(
-	"SELECT * FROM portfolio WHERE id = ? AND user_id = ?;",
-	[
-		load.portfolioId,
-		req.body.userDecoded.id,
-	]
-);
+				[
+					portfolios,
+				] = await mySQLPool.promise().query(
+					"SELECT * FROM portfolio WHERE id = ? AND user_id = ?;",
+					[
+						load.portfolioId,
+						req.body.userDecoded.id,
+					]
+				);
 
 				if (!Array.isArray(portfolios))
 				{

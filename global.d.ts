@@ -15,7 +15,7 @@ declare global
 		address?: string;
 		isin?: string;
 		name?: string;
-		native_token?: boolean;
+		nativeToken?: boolean;
 		network: string;
 		symbol?: string;
 	};
