@@ -46,13 +46,11 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		async (req: express.Request, res: express.Response) =>
 		{
 			const { name, symbol, network, isin, address, nativeToken }: CryptoCreate = req.body.load;
-
 			try
 			{
 				if (!network || !blockchainNetworks.includes(network))
 				{
 					res.status(hTTPStatus.BAD_REQUEST).send("Invalid or missing network");
-
 					return;
 				}
 
@@ -137,6 +135,69 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			catch (error)
 			{
 				console.log(error);
+				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(error);
+			}
+		}
+	).put(
+		"/update/:cryptoid",
+		userAdmin(),
+		async (req: express.Request, res: express.Response) =>
+		{
+			const { cryptoid } = req.params;
+			const { name, symbol, network, isin, address }: CryptoUpdate = req.body.load;
+			try
+			{
+				const [[existingAsset]]: any[] = await mySQLPool.promise().query(
+					"SELECT * FROM crypto WHERE id = ?;",
+					[cryptoid]
+				);
+
+				if (!existingAsset)
+				{
+					res.status(hTTPStatus.NOT_FOUND).send("Asset not found");
+					return;
+				}
+
+				const updatedAsset = {
+					name: name ?? existingAsset.name,
+					symbol: symbol ?? existingAsset.symbol,
+					network: network ?? existingAsset.network,
+					isin: isin ?? existingAsset.isin,
+					address: address ?? existingAsset.address,
+				};
+
+				await mySQLPool.promise().query(
+					`UPDATE crypto SET name = ?, symbol = ?, network = ?, isin = ?, address = ? WHERE id = ?;`,
+					[
+						updatedAsset.name,
+						updatedAsset.symbol,
+						updatedAsset.network,
+						updatedAsset.isin,
+						updatedAsset.address,
+						cryptoid
+					]
+				);
+
+				res.status(hTTPStatus.OK).send("Updated crypto");
+			}
+			catch (error)
+			{
+				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(error);
+			}
+		}
+	).delete(
+		"/delete/:cryptoid",
+		userAdmin(),
+		async (req: express.Request, res: express.Response) =>
+		{
+			const { cryptoid } = req.params;
+			try
+			{
+				await mySQLPool.promise().query("DELETE FROM crypto WHERE id = ?;", [cryptoid]);
+				res.status(hTTPStatus.OK).send("Deleted crypto");
+			}
+			catch (error)
+			{
 				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(error);
 			}
 		}
