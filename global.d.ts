@@ -1,11 +1,11 @@
-import { FieldPacket, RowDataPacket, QueryResult } from "mysql2";
+import { FieldPacket, OkPacket, RowDataPacket } from "mysql2";
 
 
 declare global
 {
 	// Wrappers
 	type FieldPacket = FieldPacket;
-	type QueryResult = QueryResult;
+	type RowDataPacket = RowDataPacket;
 
 	// Types
 	type Load = object;
@@ -53,6 +53,11 @@ declare global
 		stockId: string,
 	};
 
+	type PortfolioAssetCreateByQuery = Load & {
+		portfolioId: string,
+		query: string,
+	};
+
 	type PortfolioCreate = Load & {
 		name: string,
 	};
@@ -86,18 +91,30 @@ declare global
 	type MySQLQueryResult = [QueryResult, FieldPacket[]];
 
 	// Interfaces
+	interface IPortfolioAsset extends
+		RowDataPacket,
+		OkPacket
+	{
+		id: number;
+		portfolioId: number;
+		stockId: number;
+		created: number;
+	}
+
 	interface IStock extends
-		RowDataPacket
+		RowDataPacket,
+		OkPacket
 	{
 		id: number;
 		name: string;
 		symbol: string;
 		exchange: string;
-		isin: string | null;
+		isin: string;
 	}
 
 	interface IUser extends
-		RowDataPacket
+		RowDataPacket,
+		OkPacket
 	{
 		id: number;
 		email: string;

@@ -117,7 +117,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				] = await mySQLPool.promise().query<IStock[]>(
 					"SELECT * FROM stock WHERE symbol = ?;",
 					[
-						externalRes.data[0].symbol
+						externalRes.data[0].symbol,
 					]
 				);
 
