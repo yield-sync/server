@@ -9,6 +9,7 @@ export default
 
 	api: {
 		sendinblueKey: process.env.API__SENDINBLUE_KEY || "",
+		financialModelingPrepKey: process.env.API__FINANCIAL_MODELING_PREP_KEY || ""
 	},
 
 	app: {
