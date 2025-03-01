@@ -9,6 +9,7 @@ export const blockchainNetworks = [
 export const stockExchanges = [
 	"nasdaq",
 	"nyse",
+	"amex",
 ];
 
 export const hTTPStatus = {

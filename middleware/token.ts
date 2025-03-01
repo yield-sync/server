@@ -1,4 +1,5 @@
 import express from "express";
+import mysql from "mysql2";
 
 import config from "../config";
 import { hTTPStatus } from "../constants";
@@ -31,13 +32,13 @@ function verifyJWT(token: string): any | null
 }
 
 
-export const userMiddleware = (requireAdmin: boolean = false) =>
+export const userMiddleware = (mySQLPool: mysql.Pool, requireAdmin: boolean = false) =>
 {
-	return (req: express.Request, res: express.Response, next: express.NextFunction) =>
+	return async (req: express.Request, res: express.Response, next: express.NextFunction) =>
 	{
 		const authHeader = req.headers.authorization;
 
-		const decoded = verifyJWT(authHeader || "");
+		const decoded = verifyJWT(authHeader || null);
 
 		if (!decoded)
 		{
@@ -57,6 +58,20 @@ export const userMiddleware = (requireAdmin: boolean = false) =>
 			return;
 		}
 
+		let users;
+
+		[
+			users,
+		] = await mySQLPool.promise().query<IStock[]>("SELECT id FROM user WHERE id = ?;", [
+			decoded.id,
+		]);
+
+		if ((users as any[]).length === 0)
+		{
+			res.status(hTTPStatus.UNAUTHORIZED).send("User not found from decoded token");
+			return;
+		}
+
 		// Attach decoded user to request object
 		req.body.userDecoded = decoded;
 
@@ -64,12 +79,12 @@ export const userMiddleware = (requireAdmin: boolean = false) =>
 	};
 };
 
-export const user = () =>
+export const user = (mySQLPool: mysql.Pool) =>
 {
-	return userMiddleware(false);
+	return userMiddleware(mySQLPool, false);
 };
 
-export const userAdmin = () =>
+export const userAdmin = (mySQLPool: mysql.Pool) =>
 {
-	return userMiddleware(true);
+	return userMiddleware(mySQLPool, true);
 };

@@ -1,7 +1,6 @@
 import express from "express";
 import mysql from "mysql2";
 
-import config from "../../../config";
 import { user } from "../../../middleware/token";
 import { hTTPStatus } from "../../../constants";
 
@@ -15,7 +14,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		* @access User
 		*/
 		"/create",
-		user(),
+		user(mySQLPool),
 		async (req: express.Request, res: express.Response) =>
 		{
 			const load: PortfolioAssetCreate = req.body.load;

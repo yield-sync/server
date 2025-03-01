@@ -8,8 +8,10 @@ export default
 	port: process.env.PORT || 5000,
 
 	api: {
-		sendinblueKey: process.env.API__SENDINBLUE_KEY || "",
-		financialModelingPrepKey: process.env.API__FINANCIAL_MODELING_PREP_KEY || ""
+		financialModelingPrep: {
+			uRL: "https://financialmodelingprep.com/",
+			key: process.env.API__FINANCIAL_MODELING_PREP__KEY || ""
+		}
 	},
 
 	app: {

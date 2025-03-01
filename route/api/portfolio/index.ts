@@ -1,7 +1,6 @@
 import express from "express";
 import mysql from "mysql2";
 
-import config from "../../../config";
 import { user } from "../../../middleware/token";
 import { hTTPStatus } from "../../../constants";
 
@@ -15,7 +14,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		* @access User
 		*/
 		"/",
-		user(),
+		user(mySQLPool),
 		async (req: express.Request, res: express.Response) =>
 		{
 			try
@@ -45,7 +44,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		* @access User
 		*/
 		"/create",
-		user(),
+		user(mySQLPool),
 		async (req: express.Request, res: express.Response) =>
 		{
 			const load: PortfolioCreate = req.body.load;
@@ -85,7 +84,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		* @access User
 		*/
 		"/update",
-		user(),
+		user(mySQLPool),
 		async (req: express.Request, res: express.Response) =>
 		{
 			const load: PortfolioUpdate = req.body.load;
@@ -133,7 +132,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		* @access User
 		*/
 		"/delete",
-		user(),
+		user(mySQLPool),
 		async (req: express.Request, res: express.Response) =>
 		{
 			try

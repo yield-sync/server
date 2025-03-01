@@ -42,7 +42,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		* @access authorized:admin
 		*/
 		"/create",
-		userAdmin(),
+		userAdmin(mySQLPool),
 		async (req: express.Request, res: express.Response) =>
 		{
 			const { name, symbol, network, isin, address, nativeToken }: CryptoCreate = req.body.load;
@@ -140,17 +140,23 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		}
 	).put(
 		"/update/:cryptoid",
-		userAdmin(),
+		userAdmin(mySQLPool),
 		async (req: express.Request, res: express.Response) =>
 		{
 			const { cryptoid } = req.params;
 			const { name, symbol, network, isin, address }: CryptoUpdate = req.body.load;
 			try
 			{
-				const [[existingAsset]]: any[] = await mySQLPool.promise().query(
-					"SELECT * FROM crypto WHERE id = ?;",
-					[cryptoid]
-				);
+				const [
+					[
+						existingAsset,
+					],]: any[
+] = await mySQLPool.promise().query(
+	"SELECT * FROM crypto WHERE id = ?;",
+	[
+		cryptoid,
+	]
+);
 
 				if (!existingAsset)
 				{
@@ -167,14 +173,14 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				};
 
 				await mySQLPool.promise().query(
-					`UPDATE crypto SET name = ?, symbol = ?, network = ?, isin = ?, address = ? WHERE id = ?;`,
+					"UPDATE crypto SET name = ?, symbol = ?, network = ?, isin = ?, address = ? WHERE id = ?;",
 					[
 						updatedAsset.name,
 						updatedAsset.symbol,
 						updatedAsset.network,
 						updatedAsset.isin,
 						updatedAsset.address,
-						cryptoid
+						cryptoid,
 					]
 				);
 
@@ -187,13 +193,15 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		}
 	).delete(
 		"/delete/:cryptoid",
-		userAdmin(),
+		userAdmin(mySQLPool),
 		async (req: express.Request, res: express.Response) =>
 		{
 			const { cryptoid } = req.params;
 			try
 			{
-				await mySQLPool.promise().query("DELETE FROM crypto WHERE id = ?;", [cryptoid]);
+				await mySQLPool.promise().query("DELETE FROM crypto WHERE id = ?;", [
+					cryptoid,
+				]);
 				res.status(hTTPStatus.OK).send("Deleted crypto");
 			}
 			catch (error)

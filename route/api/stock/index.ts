@@ -1,8 +1,19 @@
+import axios from "axios";
 import express from "express";
 import mysql from "mysql2";
 
-import { userAdmin } from "../../../middleware/token";
+import config from "../../../config/index";
+import { user, userAdmin } from "../../../middleware/token";
 import { hTTPStatus, stockExchanges } from "../../../constants";
+
+
+function cleanString(input: string): string
+{
+	if (!input) return "";
+
+	// Trim, Remove special characters, and uppercase
+	return input.trim().replace(/[^a-zA-Z0-9.]/g, "").toUpperCase();
+}
 
 
 export default (mySQLPool: mysql.Pool): express.Router =>
@@ -35,6 +46,93 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				return;
 			}
 		}
+	).get(
+		"/search/:query",
+		user(mySQLPool),
+		async (req: express.Request, res: express.Response) =>
+		{
+			const query: string = cleanString(req.params.query);
+
+			let results: IStock[];
+
+			try
+			{
+				[
+					results,
+				] = await mySQLPool.promise().query<IStock[]>(
+					"SELECT * FROM stock WHERE symbol = ? OR name LIKE ?;",
+					[
+						query,
+						`%${query}%`,
+					]
+				);
+
+				if (results.length > 0)
+				{
+					res.status(hTTPStatus.ACCEPTED).json({
+						asset: results[0],
+					});
+					return;
+				}
+
+				const { uRL, key } = config.api.financialModelingPrep;
+
+				let externalRes;
+
+				try
+				{
+					externalRes = await axios.get(
+						`${uRL}/api/v3/profile/${query}?apikey=${key}`
+					);
+				}
+				catch (error)
+				{
+					console.error("Error fetching external API:", error);
+					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+						message: `Failed to fetch data from external API: ${error}`
+					});
+					return;
+				}
+
+				if (externalRes.data.length == 0)
+				{
+					res.status(hTTPStatus.NOT_FOUND).json({
+						message: "Could not find stock in database OR external API"
+					});
+					return;
+				}
+
+				await mySQLPool.promise().query(
+					"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
+					[
+						externalRes.data[0].symbol,
+						externalRes.data[0].companyName,
+						externalRes.data[0].exchangeShortName.toLowerCase(),
+						externalRes.data[0].isin,
+					]
+				);
+
+				[
+					results,
+				] = await mySQLPool.promise().query<IStock[]>(
+					"SELECT * FROM stock WHERE symbol = ?;",
+					[
+						externalRes.data[0].symbol
+					]
+				);
+
+				res.status(hTTPStatus.ACCEPTED).json({
+					asset: results[0],
+					apiResult: externalRes.data
+				});
+				return;
+			}
+			catch (error)
+			{
+				console.error(error);
+				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(error);
+			}
+		}
 	).post(
 		/**
 		* @route POST /api/stock/create
@@ -42,7 +140,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		* @access authorized:admin
 		*/
 		"/create",
-		userAdmin(),
+		userAdmin(mySQLPool),
 		async (req: express.Request, res: express.Response) =>
 		{
 			const { name, symbol, exchange, isin }: StockCreate = req.body.load;
@@ -92,6 +190,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			}
 			catch (error)
 			{
+				console.error(error);
 				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(error);
 			}
 		}
@@ -102,7 +201,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		* @access Admin only
 		*/
 		"/update",
-		userAdmin(),
+		userAdmin(mySQLPool),
 		async (req: express.Request, res: express.Response) =>
 		{
 			const { stockId, exchange, isin, name, symbol, }: StockUpdate = req.body.load;
@@ -176,8 +275,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			}
 			catch (error)
 			{
-				console.log(error);
-
+				console.error(error);
 				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(error);
 			}
 		}
@@ -188,7 +286,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		* @access authorized:admin
 		*/
 		"/delete",
-		userAdmin(),
+		userAdmin(mySQLPool),
 		async (req: express.Request, res: express.Response) =>
 		{
 			const { stockId }: StockDelete = req.body.load;
@@ -228,6 +326,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			}
 			catch (error)
 			{
+				console.error(error);
 				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(error);
 			}
 		}

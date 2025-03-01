@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import express from "express";
-import mysql, { FieldPacket } from "mysql2";
+import mysql from "mysql2";
 
 import config from "../../../config";
 import { user } from "../../../middleware/token";
@@ -23,7 +23,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		* @access User
 		*/
 		"/",
-		user(),
+		user(mySQLPool),
 		async (req: express.Request, res: express.Response) =>
 		{
 			try
@@ -137,7 +137,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		* @access User
 		*/
 		"/password-update",
-		user(),
+		user(mySQLPool),
 		async (req: express.Request, res: express.Response) =>
 		{
 			const load: UserPasswordUpdate = req.body.load;
