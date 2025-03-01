@@ -72,7 +72,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		"/create",
 		async (req: express.Request, res: express.Response) =>
 		{
-			const { email, password }: UserCreate = req.body.load;
+			const { email, password, }: UserCreate = req.body.load;
 
 			try
 			{
@@ -141,7 +141,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		user(mySQLPool),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const { password, passwordNew }: UserPasswordUpdate = req.body.load;
+			const { password, passwordNew, }: UserPasswordUpdate = req.body.load;
 
 			try
 			{
@@ -192,7 +192,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		"/login",
 		async (req: express.Request, res: express.Response) =>
 		{
-			const { email, password }: UserLogin = req.body.load;
+			const { email, password, }: UserLogin = req.body.load;
 
 			try
 			{
@@ -228,13 +228,13 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 							id: users[0].id,
 							email: users[0].email,
 							admin: users[0].admin,
-							verified: users[0].verified
+							verified: users[0].verified,
 						},
 						config.app.secretKey,
 						{
-							expiresIn: config.nodeENV == "production" ? 7200 : 10000000
+							expiresIn: config.nodeENV == "production" ? 7200 : 10000000,
 						}
-					)
+					),
 				});
 
 				return;
@@ -255,7 +255,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			try
 			{
 				res.status(hTTPStatus.OK).json({
-					message: "Verified"
+					message: "Verified",
 				});
 			}
 			catch (error)

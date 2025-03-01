@@ -47,7 +47,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const { name, symbol, network, isin, address, nativeToken }: CryptoCreate = req.body.load;
+			const { name, symbol, network, isin, address, nativeToken, }: CryptoCreate = req.body.load;
 			try
 			{
 				if (!network || !blockchainNetworks.includes(network))
@@ -146,8 +146,8 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const { cryptoid } = req.params;
-			const { name, symbol, network, isin, address }: CryptoUpdate = req.body.load;
+			const { cryptoid, } = req.params;
+			const { name, symbol, network, isin, address, }: CryptoUpdate = req.body.load;
 			try
 			{
 				const [
@@ -200,7 +200,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		userAdmin(mySQLPool),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const { cryptoid } = req.params;
+			const { cryptoid, } = req.params;
 			try
 			{
 				await mySQLPool.promise().query("DELETE FROM crypto WHERE id = ?;", [

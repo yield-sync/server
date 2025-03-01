@@ -155,7 +155,7 @@ export async function dBBuilderProduction()
 		password: config.app.database.password,
 		waitForConnections: true,
 		connectionLimit: 10,
-		queueLimit: 0
+		queueLimit: 0,
 	});
 
 	// [mock-db] drop and recreate

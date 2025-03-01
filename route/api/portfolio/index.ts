@@ -54,7 +54,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const { name }: PortfolioCreate = req.body.load;
+			const { name, }: PortfolioCreate = req.body.load;
 
 			try
 			{
@@ -95,7 +95,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const { id, name }: PortfolioUpdate = req.body.load;
+			const { id, name, }: PortfolioUpdate = req.body.load;
 
 			try
 			{
@@ -144,7 +144,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const { portfolioId }: any = req.body.load;
+			const { portfolioId, }: any = req.body.load;
 			try
 			{
 				if (!portfolioId)

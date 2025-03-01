@@ -20,5 +20,6 @@
     "route/api/**/*.test.ts",
     "sql/**/*.ts",
     "global.d.ts",
+    "middleware/*.ts",
   ]
 }

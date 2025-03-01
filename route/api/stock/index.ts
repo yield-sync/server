@@ -58,13 +58,14 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				const [
 					stocks,
-				]: [IStock[], FieldPacket[]] = await mySQLPool.promise().query<IStock[]>(
-					"SELECT * FROM stock WHERE symbol = ? OR name LIKE ?;",
-					[
-						query,
-						`%${query}%`,
-					]
-				);
+				]: [IStock[], FieldPacket[]
+] = await mySQLPool.promise().query<IStock[]>(
+	"SELECT * FROM stock WHERE symbol = ? OR name LIKE ?;",
+	[
+		query,
+		`%${query}%`,
+	]
+);
 
 				if (stocks.length > 0)
 				{
@@ -76,7 +77,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				try
 				{
-					const { uRL, key } = config.api.financialModelingPrep;
+					const { uRL, key, } = config.api.financialModelingPrep;
 
 					const externalRes = await axios.get(
 						`${uRL}/api/v3/profile/${query}?apikey=${key}`
@@ -85,7 +86,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					if (externalRes.data.length == 0)
 					{
 						res.status(hTTPStatus.NOT_FOUND).json({
-							message: "Could not find stock in database OR external API"
+							message: "Could not find stock in database OR external API",
 						});
 						return;
 					}
@@ -93,13 +94,13 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					res.status(200).json({
 						exeternalResult: externalRes.data[0],
 					});
-					return
+					return;
 				}
 				catch (error)
 				{
 					console.error("Error fetching external API:", error);
 					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
-						message: `Failed to fetch data from external API: ${error}`
+						message: `Failed to fetch data from external API: ${error}`,
 					});
 					return;
 				}
@@ -121,7 +122,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const { name, symbol, exchange, isin }: StockCreate = req.body.load;
+			const { name, symbol, exchange, isin, }: StockCreate = req.body.load;
 
 			try
 			{
@@ -269,7 +270,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const { stockId }: StockDelete = req.body.load;
+			const { stockId, }: StockDelete = req.body.load;
 
 			try
 			{

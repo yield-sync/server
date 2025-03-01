@@ -10,8 +10,8 @@ export default
 	api: {
 		financialModelingPrep: {
 			uRL: "https://financialmodelingprep.com/",
-			key: process.env.API__FINANCIAL_MODELING_PREP__KEY || ""
-		}
+			key: process.env.API__FINANCIAL_MODELING_PREP__KEY || "",
+		},
 	},
 
 	app: {

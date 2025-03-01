@@ -45,7 +45,7 @@ module.exports = {
 			"warn",
 			{
 				"arrays": "always",
-				"objects": "ignore",
+				"objects": "always",
 				"imports": "never",
 				"exports": "never",
 				"functions": "never"

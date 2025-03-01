@@ -16,7 +16,7 @@ export default {
 			executed: true,
 			status: false,
 			message: defaultMessage,
-		}
+		},
 	}),
 
 
@@ -28,7 +28,7 @@ export default {
 			executed: true,
 			status: false,
 			message: defaultMessage,
-		}
+		},
 	}),
 
 
@@ -40,6 +40,6 @@ export default {
 			executed: true,
 			status: false,
 			message: defaultMessage,
-		}
+		},
 	}),
 };

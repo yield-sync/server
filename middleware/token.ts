@@ -8,7 +8,7 @@ import { hTTPStatus } from "../constants";
 const jwt = require("jsonwebtoken");
 
 
-const { secretKey } = config.app;
+const { secretKey, } = config.app;
 
 
 function verifyJWT(token: string): any | null
@@ -43,7 +43,7 @@ export const userMiddleware = (mySQLPool: mysql.Pool, requireAdmin: boolean = fa
 		if (!decoded)
 		{
 			res.status(hTTPStatus.UNAUTHORIZED).json({
-				message: "Access denied: Invalid or missing token"
+				message: "Access denied: Invalid or missing token",
 			});
 
 			return;
@@ -52,7 +52,7 @@ export const userMiddleware = (mySQLPool: mysql.Pool, requireAdmin: boolean = fa
 		if (requireAdmin && decoded.admin.data[0] !== 1)
 		{
 			res.status(hTTPStatus.FORBIDDEN).json({
-				message: "Access denied: You are not an admin"
+				message: "Access denied: You are not an admin",
 			});
 
 			return;

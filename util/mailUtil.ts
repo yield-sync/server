@@ -38,12 +38,12 @@ export const sendRecoveryEmail = (to: string) =>
 
 	sendSmtpEmail.sender = {
 		"name": "John Doe",
-		"email": "example@example.com"
+		"email": "example@example.com",
 	};
 
 	sendSmtpEmail.to = [
 		{
-			"email": to
+			"email": to,
 		},
 	];
 
@@ -52,16 +52,16 @@ export const sendRecoveryEmail = (to: string) =>
 
 	sendSmtpEmail.replyTo = {
 		"email": "replyto@domain.com",
-		"name": "John Doe"
+		"name": "John Doe",
 	};
 
 	sendSmtpEmail.headers = {
-		"Some-Custom-Name": "unique-id-1234"
+		"Some-Custom-Name": "unique-id-1234",
 	};
 
 	sendSmtpEmail.params = {
 		"parameter": "My param value",
-		"subject": "New Subject"
+		"subject": "New Subject",
 	};
 
 //	API_INSTANCE.sendTransacEmail(sendSmtpEmail).then(

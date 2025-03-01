@@ -28,7 +28,7 @@ const MYSQL_POOL: mysql.Pool = mysql.createPool({
 
 http.createServer(
 	express().use(bodyParser.json()).use(bodyParser.urlencoded({
-		extended: false
+		extended: false,
 	})).use(cors()).use(
 		express.static(__dirname + "/static")
 	).use(
@@ -41,9 +41,9 @@ http.createServer(
 					to: function (context)
 					{
 						return context.parsedUrl.path;
-					}
+					},
 				},
-			]
+			],
 		})
 	).use(
 		"/api",

@@ -1,12 +1,10 @@
-import axios from "axios";
 import express from "express";
 import mysql from "mysql2";
 
-import config from "../../../config/index";
+import { queryStock } from "../../../external-api/FinancialModelingPrep";
 import { loadRequired } from "../../../middleware/load";
 import { user } from "../../../middleware/token";
 import { hTTPStatus } from "../../../constants";
-
 
 function cleanString(input: string): string
 {
@@ -148,7 +146,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				let externalRes: any = {
 				};
 
-				let assetId: number;
+				let stockId: number;
 
 				const [
 					foundStocks,
@@ -165,44 +163,32 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				if (foundStocks.length > 0)
 				{
-					assetId = foundStocks[0].id;
+					stockId = foundStocks[0].id;
 				}
 				else
 				{
-					const { uRL, key } = config.api.financialModelingPrep;
-
 					try
 					{
-						externalRes = await axios.get(
-							`${uRL}/api/v3/profile/${cleanedQuery}?apikey=${key}`
+						const stock: IStock = await queryStock(cleanedQuery);
+
+						await mySQLPool.promise().query(
+							"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
+							[
+								stock.symbol,
+								stock.name,
+								stock.exchange,
+								stock.isin,
+							]
 						);
 					}
 					catch (error)
 					{
 						console.error("Error fetching external API:", error);
 						res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
-							message: `Failed to fetch data from external API: ${error}`
+							message: `Failed to fetch data from external API: ${error}`,
 						});
 						return;
 					}
-
-					if (externalRes.data.length == 0)
-					{
-						res.status(hTTPStatus.NOT_FOUND).json({
-							message: "Could not find stock in database OR external API"
-						});
-						return;
-					}
-
-					await mySQLPool.promise().query(
-						"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
-						[
-							externalRes.data[0].symbol,
-							externalRes.data[0].companyName,
-							externalRes.data[0].exchangeShortName.toLowerCase(),
-							externalRes.data[0].isin,
-						]
-					);
 
 					const [
 						stocks,
@@ -216,7 +202,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 						]
 					);
 
-					assetId = stocks[0].id;
+					stockId = stocks[0].id;
 				}
 
 				const [
@@ -228,7 +214,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					"INSERT INTO portfolio_asset (portfolio_id, stock_id) VALUES (?, ?);",
 					[
 						portfolioId,
-						assetId,
+						stockId,
 					]
 				);
 
