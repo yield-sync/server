@@ -28,10 +28,11 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		{
 			try
 			{
-				let users: IUser[];
-
-				[
+				const [
 					users,
+				]: [
+					IUser[],
+					FieldPacket[]
 				] = await mySQLPool.promise().query<IUser[]>(
 					"SELECT * FROM user WHERE email = ?;",
 					[
@@ -71,18 +72,18 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		"/create",
 		async (req: express.Request, res: express.Response) =>
 		{
-			const load: UserCreate = req.body.load;
+			const { email, password }: UserCreate = req.body.load;
 
 			try
 			{
-				if (!validateEmail(load.email))
+				if (!validateEmail(email))
 				{
 					res.status(hTTPStatus.BAD_REQUEST).send("Invalid email");
 
 					return;
 				}
 
-				if (!validatePassword(load.password))
+				if (!validatePassword(password))
 				{
 					res.status(hTTPStatus.BAD_REQUEST).send(ERROR_INVALID_PASSWORD);
 
@@ -97,7 +98,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				] = await mySQLPool.promise().query<IUser[]>(
 					"SELECT * FROM user WHERE email = ?;",
 					[
-						load.email,
+						email,
 					]
 				);
 
@@ -111,13 +112,13 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				await mySQLPool.promise().query(
 					"INSERT INTO user (email, password) VALUES (?, ?);",
 					[
-						load.email,
-						await bcrypt.hash(load.password, 10),
+						email,
+						await bcrypt.hash(password, 10),
 					]
 				);
 
 				// Send Email
-				await setVerificationEmail(load.email);
+				await setVerificationEmail(email);
 
 				res.status(hTTPStatus.CREATED).send("Created user");
 
@@ -140,14 +141,15 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		user(mySQLPool),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const load: UserPasswordUpdate = req.body.load;
+			const { password, passwordNew }: UserPasswordUpdate = req.body.load;
 
 			try
 			{
-				let users: IUser[];
-
-				[
+				const [
 					users,
+				]: [
+					IUser[],
+					FieldPacket[]
 				] = await mySQLPool.promise().query<IUser[]>(
 					"SELECT * FROM user WHERE email = ?;",
 					[
@@ -155,7 +157,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					]
 				);
 
-				if (!bcrypt.compareSync(load.password, users[0].password))
+				if (!bcrypt.compareSync(password, users[0].password))
 				{
 					res.status(401).send("Invalid password.");
 
@@ -165,7 +167,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				await mySQLPool.promise().query(
 					"UPDATE user SET password = ? WHERE id = ?;",
 					[
-						await bcrypt.hash(load.passwordNew, 10),
+						await bcrypt.hash(passwordNew, 10),
 						req.body.userDecoded.id,
 					]
 				);
@@ -190,18 +192,19 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		"/login",
 		async (req: express.Request, res: express.Response) =>
 		{
-			const load: UserLogin = req.body.load;
+			const { email, password }: UserLogin = req.body.load;
 
 			try
 			{
-				let users: IUser[];
-
-				[
+				const [
 					users,
+				]: [
+					IUser[],
+					FieldPacket[]
 				] = await mySQLPool.promise().query<IUser[]>(
 					"SELECT * FROM user WHERE email = ?;",
 					[
-						load.email,
+						email,
 					]
 				);
 
@@ -212,9 +215,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				const user: IUser = users[0];
-
-				if (!bcrypt.compareSync(load.password, user.password))
+				if (!bcrypt.compareSync(password, users[0].password))
 				{
 					res.status(401).send("Invalid password or email");
 
@@ -224,10 +225,10 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				res.status(hTTPStatus.OK).send({
 					token: jsonWebToken.sign(
 						{
-							id: user.id,
-							email: user.email,
-							admin: user.admin,
-							verified: user.verified
+							id: users[0].id,
+							email: users[0].email,
+							admin: users[0].admin,
+							verified: users[0].verified
 						},
 						config.app.secretKey,
 						{
@@ -249,7 +250,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		"/verify",
 		async (req: express.Request, res: express.Response) =>
 		{
-			const load: UserVerify = req.body.load;
+			const {}: UserVerify = req.body.load;
 
 			try
 			{

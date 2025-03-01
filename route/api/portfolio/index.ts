@@ -1,6 +1,7 @@
 import express from "express";
 import mysql from "mysql2";
 
+import { loadRequired } from "../../../middleware/load";
 import { user } from "../../../middleware/token";
 import { hTTPStatus } from "../../../constants";
 
@@ -19,14 +20,19 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		{
 			try
 			{
-				const RES_PORTFOLIO = await mySQLPool.promise().query(
-					"SELECT id, name FROM portfolio WHERE user_id = ?;",
+				const [
+					portfolios,
+				]: [
+					IPortfolio[],
+					FieldPacket[]
+				] = await mySQLPool.promise().query<IPortfolio[]>(
+					"SELECT * FROM portfolio WHERE user_id = ?;",
 					[
 						req.body.userDecoded.id,
 					]
 				);
 
-				res.status(hTTPStatus.OK).send(RES_PORTFOLIO[0]);
+				res.status(hTTPStatus.OK).send(portfolios);
 
 				return;
 			}
@@ -45,13 +51,14 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		*/
 		"/create",
 		user(mySQLPool),
+		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const load: PortfolioCreate = req.body.load;
+			const { name }: PortfolioCreate = req.body.load;
 
 			try
 			{
-				if (!load.name)
+				if (!name)
 				{
 					res.status(hTTPStatus.BAD_REQUEST).send("No portfolio name provided");
 
@@ -62,7 +69,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					"INSERT INTO portfolio (user_id, name) VALUES (?, ?);",
 					[
 						req.body.userDecoded.id,
-						load.name,
+						name,
 					]
 				);
 
@@ -85,20 +92,21 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		*/
 		"/update",
 		user(mySQLPool),
+		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const load: PortfolioUpdate = req.body.load;
+			const { id, name }: PortfolioUpdate = req.body.load;
 
 			try
 			{
-				if (!load.id)
+				if (!id)
 				{
 					res.status(hTTPStatus.BAD_REQUEST).send("No portfolio id provided");
 
 					return;
 				}
 
-				if (!load.name)
+				if (!name)
 				{
 					res.status(hTTPStatus.BAD_REQUEST).send("No portfolio name provided");
 
@@ -108,9 +116,9 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				await mySQLPool.promise().query(
 					"UPDATE portfolio SET name = ? WHERE user_id = ? AND id = ?;",
 					[
-						load.name,
+						name,
 						req.body.userDecoded.id,
-						load.id,
+						id,
 					]
 				);
 
@@ -133,11 +141,13 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		*/
 		"/delete",
 		user(mySQLPool),
+		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{
+			const { portfolioId }: any = req.body.load;
 			try
 			{
-				if (!req.body.load.portfolioId)
+				if (!portfolioId)
 				{
 					res.status(hTTPStatus.BAD_REQUEST).send("No portfolio id provided");
 
@@ -148,7 +158,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					"DELETE FROM portfolio WHERE user_id = ? AND id = ?;",
 					[
 						req.body.userDecoded.id,
-						req.body.load.portfolioId,
+						portfolioId,
 					]
 				);
 

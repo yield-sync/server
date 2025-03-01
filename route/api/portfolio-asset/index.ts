@@ -3,6 +3,7 @@ import express from "express";
 import mysql from "mysql2";
 
 import config from "../../../config/index";
+import { loadRequired } from "../../../middleware/load";
 import { user } from "../../../middleware/token";
 import { hTTPStatus } from "../../../constants";
 
@@ -26,35 +27,36 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		*/
 		"/create",
 		user(mySQLPool),
+		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const load: PortfolioAssetCreate = req.body.load;
+			const { portfolioId, stockId, }: PortfolioAssetCreate = req.body.load;
 
 			try
 			{
-				if (!load.stockId)
+				if (!stockId)
 				{
 					res.status(hTTPStatus.BAD_REQUEST).send("No stockId received");
 
 					return;
 				}
 
-				if (!load.portfolioId)
+				if (!portfolioId)
 				{
 					res.status(hTTPStatus.BAD_REQUEST).send("No portfolioId received");
 
 					return;
 				}
 
-				let portfolios;
-
-				// First determine that the portfolio belongs to the user
-				[
+				const [
 					portfolios,
+				]: [
+					IPortfolio[],
+					FieldPacket[]
 				] = await mySQLPool.promise().query(
 					"SELECT * FROM portfolio WHERE id = ? AND user_id = ?;",
 					[
-						load.portfolioId,
+						portfolioId,
 						req.body.userDecoded.id,
 					]
 				);
@@ -77,8 +79,8 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				await mySQLPool.promise().query(
 					"INSERT INTO portfolio_asset (portfolioId, stockId) VALUES (?, ?);",
 					[
-						load.portfolioId,
-						load.stockId,
+						portfolioId,
+						stockId,
 					]
 				);
 
@@ -102,40 +104,36 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		*/
 		"/create-by-query",
 		user(mySQLPool),
+		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{
-			if (!req.body.load)
-			{
-				res.status(hTTPStatus.BAD_REQUEST).send("No load passed");
-				return;
-			}
+			const { portfolioId, query, }: PortfolioAssetCreateByQuery = req.body.load;
 
-			const load: PortfolioAssetCreateByQuery = req.body.load;
-
-			if (!load.portfolioId || typeof load.portfolioId !== "number")
+			if (!portfolioId || typeof portfolioId !== "number")
 			{
 				res.status(hTTPStatus.BAD_REQUEST).send("No portfolioId received");
 				return;
 			}
 
-			if (!load.query)
+			if (!query)
 			{
 				res.status(hTTPStatus.BAD_REQUEST).send("No query received");
 				return;
 			}
 
-			load.query = cleanString(load.query);
+			let cleanedQuery = cleanString(query);
 
 			try
 			{
-				let portfolios: any;
-
-				[
+				const [
 					portfolios,
+				]: [
+					IPortfolio[],
+					FieldPacket[]
 				] = await mySQLPool.promise().query(
 					"SELECT * FROM portfolio WHERE id = ? AND user_id = ?;",
 					[
-						load.portfolioId,
+						portfolioId,
 						req.body.userDecoded.id,
 					]
 				);
@@ -160,8 +158,8 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				] = await mySQLPool.promise().query<IStock[]>(
 					"SELECT * FROM stock WHERE symbol = ? OR name LIKE ?;",
 					[
-						load.query,
-						`%${load.query}%`,
+						cleanedQuery,
+						`%${cleanedQuery}%`,
 					]
 				);
 
@@ -176,7 +174,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					try
 					{
 						externalRes = await axios.get(
-							`${uRL}/api/v3/profile/${load.query}?apikey=${key}`
+							`${uRL}/api/v3/profile/${cleanedQuery}?apikey=${key}`
 						);
 					}
 					catch (error)
@@ -229,7 +227,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				] = await mySQLPool.promise().query(
 					"INSERT INTO portfolio_asset (portfolioId, stockId) VALUES (?, ?);",
 					[
-						load.portfolioId,
+						portfolioId,
 						assetId,
 					]
 				);

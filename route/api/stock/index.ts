@@ -3,6 +3,7 @@ import express from "express";
 import mysql from "mysql2";
 
 import config from "../../../config/index";
+import { loadRequired } from "../../../middleware/load";
 import { user, userAdmin } from "../../../middleware/token";
 import { hTTPStatus, stockExchanges } from "../../../constants";
 
@@ -141,6 +142,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		*/
 		"/create",
 		userAdmin(mySQLPool),
+		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{
 			const { name, symbol, exchange, isin }: StockCreate = req.body.load;
@@ -202,6 +204,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		*/
 		"/update",
 		userAdmin(mySQLPool),
+		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{
 			const { stockId, exchange, isin, name, symbol, }: StockUpdate = req.body.load;
@@ -287,6 +290,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		*/
 		"/delete",
 		userAdmin(mySQLPool),
+		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{
 			const { stockId }: StockDelete = req.body.load;

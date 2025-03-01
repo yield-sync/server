@@ -91,6 +91,14 @@ declare global
 	type MySQLQueryResult = [QueryResult, FieldPacket[]];
 
 	// Interfaces
+	interface IPortfolio extends
+		RowDataPacket,
+		OkPacket
+	{
+		id: number;
+		name: string;
+	}
+
 	interface IPortfolioAsset extends
 		RowDataPacket,
 		OkPacket

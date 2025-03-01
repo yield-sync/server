@@ -1,6 +1,7 @@
 import express from "express";
 import mysql from "mysql2";
 
+import { loadRequired } from "../../../middleware/load";
 import { userAdmin } from "../../../middleware/token";
 import { blockchainNetworks, hTTPStatus } from "../../../constants";
 
@@ -43,6 +44,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		*/
 		"/create",
 		userAdmin(mySQLPool),
+		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{
 			const { name, symbol, network, isin, address, nativeToken }: CryptoCreate = req.body.load;
@@ -141,6 +143,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 	).put(
 		"/update/:cryptoid",
 		userAdmin(mySQLPool),
+		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{
 			const { cryptoid } = req.params;
@@ -148,28 +151,29 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			try
 			{
 				const [
+					existingAsset,
+				]: [
+					RowDataPacket[],
+					FieldPacket[]
+				] = await mySQLPool.promise().query(
+					"SELECT * FROM crypto WHERE id = ?;",
 					[
-						existingAsset,
-					],]: any[
-] = await mySQLPool.promise().query(
-	"SELECT * FROM crypto WHERE id = ?;",
-	[
-		cryptoid,
-	]
-);
+						cryptoid,
+					]
+				);
 
-				if (!existingAsset)
+				if (existingAsset.length === 0)
 				{
 					res.status(hTTPStatus.NOT_FOUND).send("Asset not found");
 					return;
 				}
 
 				const updatedAsset = {
-					name: name ?? existingAsset.name,
-					symbol: symbol ?? existingAsset.symbol,
-					network: network ?? existingAsset.network,
-					isin: isin ?? existingAsset.isin,
-					address: address ?? existingAsset.address,
+					name: name ?? existingAsset[0].name,
+					symbol: symbol ?? existingAsset[0].symbol,
+					network: network ?? existingAsset[0].network,
+					isin: isin ?? existingAsset[0].isin,
+					address: address ?? existingAsset[0].address,
 				};
 
 				await mySQLPool.promise().query(
