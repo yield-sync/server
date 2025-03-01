@@ -13,7 +13,8 @@ export class ExternalRequestError extends Error
 {}
 
 
-export const queryStock = async (ticker: string): Promise<IStock> => {
+export const queryStock = async (ticker: string): Promise<IStock> => 
+{
 	try
 	{
 		const response = await axios.get(

@@ -167,28 +167,17 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				}
 				else
 				{
-					try
-					{
-						const stock: IStock = await queryStock(cleanedQuery);
+					const externallyProvidedStockData: IStock = await queryStock(cleanedQuery);
 
-						await mySQLPool.promise().query(
-							"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
-							[
-								stock.symbol,
-								stock.name,
-								stock.exchange,
-								stock.isin,
-							]
-						);
-					}
-					catch (error)
-					{
-						console.error("Error fetching external API:", error);
-						res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
-							message: `Failed to fetch data from external API: ${error}`,
-						});
-						return;
-					}
+					await mySQLPool.promise().query(
+						"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
+						[
+							externallyProvidedStockData.symbol,
+							externallyProvidedStockData.name,
+							externallyProvidedStockData.exchange,
+							externallyProvidedStockData.isin,
+						]
+					);
 
 					const [
 						stocks,
@@ -206,7 +195,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				}
 
 				const [
-					result,
+					insertionResult,
 				]: [
 					any,
 					FieldPacket[]
@@ -219,19 +208,19 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				);
 
 				const [
-					createdPortfolioAsset,
+					portfolioAssets,
 				]: [
 					IPortfolioAsset[],
 					FieldPacket[]
 				]  = await mySQLPool.promise().query(
 					"SELECT * FROM portfolio_asset WHERE id = ?;",
 					[
-						result.insertId,
+						insertionResult.insertId,
 					]
 				);
 
 				res.status(hTTPStatus.CREATED).json({
-					createdPortfolioAsset: createdPortfolioAsset[0],
+					portfolioAsset: portfolioAssets[0],
 					externalAPIResult: externalRes.data ?? null,
 				});
 			}
