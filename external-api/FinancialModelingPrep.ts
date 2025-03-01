@@ -6,14 +6,16 @@ import config from "../config";
 const { uRL, key, } = config.api.financialModelingPrep;
 
 
-export class NothingFoundError extends Error
+export class NothingFoundError extends
+	Error
 {}
 
-export class ExternalRequestError extends Error
+export class ExternalRequestError extends
+	Error
 {}
 
 
-export const queryStock = async (ticker: string): Promise<IStock> => 
+export const queryStock = async (ticker: string): Promise<IStock> =>
 {
 	try
 	{
