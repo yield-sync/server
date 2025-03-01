@@ -54,14 +54,11 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		{
 			const query: string = cleanString(req.params.query);
 
-			let results: IStock[];
-			let externalRes: any = {};
-
 			try
 			{
-				[
-					results,
-				] = await mySQLPool.promise().query<IStock[]>(
+				const [
+					stocks,
+				]: [IStock[], FieldPacket[]] = await mySQLPool.promise().query<IStock[]>(
 					"SELECT * FROM stock WHERE symbol = ? OR name LIKE ?;",
 					[
 						query,
@@ -69,21 +66,34 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					]
 				);
 
-				if (results.length > 0)
+				if (stocks.length > 0)
 				{
 					res.status(hTTPStatus.ACCEPTED).json({
-						stock: results[0],
+						stock: stocks[0],
 					});
 					return;
 				}
 
-				const { uRL, key } = config.api.financialModelingPrep;
-
 				try
 				{
-					externalRes = await axios.get(
+					const { uRL, key } = config.api.financialModelingPrep;
+
+					const externalRes = await axios.get(
 						`${uRL}/api/v3/profile/${query}?apikey=${key}`
 					);
+
+					if (externalRes.data.length == 0)
+					{
+						res.status(hTTPStatus.NOT_FOUND).json({
+							message: "Could not find stock in database OR external API"
+						});
+						return;
+					}
+
+					res.status(200).json({
+						exeternalResult: externalRes.data[0],
+					});
+					return
 				}
 				catch (error)
 				{
@@ -93,19 +103,6 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					});
 					return;
 				}
-
-				if (externalRes.data.length == 0)
-				{
-					res.status(hTTPStatus.NOT_FOUND).json({
-						message: "Could not find stock in database OR external API"
-					});
-					return;
-				}
-
-				res.status(200).json({
-					exeternalResult: externalRes.data[0],
-				});
-				return
 			}
 			catch (error)
 			{
