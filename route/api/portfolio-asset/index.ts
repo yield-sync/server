@@ -77,7 +77,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				// Insert into portfolio_asset
 				await mySQLPool.promise().query(
-					"INSERT INTO portfolio_asset (portfolioId, stockId) VALUES (?, ?);",
+					"INSERT INTO portfolio_asset (portfolio_id, stock_id) VALUES (?, ?);",
 					[
 						portfolioId,
 						stockId,
@@ -225,7 +225,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					any,
 					FieldPacket[]
 				] = await mySQLPool.promise().query(
-					"INSERT INTO portfolio_asset (portfolioId, stockId) VALUES (?, ?);",
+					"INSERT INTO portfolio_asset (portfolio_id, stock_id) VALUES (?, ?);",
 					[
 						portfolioId,
 						assetId,

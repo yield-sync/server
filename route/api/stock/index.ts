@@ -55,6 +55,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			const query: string = cleanString(req.params.query);
 
 			let results: IStock[];
+			let externalRes: any = {};
 
 			try
 			{
@@ -71,14 +72,12 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				if (results.length > 0)
 				{
 					res.status(hTTPStatus.ACCEPTED).json({
-						asset: results[0],
+						stock: results[0],
 					});
 					return;
 				}
 
 				const { uRL, key } = config.api.financialModelingPrep;
-
-				let externalRes;
 
 				try
 				{
@@ -103,30 +102,10 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				await mySQLPool.promise().query(
-					"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
-					[
-						externalRes.data[0].symbol,
-						externalRes.data[0].companyName,
-						externalRes.data[0].exchangeShortName.toLowerCase(),
-						externalRes.data[0].isin,
-					]
-				);
-
-				[
-					results,
-				] = await mySQLPool.promise().query<IStock[]>(
-					"SELECT * FROM stock WHERE symbol = ?;",
-					[
-						externalRes.data[0].symbol,
-					]
-				);
-
-				res.status(hTTPStatus.ACCEPTED).json({
-					asset: results[0],
-					apiResult: externalRes.data
+				res.status(200).json({
+					exeternalResult: externalRes.data[0],
 				});
-				return;
+				return
 			}
 			catch (error)
 			{

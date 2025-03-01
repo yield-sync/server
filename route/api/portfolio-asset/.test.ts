@@ -221,19 +221,19 @@ describe("Request: GET", () =>
 
 				expect(portfolioAssests.length).toBeGreaterThan(0);
 
-				if (!("stockId" in portfolioAssests[0]))
+				if (!("stock_id" in portfolioAssests[0]))
 				{
-					throw new Error("Key 'stockId' not in portfolioAssets");
+					throw new Error("Key 'stock_id' not in portfolioAssets");
 				}
 
-				expect(portfolioAssests[0].stockId).toBe(stockId);
+				expect(portfolioAssests[0].stock_id).toBe(stockId);
 
-				if (!("portfolioId" in portfolioAssests[0]))
+				if (!("portfolio_id" in portfolioAssests[0]))
 				{
-					throw new Error("Key 'portfolioId' not in portfolioAssets");
+					throw new Error("Key 'portfolio_id' not in portfolioAssets");
 				}
 
-				expect(portfolioAssests[0].portfolioId).toBe(portfolioId);
+				expect(portfolioAssests[0].portfolio_id).toBe(portfolioId);
 			});
 		});
 	});
