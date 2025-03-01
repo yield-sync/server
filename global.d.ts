@@ -56,6 +56,7 @@ declare global
 	type PortfolioAssetCreateByQuery = Load & {
 		portfolioId: string,
 		query: string,
+		crypto?: boolean;
 	};
 
 	type PortfolioCreate = Load & {

@@ -105,7 +105,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const { portfolioId, query, }: PortfolioAssetCreateByQuery = req.body.load;
+			const { portfolioId, query, crypto = false }: PortfolioAssetCreateByQuery = req.body.load;
 
 			if (!portfolioId || typeof portfolioId !== "number")
 			{
@@ -143,59 +143,65 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				let externalRes: any = {
-				};
-
 				let stockId: number;
 
-				const [
-					foundStocks,
-				]: [
-					IStock[],
-					FieldPacket[]
-				] = await mySQLPool.promise().query<IStock[]>(
-					"SELECT * FROM stock WHERE symbol = ? OR name LIKE ?;",
-					[
-						cleanedQuery,
-						`%${cleanedQuery}%`,
-					]
-				);
-
-				if (foundStocks.length > 0)
+				if (crypto)
 				{
-					stockId = foundStocks[0].id;
+					res.status(hTTPStatus.BAD_REQUEST).send("Crypto not supported yet");
+
+					return;
 				}
 				else
 				{
-					const externallyProvidedStockData: IStock = await queryStock(cleanedQuery);
-
-					await mySQLPool.promise().query(
-						"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
-						[
-							externallyProvidedStockData.symbol,
-							externallyProvidedStockData.name,
-							externallyProvidedStockData.exchange,
-							externallyProvidedStockData.isin,
-						]
-					);
-
 					const [
-						stocks,
+						foundStocks,
 					]: [
 						IStock[],
 						FieldPacket[]
 					] = await mySQLPool.promise().query<IStock[]>(
-						"SELECT * FROM stock WHERE symbol = ?;",
+						"SELECT * FROM stock WHERE symbol = ? OR name LIKE ?;",
 						[
-							externalRes.data[0].symbol,
+							cleanedQuery,
+							`%${cleanedQuery}%`,
 						]
 					);
 
-					stockId = stocks[0].id;
+					if (foundStocks.length > 0)
+					{
+						stockId = foundStocks[0].id;
+					}
+					else
+					{
+						const externallyProvidedStockData: IStock = await queryStock(cleanedQuery);
+
+						await mySQLPool.promise().query(
+							"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
+							[
+								externallyProvidedStockData.symbol,
+								externallyProvidedStockData.name,
+								externallyProvidedStockData.exchange,
+								externallyProvidedStockData.isin,
+							]
+						);
+
+						const [
+							stocks,
+						]: [
+							IStock[],
+							FieldPacket[]
+						] = await mySQLPool.promise().query<IStock[]>(
+							"SELECT * FROM stock WHERE symbol = ?;",
+							[
+								externallyProvidedStockData.symbol,
+							]
+						);
+
+						stockId = stocks[0].id;
+					}
 				}
 
 				const [
-					insertionResult,
+					insertionQuery,
 				]: [
 					any,
 					FieldPacket[]
@@ -215,13 +221,12 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				]  = await mySQLPool.promise().query(
 					"SELECT * FROM portfolio_asset WHERE id = ?;",
 					[
-						insertionResult.insertId,
+						insertionQuery.insertId,
 					]
 				);
 
 				res.status(hTTPStatus.CREATED).json({
 					portfolioAsset: portfolioAssets[0],
-					externalAPIResult: externalRes.data ?? null,
 				});
 			}
 			catch (error)
