@@ -144,9 +144,32 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				}
 
 				let stockId: number;
+				let cryptoId: number;
 
 				if (crypto)
 				{
+					const [
+						foundCryptos,
+					]: [
+						ICrypto[],
+						FieldPacket[]
+					] = await mySQLPool.promise().query<ICrypto[]>(
+						"SELECT * FROM crypto WHERE symbol = ? OR name LIKE ?;",
+						[
+							cleanedQuery,
+							`%${cleanedQuery}%`,
+						]
+					);
+
+					if (foundCryptos.length > 0)
+					{
+						cryptoId = foundCryptos[0].id;
+					}
+					else
+					{
+
+					}
+
 					res.status(hTTPStatus.BAD_REQUEST).send("Crypto not supported yet");
 
 					return;
