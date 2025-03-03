@@ -103,6 +103,16 @@ declare global
 		isin?: string;
 	}
 
+	interface ICryptocurrency extends
+		RowDataPacket,
+		OkPacket
+	{
+		id: number;
+		coingeckoId: string;
+		name: string;
+		symbol: string;
+	}
+
 	interface IPortfolio extends
 		RowDataPacket,
 		OkPacket
