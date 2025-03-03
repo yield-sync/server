@@ -55,24 +55,43 @@ const queries: string[] = [
 			)
 		);
 	`,
+	// Cryptocurrency
+	`
+		CREATE TABLE cryptocurrency (
+			id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+			coingecko_id VARCHAR(50) UNIQUE,
+			symbol VARCHAR(50) NOT NULL,
+			name VARCHAR(100) NOT NULL
+		);
+	`,
+	//
+	`
+		CREATE TABLE cryptocurrency_platform (
+			id INT PRIMARY KEY AUTO_INCREMENT,
+			cryptocurrency_id INT NOT NULL,
+			platform VARCHAR(50) NOT NULL,
+			address VARCHAR(100) NOT NULL,
+			FOREIGN KEY (cryptocurrency_id) REFERENCES cryptocurrency(id)
+		);
+	`,
 	// stock_industry
 	`
 		CREATE TABLE stock_industry (
 			id INT NOT NULL AUTO_INCREMENT,
-			stockId INT NOT NULL,
+			stock_id INT NOT NULL,
 			industry VARCHAR(255),
 			PRIMARY KEY (id),
-			FOREIGN KEY (stockId) REFERENCES stock(id) ON DELETE CASCADE
+			FOREIGN KEY (stock_id) REFERENCES stock(id) ON DELETE CASCADE
 		)
 	`,
 	// stock_sector
 	`
 		CREATE TABLE stock_sector (
 			id INT NOT NULL AUTO_INCREMENT,
-			stockId INT NOT NULL,
+			stock_id INT NOT NULL,
 			sector VARCHAR(255),
 			PRIMARY KEY (id),
-			FOREIGN KEY (stockId) REFERENCES stock(id) ON DELETE CASCADE
+			FOREIGN KEY (stock_id) REFERENCES stock(id) ON DELETE CASCADE
 		)
 	`,
 	// portfolio
