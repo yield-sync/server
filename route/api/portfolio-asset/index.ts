@@ -105,7 +105,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const { portfolioId, query, crypto = false }: PortfolioAssetCreateByQuery = req.body.load;
+			const { portfolioId, query, crypto = false, }: PortfolioAssetCreateByQuery = req.body.load;
 
 			if (!portfolioId || typeof portfolioId !== "number")
 			{

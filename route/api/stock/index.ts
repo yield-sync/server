@@ -58,14 +58,16 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				const [
 					stocks,
-				]: [IStock[], FieldPacket[]
-] = await mySQLPool.promise().query<IStock[]>(
-	"SELECT * FROM stock WHERE symbol = ? OR name LIKE ?;",
-	[
-		query,
-		`%${query}%`,
-	]
-);
+				]: [
+					IStock[],
+					FieldPacket[]
+				] = await mySQLPool.promise().query<IStock[]>(
+					"SELECT * FROM stock WHERE symbol = ? OR name LIKE ?;",
+					[
+						query,
+						`%${query}%`,
+					]
+				);
 
 				if (stocks.length > 0)
 				{
