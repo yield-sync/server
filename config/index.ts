@@ -8,6 +8,11 @@ export default
 	port: process.env.PORT || 5000,
 
 	api: {
+		coingecko: {
+			uRL: "https://api.coingecko.com/",
+			key: process.env.API__COINGECKO__KEY || "",
+
+		},
 		financialModelingPrep: {
 			uRL: "https://financialmodelingprep.com/",
 			key: process.env.API__FINANCIAL_MODELING_PREP__KEY || "",
