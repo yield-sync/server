@@ -94,9 +94,9 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const { cryptoid } = req.params;
+			const { cryptoid, } = req.params;
 
-			const { coingeckoId, name, symbol }: CryptocurrencyUpdate = req.body.load;
+			const { coingeckoId, name, symbol, }: CryptocurrencyUpdate = req.body.load;
 
 			try
 			{

@@ -18,7 +18,7 @@ import routeApiUser from "./route/api/user";
 
 if (!config.app.database.host || !config.port)
 {
-	throw new Error('Missing required configuration');
+	throw new Error("Missing required configuration");
 }
 
 
@@ -30,8 +30,9 @@ const MYSQL_POOL: mysql.Pool = mysql.createPool({
 	waitForConnections: true,
 	connectionLimit: 10,
 	queueLimit: 0,
-}).on('error', (err) => {
-	console.error('MySQL Pool Error:', err);
+}).on("error", (err) =>
+{
+	console.error("MySQL Pool Error:", err);
 });
 
 
