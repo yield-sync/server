@@ -3,7 +3,7 @@ import mysql from "mysql2";
 
 import { loadRequired } from "../../../middleware/load";
 import { userAdmin } from "../../../middleware/token";
-import { blockchainNetworks, hTTPStatus } from "../../../constants";
+import { hTTPStatus } from "../../../constants";
 
 
 export default (mySQLPool: mysql.Pool): express.Router =>

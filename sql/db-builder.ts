@@ -1,12 +1,8 @@
 import mysql from "mysql2";
 
 import config from "../config";
-import { blockchainNetworks, stockExchanges } from "../constants";
+import { stockExchanges } from "../constants";
 
-const sQLBlockchainNetworks: string = blockchainNetworks.map((n) =>
-{
-	return `'${n}'`;
-}).join(", ");
 
 const sQLStockExchanges: string = stockExchanges.map((n) =>
 {

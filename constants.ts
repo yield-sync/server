@@ -1,11 +1,3 @@
-export const blockchainNetworks = [
-	"arbitrum",
-	"base",
-	"ethereum",
-	"op-mainnet",
-	"solana",
-];
-
 export const stockExchanges = [
 	"nasdaq",
 	"nyse",
