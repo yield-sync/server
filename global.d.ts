@@ -23,24 +23,6 @@ declare global
 		symbol?: string;
 	};
 
-	type CryptoCreate = Load & {
-		address?: string;
-		isin?: string;
-		name?: string;
-		nativeToken?: boolean;
-		network: string;
-		symbol?: string;
-	};
-
-	type CryptoUpdate = Load & {
-		address?: string;
-		isin?: string;
-		name?: string;
-		nativeToken?: boolean;
-		network?: string;
-		symbol?: string;
-	};
-
 	type StockCreate = Load & {
 		exchange: string;
 		isin: string;
