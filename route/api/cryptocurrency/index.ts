@@ -18,13 +18,13 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		{
 			try
 			{
-				let stocks: ICryptocurrency[];
+				let cryptocurrencies: ICryptocurrency[];
 
 				[
-					stocks,
+					cryptocurrencies,
 				] = await mySQLPool.promise().query<ICryptocurrency[]>("SELECT * FROM cryptocurrency;");
 
-				res.status(hTTPStatus.OK).send(stocks);
+				res.status(hTTPStatus.OK).send(cryptocurrencies);
 
 				return;
 			}
@@ -46,92 +46,41 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const { name, symbol, network, isin, address, nativeToken, }: CryptoCreate = req.body.load;
+			const { coingeckoId, name = null, symbol = null, }: CryptocurrencyCreate = req.body.load;
 			try
 			{
-				if (!network || !blockchainNetworks.includes(network))
+				if (!coingeckoId)
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("Invalid or missing network");
+					res.status(hTTPStatus.BAD_REQUEST).send("Invalid or missing coingeckoId");
 					return;
 				}
 
-				if (!address && !nativeToken)
+				const [
+					cryptocurrencyWithCoinGeckoId,
+				] = await mySQLPool.promise().query(
+					"SELECT id FROM cryptocurrency WHERE coingecko_id = ?;",
+					[
+						coingeckoId,
+					]
+				);
+
+				if ((cryptocurrencyWithCoinGeckoId as any[]).length > 0)
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("Address is required for blockchain assets.");
+					res.status(hTTPStatus.CONFLICT).send("coingecko_id already found");
 					return;
-				}
-
-				if (address && nativeToken)
-				{
-					res.status(hTTPStatus.BAD_REQUEST).send("Native tokens should not have an address.");
-					return;
-				}
-
-				if (address)
-				{
-					const [
-						assetOnNetworkAndAddress,
-					] = await mySQLPool.promise().query(
-						"SELECT id FROM crypto WHERE network = ? AND address = ?;",
-						[
-							network,
-							address,
-						]
-					);
-
-					if ((assetOnNetworkAndAddress as any[]).length > 0)
-					{
-						res.status(hTTPStatus.CONFLICT).send("Address on blockchain already exists");
-						return;
-					}
-				}
-
-				if (nativeToken)
-				{
-					const [
-						assetOnNetworkNativeToken,
-					] = await mySQLPool.promise().query(
-						"SELECT id FROM asset WHERE network = ? AND native_token = 1;",
-						[
-							network,
-							address,
-						]
-					);
-
-					if ((assetOnNetworkNativeToken as any[]).length > 0)
-					{
-						res.status(hTTPStatus.CONFLICT).send("Native token on network already exists.");
-						return;
-					}
-				}
-
-				if (isin)
-				{
-					const [
-						existingISIN,
-					] = await mySQLPool.promise().query("SELECT id FROM crypto WHERE isin = ?;", [
-						isin,
-					]);
-					if ((existingISIN as any[]).length > 0)
-					{
-						res.status(hTTPStatus.CONFLICT).send("ISIN already exists.");
-						return;
-					}
 				}
 
 				// Insert the asset
 				await mySQLPool.promise().query(
-					"INSERT INTO crypto (symbol, name, network, isin, address) VALUES (?, ?, ?, ?, ?);",
+					"INSERT INTO cryptocurrency (symbol, name, coingecko_id) VALUES (?, ?, ?);",
 					[
 						symbol,
 						name,
-						network,
-						isin,
-						address,
+						coingeckoId,
 					]
 				);
 
-				res.status(hTTPStatus.CREATED).send("Created crypto");
+				res.status(hTTPStatus.CREATED).send("Created cryptocurrency");
 			}
 			catch (error)
 			{
@@ -145,8 +94,10 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const { cryptoid, } = req.params;
-			const { name, symbol, network, isin, address, }: CryptoUpdate = req.body.load;
+			const { cryptoid } = req.params;
+
+			const { coingeckoId, name, symbol }: CryptocurrencyUpdate = req.body.load;
+
 			try
 			{
 				const [
@@ -155,7 +106,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					RowDataPacket[],
 					FieldPacket[]
 				] = await mySQLPool.promise().query(
-					"SELECT * FROM crypto WHERE id = ?;",
+					"SELECT * FROM cryptocurrency WHERE id = ?;",
 					[
 						cryptoid,
 					]
@@ -167,27 +118,17 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				const updatedAsset = {
-					name: name ?? existingAsset[0].name,
-					symbol: symbol ?? existingAsset[0].symbol,
-					network: network ?? existingAsset[0].network,
-					isin: isin ?? existingAsset[0].isin,
-					address: address ?? existingAsset[0].address,
-				};
-
 				await mySQLPool.promise().query(
-					"UPDATE crypto SET name = ?, symbol = ?, network = ?, isin = ?, address = ? WHERE id = ?;",
+					"UPDATE cryptocurrency SET coingecko_id = ?, name = ?, symbol = ? WHERE id = ?;",
 					[
-						updatedAsset.name,
-						updatedAsset.symbol,
-						updatedAsset.network,
-						updatedAsset.isin,
-						updatedAsset.address,
+						coingeckoId ?? existingAsset[0].coingecko_id,
+						name ?? existingAsset[0].name,
+						symbol ?? existingAsset[0].symbol,
 						cryptoid,
 					]
 				);
 
-				res.status(hTTPStatus.OK).send("Updated crypto");
+				res.status(hTTPStatus.OK).send("Updated cryptocurrency");
 			}
 			catch (error)
 			{
@@ -202,10 +143,14 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			const { cryptoid, } = req.params;
 			try
 			{
-				await mySQLPool.promise().query("DELETE FROM crypto WHERE id = ?;", [
-					cryptoid,
-				]);
-				res.status(hTTPStatus.OK).send("Deleted crypto");
+				await mySQLPool.promise().query(
+					"DELETE FROM cryptocurrency WHERE id = ?;",
+					[
+						cryptoid,
+					]
+				);
+
+				res.status(hTTPStatus.OK).send("Deleted cryptocurrency");
 			}
 			catch (error)
 			{

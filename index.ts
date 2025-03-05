@@ -9,6 +9,7 @@ import path from "path";
 import config from "./config";
 import rateLimiter from "./rate-limiter";
 import routeApi from "./route/api";
+import routeApiCryptocurrency from "./route/api/cryptocurrency";
 import routeApiPortfolio from "./route/api/portfolio";
 import routeApiPortfolioAsset from "./route/api/portfolio-asset";
 import routeApiStock from "./route/api/stock";
@@ -48,6 +49,9 @@ http.createServer(
 	).use(
 		"/api",
 		routeApi()
+	).use(
+		"/api/cryptocurrency",
+		routeApiCryptocurrency(MYSQL_POOL)
 	).use(
 		"/api/portfolio",
 		routeApiPortfolio(MYSQL_POOL)

@@ -11,6 +11,18 @@ declare global
 	type Load = object;
 
 
+	type CryptocurrencyCreate = Load & {
+		coingeckoId: string;
+		name?: string;
+		symbol?: string;
+	};
+
+	type CryptocurrencyUpdate = Load & {
+		coingeckoId: string;
+		name?: string;
+		symbol?: string;
+	};
+
 	type CryptoCreate = Load & {
 		address?: string;
 		isin?: string;

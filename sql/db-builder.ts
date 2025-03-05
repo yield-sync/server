@@ -37,25 +37,7 @@ const queries: string[] = [
 			symbol VARCHAR(255) NOT NULL
 		);
 	`,
-	// crypto
-	`
-		CREATE TABLE crypto (
-			id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-			native_token BIT(1) NOT NULL DEFAULT 0,
-			network VARCHAR(10) NOT NULL CHECK (network IN (${sQLBlockchainNetworks})),
-			isin VARCHAR(12) UNIQUE,
-			address VARCHAR(255),
-			name VARCHAR(255) NOT NULL,
-			symbol VARCHAR(255) NOT NULL,
-			UNIQUE KEY unique_native_token_per_network (network, native_token),
-			UNIQUE KEY unique_address_per_network (network, address),
-			CHECK (
-				(address IS NOT NULL AND native_token = 0) OR
-				(address IS NULL AND native_token = 1)
-			)
-		);
-	`,
-	// Cryptocurrency
+	// cryptocurrency
 	`
 		CREATE TABLE cryptocurrency (
 			id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -64,7 +46,7 @@ const queries: string[] = [
 			name VARCHAR(100) NOT NULL
 		);
 	`,
-	//
+	// cryptocurrency_platform
 	`
 		CREATE TABLE cryptocurrency_platform (
 			id INT PRIMARY KEY AUTO_INCREMENT,
@@ -110,12 +92,12 @@ const queries: string[] = [
 		CREATE TABLE portfolio_asset (
 			id INT NOT NULL AUTO_INCREMENT,
 			portfolio_id INT NOT NULL,
-			crypto_id INT,
+			cryptocurrency_id INT,
 			stock_id INT,
 			created DATETIME DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
 			FOREIGN KEY (portfolio_id) REFERENCES portfolio(id) ON DELETE CASCADE,
-			FOREIGN KEY (crypto_id) REFERENCES crypto(id) ON DELETE CASCADE,
+			FOREIGN KEY (cryptocurrency_id) REFERENCES cryptocurrency(id) ON DELETE CASCADE,
 			FOREIGN KEY (stock_id) REFERENCES stock(id) ON DELETE CASCADE
 		)
 	`,
