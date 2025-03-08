@@ -1,3 +1,4 @@
+import axios from "axios";
 import express from "express";
 import mysql from "mysql2";
 import request from "supertest";
@@ -18,6 +19,9 @@ let token: string;
 
 let app: express.Express;
 let mySQLPool: mysql.Pool;
+
+
+jest.mock("axios");
 
 
 afterAll(async () =>
@@ -77,6 +81,87 @@ beforeEach(async () =>
 	expect(typeof token).toBe("string");
 });
 
+
+describe("Request: GET", () => {
+	describe("/api/stock/search/:query", () => {
+		const ticker = "AAPL";
+		const companyName = "Apple Inc.";
+		const exchange = "nasdaq";
+		const isin = "US0378331005";
+
+
+		afterEach(() => {
+			jest.clearAllMocks();
+		});
+
+
+		it("Should return stock from DB if it exists and NOT make external request..", async () => {
+			await mySQLPool.promise().query(
+				"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
+				[
+					ticker,
+					companyName,
+					exchange,
+					isin,
+				]
+			);
+
+			const res = await request(app).get(`/api/stock/search/${ticker}`).set("authorization", `Bearer ${token}`);
+
+			expect(res.statusCode).toBe(202);
+
+			expect(res.body).toEqual({
+			stock: {
+				id: 1,
+				symbol: ticker,
+				name: companyName,
+				exchange: exchange,
+				isin: isin
+			}
+			});
+
+			expect(axios.get).not.toHaveBeenCalled();
+		});
+
+		it("Should fetch from external API if stock does not exist in DB..", async () => {
+			// Mock the external API response
+			(axios.get as jest.Mock).mockResolvedValueOnce({
+				data: [{
+					symbol: ticker,
+					companyName: companyName,
+					exchangeShortName: exchange,
+					isin: isin
+				}]
+			});
+
+			const res = await request(app).get(`/api/stock/search/${ticker}`).set("authorization", `Bearer ${token}`);
+
+			expect(res.statusCode).toBe(202);
+
+			expect(res.body).toEqual({
+				stocks: {
+					id: 1,
+					symbol: ticker,
+					name: companyName,
+					exchange: exchange,
+					isin: isin
+				},
+				apiResult: [{
+					symbol: ticker,
+					companyName: companyName,
+					exchangeShortName: exchange,
+					isin: isin
+				}]
+			});
+
+			const { uRL, key, } = config.api.financialModelingPrep;
+
+			expect(axios.get).toHaveBeenCalledWith(
+				expect.stringContaining(`${uRL}/api/v3/profile/${ticker}?apikey=${key}`)
+			);
+		});
+	});
+});
 
 describe("Request: POST", () =>
 {

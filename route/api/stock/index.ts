@@ -48,6 +48,12 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			}
 		}
 	).get(
+		/**
+		* @route GET /api/stock/search/:query
+		* @desc Search for a stock and add it to DB if it doesnt exist
+		* @param query {string} to search for
+		* @access authorized:user
+		*/
 		"/search/:query",
 		user(mySQLPool),
 		async (req: express.Request, res: express.Response) =>
@@ -56,11 +62,10 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 			try
 			{
-				const [
+				let stocks: IStock[];
+
+				[
 					stocks,
-				]: [
-					IStock[],
-					FieldPacket[]
 				] = await mySQLPool.promise().query<IStock[]>(
 					"SELECT * FROM stock WHERE symbol = ? OR name LIKE ?;",
 					[
@@ -93,9 +98,31 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 						return;
 					}
 
-					res.status(200).json({
-						exeternalResult: externalRes.data[0],
+
+					await mySQLPool.promise().query(
+						"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
+						[
+							externalRes.data[0].symbol,
+							externalRes.data[0].companyName,
+							externalRes.data[0].exchangeShortName.toLowerCase(),
+							externalRes.data[0].isin,
+						]
+					);
+
+					[
+						stocks,
+					] = await mySQLPool.promise().query<IStock[]>(
+						"SELECT * FROM stock WHERE symbol = ?;",
+						[
+							externalRes.data[0].symbol,
+						]
+					);
+
+					res.status(hTTPStatus.ACCEPTED).json({
+						stocks: stocks[0],
+						apiResult: externalRes.data
 					});
+
 					return;
 				}
 				catch (error)
@@ -104,6 +131,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
 						message: `Failed to fetch data from external API: ${error}`,
 					});
+
 					return;
 				}
 			}
