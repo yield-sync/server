@@ -109,7 +109,7 @@ describe("Request: POST", () =>
 			it("Should create asset.", async () =>
 			{
 				const res = await request(app).post("/api/cryptocurrency/create").set("authorization", `Bearer ${token}`).send({
-					load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, coingeckoId: COINGECKO_ID } as CryptocurrencyCreate
+					load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, coingecko_id: COINGECKO_ID } as CryptocurrencyCreate
 				});
 
 				expect(res.statusCode).toBe(201);
@@ -127,11 +127,11 @@ describe("Request: POST", () =>
 			it("Should not allow duplicate coingecko_id.", async () =>
 			{
 				await request(app).post("/api/cryptocurrency/create").set("authorization", `Bearer ${token}`).send({
-					load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, coingeckoId: COINGECKO_ID } as CryptocurrencyCreate
+					load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, coingecko_id: COINGECKO_ID } as CryptocurrencyCreate
 				});
 
 				const res = await request(app).post("/api/cryptocurrency/create").set("authorization", `Bearer ${token}`).send({
-					load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, coingeckoId: COINGECKO_ID } as CryptocurrencyCreate
+					load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, coingecko_id: COINGECKO_ID } as CryptocurrencyCreate
 				});
 
 				expect(res.statusCode).toBe(409);
@@ -150,7 +150,7 @@ describe("Request: PUT", () =>
 			it("Should update asset name successfully", async () =>
 			{
 				await request(app).post("/api/cryptocurrency/create").set("authorization", `Bearer ${token}`).send({
-					load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, coingeckoId: COINGECKO_ID } as CryptocurrencyCreate
+					load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, coingecko_id: COINGECKO_ID } as CryptocurrencyCreate
 				});
 
 				let cryptos;
@@ -190,7 +190,7 @@ describe("Request: DELETE", () =>
 		it("Should delete asset successfully", async () =>
 		{
 			await request(app).post("/api/cryptocurrency/create").set("authorization", `Bearer ${token}`).send({
-				load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, coingeckoId: COINGECKO_ID } as CryptocurrencyCreate
+				load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, coingecko_id: COINGECKO_ID } as CryptocurrencyCreate
 			});
 
 			let cryptos;

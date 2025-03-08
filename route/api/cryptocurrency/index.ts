@@ -5,15 +5,13 @@ import { loadRequired } from "../../../middleware/load";
 import { user, userAdmin } from "../../../middleware/token";
 import { hTTPStatus } from "../../../constants";
 import { queryCryptocurrency } from "../../../external-api/coingecko";
+import { sanitizeQuery } from "../../../util/sanitizer";
 
 
-function cleanString(input: string): string
-{
-	if (!input) return "";
+const EXTERNAL_CALL_DELAY_MINUTES: number = 1440;
+const EXTERNAL_CALL_DELAY_MS: number = EXTERNAL_CALL_DELAY_MINUTES * 60 * 1000;
 
-	// Trim, Remove special characters, and uppercase
-	return input.trim().replace(/[^a-zA-Z0-9.]/g, "").toUpperCase();
-}
+const lastExternalReqTimes: Map<string, Date> = new Map();
 
 
 export default (mySQLPool: mysql.Pool): express.Router =>
@@ -78,10 +76,17 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		user(mySQLPool),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const query: string = cleanString(req.params.query);
+			let resJSON: {
+				cryptocurrencies?: ICryptocurrency[]
+				externalAPIResults?: CoingeckoCoin[]
+			} = {};
+
+			const query: string = sanitizeQuery(req.params.query);
 
 			try
 			{
+				const now = new Date();
+
 				let cryptocurrencies: ICryptocurrency[] = [];
 
 				[
@@ -93,55 +98,79 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 						`%${query}%`,
 					]
 				);
-				// The current issue is that what if coingecko adds another token with the same symbol the initial insertion has already occured?
 
-				if (cryptocurrencies.length > 0)
+				const lastExternalReqTimeForQuery = lastExternalReqTimes.get(query);
+
+				const shouldReqExternal = !lastExternalReqTimeForQuery || (
+					now.getTime() - lastExternalReqTimeForQuery.getTime()
+				) >= EXTERNAL_CALL_DELAY_MS;
+
+				if (shouldReqExternal)
 				{
-					res.status(hTTPStatus.ACCEPTED).json({
+					lastExternalReqTimes.set(query, now);
+
+					const externalAPIResults: CoingeckoCoin[] = await queryCryptocurrency(query);
+
+					resJSON = {
+						...resJSON,
+						externalAPIResults,
+					};
+
+					for (let i = 0; i < externalAPIResults.length; i++)
+					{
+						const coingeckoCoin = externalAPIResults[i];
+
+						let missingInDatabase = true
+
+						for (let ii = 0; ii < cryptocurrencies.length; ii++)
+						{
+							if (coingeckoCoin.id == cryptocurrencies[ii].coingecko_id)
+							{
+								missingInDatabase = false
+							}
+						}
+
+						if (!missingInDatabase)
+						{
+							continue;
+						}
+
+						console.log(`[INFO] Adding to DB cryptocurrency with coingecko_id '${coingeckoCoin.id}'..`);
+
+						await mySQLPool.promise().query(
+							"INSERT INTO cryptocurrency (symbol, name, coingecko_id) VALUES (?, ?, ?);",
+							[
+								coingeckoCoin.symbol,
+								coingeckoCoin.name,
+								coingeckoCoin.id,
+							]
+						);
+					}
+
+					[
 						cryptocurrencies,
-					});
-					return;
-				}
-
-				const externalAPIResults = await queryCryptocurrency(query);
-
-				if (externalAPIResults.length == 0)
-				{
-					res.status(hTTPStatus.NOT_FOUND).json({
-						message: "Nothing found"
-					});
-
-					return;
-				}
-
-				for (let i = 0; i < externalAPIResults.length; i++)
-				{
-					await mySQLPool.promise().query(
-						"INSERT INTO cryptocurrency (symbol, name, coingecko_id) VALUES (?, ?, ?);",
+					] = await mySQLPool.promise().query<ICryptocurrency[]>(
+						"SELECT * FROM cryptocurrency WHERE symbol = ? OR name LIKE ?;",
 						[
-							externalAPIResults[i].symbol,
-							externalAPIResults[i].name,
-							externalAPIResults[i].id,
+							query,
+							`%${query}%`,
 						]
 					);
 				}
+				else
+				{
+					console.log(`[WARNING] Not enough time has passed from last external API req request for query..`);
+					console.log(`[INFO] EXTERNAL_CALL_DELAY_MINUTES: ${EXTERNAL_CALL_DELAY_MINUTES}`);
+					console.log(`[INFO] query: ${query}`);
+					console.log(`[INFO] lastExternalReqTimeForQuery: ${lastExternalReqTimeForQuery}`);
+				}
 
-				[
+				resJSON = {
+					...resJSON,
 					cryptocurrencies,
-				] = await mySQLPool.promise().query<ICryptocurrency[]>(
-					"SELECT * FROM cryptocurrency WHERE symbol = ? OR name LIKE ?;",
-					[
-						query,
-						`%${query}%`,
-					]
-				);
+				};
 
-				res.status(hTTPStatus.OK).send({
-					cryptocurrencies,
-					externalAPIResults
-				})
-
-				return;
+				res.status(hTTPStatus.OK).json(resJSON);
 			}
 			catch (error)
 			{
@@ -160,12 +189,12 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const { coingeckoId, name = null, symbol = null, }: CryptocurrencyCreate = req.body.load;
+			const { coingecko_id, name = null, symbol = null, }: CryptocurrencyCreate = req.body.load;
 			try
 			{
-				if (!coingeckoId)
+				if (!coingecko_id)
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("Invalid or missing coingeckoId");
+					res.status(hTTPStatus.BAD_REQUEST).send("Invalid or missing coingecko_id");
 					return;
 				}
 
@@ -174,7 +203,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				] = await mySQLPool.promise().query(
 					"SELECT id FROM cryptocurrency WHERE coingecko_id = ?;",
 					[
-						coingeckoId,
+						coingecko_id,
 					]
 				);
 
@@ -190,7 +219,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					[
 						symbol,
 						name,
-						coingeckoId,
+						coingecko_id,
 					]
 				);
 
@@ -210,7 +239,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		{
 			const { cryptoid, } = req.params;
 
-			const { coingeckoId, name, symbol, }: CryptocurrencyUpdate = req.body.load;
+			const { coingecko_id, name, symbol, }: CryptocurrencyUpdate = req.body.load;
 
 			try
 			{
@@ -235,7 +264,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				await mySQLPool.promise().query(
 					"UPDATE cryptocurrency SET coingecko_id = ?, name = ?, symbol = ? WHERE id = ?;",
 					[
-						coingeckoId ?? existingAsset[0].coingecko_id,
+						coingecko_id ?? existingAsset[0].coingecko_id,
 						name ?? existingAsset[0].name,
 						symbol ?? existingAsset[0].symbol,
 						cryptoid,

@@ -5,14 +5,7 @@ import { queryStock } from "../../../external-api/FinancialModelingPrep";
 import { loadRequired } from "../../../middleware/load";
 import { user } from "../../../middleware/token";
 import { hTTPStatus } from "../../../constants";
-
-function cleanString(input: string): string
-{
-	if (!input) return "";
-
-	// Trim, Remove special characters, and uppercase
-	return input.trim().replace(/[^a-zA-Z0-9.]/g, "").toUpperCase();
-}
+import { sanitizeQuery } from "../../../util/sanitizer";
 
 
 export default (mySQLPool: mysql.Pool): express.Router =>
@@ -119,7 +112,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				return;
 			}
 
-			let cleanedQuery = cleanString(query);
+			let cleanedQuery = sanitizeQuery(query);
 
 			try
 			{

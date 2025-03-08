@@ -12,16 +12,26 @@ declare global
 
 
 	type CryptocurrencyCreate = Load & {
-		coingeckoId: string;
+		coingecko_id: string;
 		name?: string;
 		symbol?: string;
 	};
 
 	type CryptocurrencyUpdate = Load & {
-		coingeckoId: string;
+		coingecko_id: string;
 		name?: string;
 		symbol?: string;
 	};
+
+	type CoingeckoCoin = {
+		id: string,
+		name: string,
+		symbol: string,
+		api_symbol: string,
+		market_cap_rank: number,
+		thumb: string,
+		large: string,
+	}
 
 	type StockCreate = Load & {
 		exchange: string;
@@ -102,7 +112,7 @@ declare global
 		OkPacket
 	{
 		id: number;
-		coingeckoId: string;
+		coingecko_id: string;
 		name: string;
 		symbol: string;
 	}

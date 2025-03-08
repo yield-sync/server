@@ -6,15 +6,7 @@ import config from "../../../config/index";
 import { loadRequired } from "../../../middleware/load";
 import { user, userAdmin } from "../../../middleware/token";
 import { hTTPStatus, stockExchanges } from "../../../constants";
-
-
-function cleanString(input: string): string
-{
-	if (!input) return "";
-
-	// Trim, Remove special characters, and uppercase
-	return input.trim().replace(/[^a-zA-Z0-9.]/g, "").toUpperCase();
-}
+import { sanitizeQuery } from "../../../util/sanitizer";
 
 
 export default (mySQLPool: mysql.Pool): express.Router =>
@@ -58,7 +50,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		user(mySQLPool),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const query: string = cleanString(req.params.query);
+			const query: string = sanitizeQuery(req.params.query);
 
 			try
 			{
