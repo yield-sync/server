@@ -82,11 +82,14 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				cryptocurrencies: ICryptocurrency[]
 				externalAPIResults: CoingeckoCoin[]
 			} = {
-				cryptocurrencies: [],
-				externalAPIResults: [],
+				cryptocurrencies: [
+				],
+				externalAPIResults: [
+				],
 			};
 
-			let cryptocurrencies: ICryptocurrency[] = [];
+			let cryptocurrencies: ICryptocurrency[] = [
+			];
 
 			const query: string = sanitizeQuery(req.params.query);
 
@@ -133,13 +136,13 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					{
 						const coingeckoCoin = externalAPIResults[i];
 
-						let missingInDatabase = true
+						let missingInDatabase = true;
 
 						for (let ii = 0; ii < cryptocurrencyCoingeckoIds.length; ii++)
 						{
 							if (coingeckoCoin.id == cryptocurrencyCoingeckoIds[ii].coingecko_id)
 							{
-								missingInDatabase = false
+								missingInDatabase = false;
 							}
 						}
 
@@ -172,7 +175,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				}
 				else
 				{
-					console.log(`[WARNING] Not enough time has passed from last external API req request for query..`);
+					console.log("[WARNING] Not enough time has passed from last external API req request for query..");
 					console.log(`[INFO] EXTERNAL_CALL_DELAY_MINUTES: ${EXTERNAL_CALL_DELAY_MINUTES}`);
 					console.log(`[INFO] query: ${query}`);
 					console.log(`[INFO] lastExternalReqTimeForQuery: ${lastExternalReqTimeForQuery}`);

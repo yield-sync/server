@@ -112,7 +112,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 					res.status(hTTPStatus.ACCEPTED).json({
 						stocks: stocks[0],
-						apiResult: externalRes.data
+						apiResult: externalRes.data,
 					});
 
 					return;

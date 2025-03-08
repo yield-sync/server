@@ -6,7 +6,8 @@
  */
 export function sanitizeQuery(input: unknown): string
 {
-	if (typeof input !== "string") {
+	if (typeof input !== "string")
+	{
 		throw new TypeError("Input must be a string");
 	}
 
@@ -14,5 +15,5 @@ export function sanitizeQuery(input: unknown): string
 	if (!trimmed) return "";
 
 	// Remove all except alphanumeric and periods
-	return trimmed.replace(/[^a-zA-Z0-9.]/g, "")
+	return trimmed.replace(/[^a-zA-Z0-9.]/g, "");
 }
