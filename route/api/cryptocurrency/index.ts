@@ -79,9 +79,12 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			const now = new Date();
 
 			let resJSON: {
-				cryptocurrencies?: ICryptocurrency[]
-				externalAPIResults?: CoingeckoCoin[]
-			} = {};
+				cryptocurrencies: ICryptocurrency[]
+				externalAPIResults: CoingeckoCoin[]
+			} = {
+				cryptocurrencies: [],
+				externalAPIResults: [],
+			};
 
 			let cryptocurrencies: ICryptocurrency[] = [];
 
@@ -92,7 +95,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				[
 					cryptocurrencies,
 				] = await mySQLPool.promise().query<ICryptocurrency[]>(
-					"SELECT * FROM cryptocurrency WHERE symbol = ? OR name LIKE ? LIMIT 10;",
+					"SELECT * FROM cryptocurrency WHERE symbol = ? OR name LIKE ?;",
 					[
 						query,
 						`%${query}%`,
@@ -111,10 +114,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 					const externalAPIResults: CoingeckoCoin[] = await queryCryptocurrency(query);
 
-					resJSON = {
-						...resJSON,
-						externalAPIResults,
-					};
+					resJSON.externalAPIResults = externalAPIResults;
 
 					for (let i = 0; i < externalAPIResults.length; i++)
 					{
@@ -165,10 +165,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					console.log(`[INFO] lastExternalReqTimeForQuery: ${lastExternalReqTimeForQuery}`);
 				}
 
-				resJSON = {
-					...resJSON,
-					cryptocurrencies,
-				};
+				resJSON.cryptocurrencies = cryptocurrencies;
 
 				res.status(hTTPStatus.OK).json(resJSON);
 			}
