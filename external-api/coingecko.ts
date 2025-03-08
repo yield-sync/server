@@ -1,3 +1,10 @@
+type CoingeckoCoin = {
+	id: string,
+	name: string,
+	symbol: string,
+}
+
+
 import axios from "axios";
 
 import config from "../config";
@@ -15,8 +22,10 @@ export class ExternalRequestError extends
 {}
 
 
-export const queryCryptocurrency = async (symbol: string): Promise<any> =>
+export const queryCryptocurrency = async (query: string): Promise<CoingeckoCoin[]> =>
 {
+	let matchingResults = [];
+
 	try
 	{
 		const response = await axios.request({
@@ -28,14 +37,22 @@ export const queryCryptocurrency = async (symbol: string): Promise<any> =>
 			},
 		});
 
-		console.log(response);
-
 		if (response.data.length == 0)
 		{
 			throw new NothingFoundError("Nothing found from external API");
 		}
 
-		return;
+
+		for (let i = 0; i < response.data.length; i++) {
+			const cryptocurrency = response.data[i];
+
+			if (cryptocurrency.symbol == query.toLowerCase())
+			{
+				matchingResults.push(cryptocurrency);
+			}
+		}
+
+		return matchingResults;
 	}
 	catch (error)
 	{
