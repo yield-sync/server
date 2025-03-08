@@ -76,19 +76,19 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		user(mySQLPool),
 		async (req: express.Request, res: express.Response) =>
 		{
+			const now = new Date();
+
 			let resJSON: {
 				cryptocurrencies?: ICryptocurrency[]
 				externalAPIResults?: CoingeckoCoin[]
 			} = {};
 
+			let cryptocurrencies: ICryptocurrency[] = [];
+
 			const query: string = sanitizeQuery(req.params.query);
 
 			try
 			{
-				const now = new Date();
-
-				let cryptocurrencies: ICryptocurrency[] = [];
-
 				[
 					cryptocurrencies,
 				] = await mySQLPool.promise().query<ICryptocurrency[]>(
@@ -101,11 +101,11 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				const lastExternalReqTimeForQuery = lastExternalReqTimes.get(query);
 
-				const shouldReqExternal = !lastExternalReqTimeForQuery || (
-					now.getTime() - lastExternalReqTimeForQuery.getTime()
-				) >= EXTERNAL_CALL_DELAY_MS;
-
-				if (shouldReqExternal)
+				if (
+					!lastExternalReqTimeForQuery || (
+						now.getTime() - lastExternalReqTimeForQuery.getTime()
+					) >= EXTERNAL_CALL_DELAY_MS
+				)
 				{
 					lastExternalReqTimes.set(query, now);
 
