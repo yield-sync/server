@@ -92,7 +92,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				[
 					cryptocurrencies,
 				] = await mySQLPool.promise().query<ICryptocurrency[]>(
-					"SELECT * FROM cryptocurrency WHERE symbol = ? OR name LIKE ?;",
+					"SELECT * FROM cryptocurrency WHERE symbol = ? OR name LIKE ? LIMIT 10;",
 					[
 						query,
 						`%${query}%`,
@@ -150,7 +150,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					[
 						cryptocurrencies,
 					] = await mySQLPool.promise().query<ICryptocurrency[]>(
-						"SELECT * FROM cryptocurrency WHERE symbol = ? OR name LIKE ?;",
+						"SELECT * FROM cryptocurrency WHERE symbol = ? OR name LIKE ? LIMIT 10;",
 						[
 							query,
 							`%${query}%`,
