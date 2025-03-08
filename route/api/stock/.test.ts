@@ -274,14 +274,14 @@ describe("Request: POST", () =>
 	{
 		describe("Expected Failure", () =>
 		{
-			it("Should fail if stockId is missing..", async () =>
+			it("Should fail if stock_id is missing..", async () =>
 			{
 				const res = await request(app).post("/api/stock/update").set("authorization", `Bearer ${token}`).send({
 					load: { exchange: "nasdaq", isin: "US0378331005", name: ASSET_NAME, symbol: ASSET_SYMBOL }
 				});
 
 				expect(res.statusCode).toBe(400);
-				expect(res.text).toBe("stockId is required");
+				expect(res.text).toBe("stock_id is required");
 			});
 		});
 
@@ -303,7 +303,7 @@ describe("Request: POST", () =>
 				expect(assets.length).toBe(1);
 
 				const updateRes = await request(app).post("/api/stock/update").set("authorization", `Bearer ${token}`).send({
-					load: { stockId: assets[0].id, name: "New Name", symbol: "NEW", exchange: "nasdaq", isin: "US0378331005" }
+					load: { stock_id: assets[0].id, name: "New Name", symbol: "NEW", exchange: "nasdaq", isin: "US0378331005" }
 				});
 
 				expect(updateRes.statusCode).toBe(200);
@@ -321,7 +321,7 @@ describe("Request: POST", () =>
 	{
 		describe("Expected Failure", () =>
 		{
-			it("Should fail if stockId is missing..", async () =>
+			it("Should fail if stock_id is missing..", async () =>
 			{
 				const res = await request(app).post("/api/stock/delete").set("authorization", `Bearer ${token}`).send({
 					load: {}
@@ -347,7 +347,7 @@ describe("Request: POST", () =>
 				expect(assets.length).toBe(1);
 
 				const deleteRes = await request(app).post("/api/stock/delete").set("authorization", `Bearer ${token}`).send({
-					load: { stockId: assets[0].id }
+					load: { stock_id: assets[0].id }
 				});
 
 				expect(deleteRes.statusCode).toBe(200);

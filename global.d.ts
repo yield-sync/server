@@ -41,7 +41,7 @@ declare global
 	};
 
 	type StockUpdate = Load & {
-		stockId: string;
+		stock_id: string;
 		exchange: string;
 		isin: string;
 		name?: string;
@@ -49,12 +49,12 @@ declare global
 	};
 
 	type StockDelete = Load & {
-		stockId: string,
+		stock_id: string,
 	};
 
 	type PortfolioAssetCreate = Load & {
 		portfolioId: string,
-		stockId: string,
+		stock_id: string,
 	};
 
 	type PortfolioAssetCreateByQuery = Load & {
@@ -131,7 +131,7 @@ declare global
 	{
 		id: number;
 		portfolioId: number;
-		stockId: number;
+		stock_id: number;
 		created: number;
 	}
 

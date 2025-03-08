@@ -206,13 +206,13 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const { stockId, exchange, isin, name, symbol, }: StockUpdate = req.body.load;
+			const { stock_id, exchange, isin, name, symbol, }: StockUpdate = req.body.load;
 
 			try
 			{
-				if (!stockId)
+				if (!stock_id)
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("stockId is required");
+					res.status(hTTPStatus.BAD_REQUEST).send("stock_id is required");
 					return;
 				}
 
@@ -236,7 +236,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				] = await mySQLPool.promise().query<IStock[]>(
 					"SELECT * FROM stock WHERE id = ?;",
 					[
-						stockId,
+						stock_id,
 					]
 				);
 
@@ -252,7 +252,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					"SELECT id FROM stock WHERE isin = ? AND id != ?;",
 					[
 						isin,
-						stockId,
+						stock_id,
 					]
 				);
 
@@ -269,7 +269,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 						symbol,
 						exchange,
 						isin,
-						stockId,
+						stock_id,
 					]
 				);
 
@@ -292,11 +292,11 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const { stockId, }: StockDelete = req.body.load;
+			const { stock_id, }: StockDelete = req.body.load;
 
 			try
 			{
-				if (!stockId)
+				if (!stock_id)
 				{
 					res.status(hTTPStatus.BAD_REQUEST).send("Stock ID is required");
 					return;
@@ -308,7 +308,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				] = await mySQLPool.promise().query(
 					"SELECT id FROM stock WHERE id = ?;",
 					[
-						stockId,
+						stock_id,
 					]
 				);
 
@@ -321,7 +321,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				await mySQLPool.promise().query(
 					"DELETE FROM stock WHERE id = ?;",
 					[
-						stockId,
+						stock_id,
 					]
 				);
 

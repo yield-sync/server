@@ -21,13 +21,13 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const { portfolioId, stockId, }: PortfolioAssetCreate = req.body.load;
+			const { portfolioId, stock_id, }: PortfolioAssetCreate = req.body.load;
 
 			try
 			{
-				if (!stockId)
+				if (!stock_id)
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("No stockId received");
+					res.status(hTTPStatus.BAD_REQUEST).send("No stock_id received");
 
 					return;
 				}
@@ -71,7 +71,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					"INSERT INTO portfolio_asset (portfolio_id, stock_id) VALUES (?, ?);",
 					[
 						portfolioId,
-						stockId,
+						stock_id,
 					]
 				);
 
@@ -136,7 +136,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				let stockId: number;
+				let stock_id: number;
 				let cryptoId: number;
 
 				if (crypto)
@@ -184,7 +184,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 					if (foundStocks.length > 0)
 					{
-						stockId = foundStocks[0].id;
+						stock_id = foundStocks[0].id;
 					}
 					else
 					{
@@ -212,7 +212,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 							]
 						);
 
-						stockId = stocks[0].id;
+						stock_id = stocks[0].id;
 					}
 				}
 
@@ -225,7 +225,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					"INSERT INTO portfolio_asset (portfolio_id, stock_id) VALUES (?, ?);",
 					[
 						portfolioId,
-						stockId,
+						stock_id,
 					]
 				);
 

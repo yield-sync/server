@@ -21,7 +21,7 @@ const PASSWORD: string = "testpassword!";
 const PORTFOLIO_NAME: string = "my-portfolio";
 
 let token: string;
-let stockId: string;
+let stock_id: string;
 let portfolioId: string;
 let app: express.Express;
 let mySQLPool: mysql.Pool;
@@ -124,7 +124,7 @@ beforeEach(async () =>
 		"SELECT id FROM stock WHERE name = ?;", [ASSET_NAME]
 	);
 
-	stockId = assets[0].id;
+	stock_id = assets[0].id;
 });
 
 
@@ -139,7 +139,7 @@ describe("Request: GET", () =>
 				await request(app).post("/api/portfolio-asset/create").send({
 					load: {
 						portfolioId,
-						stockId,
+						stock_id,
 					} as PortfolioAssetCreate
 				}).expect(401);
 
@@ -158,7 +158,7 @@ describe("Request: GET", () =>
 				const RES = await request(app).post("/api/portfolio-asset/create").set(
 					'authorization',
 					`Bearer ${token}`
-				).send({ load: { stockId, } }).expect(400);
+				).send({ load: { stock_id, } }).expect(400);
 
 				expect(RES.text).toBe("No portfolioId received");
 
@@ -183,7 +183,7 @@ describe("Request: GET", () =>
 					}
 				}).expect(400);
 
-				expect(RES.text).toBe("No stockId received");
+				expect(RES.text).toBe("No stock_id received");
 
 				const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio_asset;");
 
@@ -206,7 +206,7 @@ describe("Request: GET", () =>
 				).send({
 					load: {
 						portfolioId: portfolioId,
-						stockId: stockId,
+						stock_id: stock_id,
 					} as PortfolioAssetCreate
 				});
 
@@ -226,7 +226,7 @@ describe("Request: GET", () =>
 					throw new Error("Key 'stock_id' not in portfolioAssets");
 				}
 
-				expect(portfolioAssests[0].stock_id).toBe(stockId);
+				expect(portfolioAssests[0].stock_id).toBe(stock_id);
 
 				if (!("portfolio_id" in portfolioAssests[0]))
 				{
