@@ -95,7 +95,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				[
 					cryptocurrencies,
 				] = await mySQLPool.promise().query<ICryptocurrency[]>(
-					"SELECT * FROM cryptocurrency WHERE symbol = ? OR name LIKE ?;",
+					"SELECT * FROM cryptocurrency WHERE symbol = ? OR name LIKE ? LIMIT 10;",
 					[
 						query,
 						`%${query}%`,
@@ -116,15 +116,28 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 					resJSON.externalAPIResults = externalAPIResults;
 
+					const [
+						cryptocurrencyCoingeckoIds,
+					]: [
+						ICryptocurrency[],
+						FieldPacket[]
+					] = await mySQLPool.promise().query<ICryptocurrency[]>(
+						"SELECT coingecko_id FROM cryptocurrency WHERE symbol = ? OR name LIKE ?;",
+						[
+							query,
+							`%${query}%`,
+						]
+					);
+
 					for (let i = 0; i < externalAPIResults.length; i++)
 					{
 						const coingeckoCoin = externalAPIResults[i];
 
 						let missingInDatabase = true
 
-						for (let ii = 0; ii < cryptocurrencies.length; ii++)
+						for (let ii = 0; ii < cryptocurrencyCoingeckoIds.length; ii++)
 						{
-							if (coingeckoCoin.id == cryptocurrencies[ii].coingecko_id)
+							if (coingeckoCoin.id == cryptocurrencyCoingeckoIds[ii].coingecko_id)
 							{
 								missingInDatabase = false
 							}
