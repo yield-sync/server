@@ -4,7 +4,7 @@ import mysql from "mysql2";
 import { loadRequired } from "../../../middleware/load";
 import { user, userAdmin } from "../../../middleware/token";
 import { hTTPStatus } from "../../../constants";
-import { queryCryptocurrency } from "../../../external-api/coingecko";
+import { queryForCryptocurrency } from "../../../external-api/coingecko";
 import { sanitizeQuery } from "../../../util/sanitizer";
 
 
@@ -77,9 +77,11 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			const now = new Date();
 
 			let resJSON: {
+				externalRequestRequired: boolean,
 				cryptocurrencies: ICryptocurrency[]
 				externalAPIResults: CoingeckoCoin[]
 			} = {
+				externalRequestRequired: false,
 				cryptocurrencies: [
 				],
 				externalAPIResults: [
@@ -113,18 +115,30 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					[query]
 				);
 
-				const lastRequestTimestamp = queryCryptocurrency.length > 0 ? new Date(
+				const lastExternalReqTimestamp = queryCryptocurrency.length > 0 ? new Date(
 					queryCryptocurrency[0].last_request_timestamp
 				) : null;
 
-				if (!lastRequestTimestamp || (now.getTime() - lastRequestTimestamp.getTime()) >= EXTERNAL_CALL_DELAY_MS)
+				resJSON.externalRequestRequired = !lastExternalReqTimestamp || (
+					now.getTime() - lastExternalReqTimestamp.getTime()
+				) >= EXTERNAL_CALL_DELAY_MS
+
+				if (resJSON.externalRequestRequired)
 				{
 					await mySQLPool.promise().query(
-						"iNSERT INTO query_cryptocurrency (query, last_request_timestamp) VALUES (?, ?) ON DUPLICATE KEY UPDATE last_request_timestamp = ?;",
+						`
+							INSERT INTO
+								query_cryptocurrency (query, last_request_timestamp)
+							VALUES
+								(?, ?)
+							ON DUPLICATE KEY UPDATE
+								last_request_timestamp = ?
+							;
+						`,
 						[query, now, now]
 					);
 
-					const externalAPIResults: CoingeckoCoin[] = await queryCryptocurrency(query);
+					const externalAPIResults: CoingeckoCoin[] = await queryForCryptocurrency(query);
 
 					resJSON.externalAPIResults = externalAPIResults;
 
@@ -160,8 +174,6 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 							continue;
 						}
 
-						console.log(`[INFO] Adding to DB cryptocurrency with coingecko_id '${coingeckoCoin.id}'..`);
-
 						await mySQLPool.promise().query(
 							"INSERT INTO cryptocurrency (symbol, name, coingecko_id) VALUES (?, ?, ?);",
 							[
@@ -181,13 +193,6 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 							`%${query}%`,
 						]
 					);
-				}
-				else
-				{
-					console.log("[WARNING] Not enough time has passed from last external API req request for query..");
-					console.log(`[INFO] EXTERNAL_CALL_DELAY_MINUTES: ${EXTERNAL_CALL_DELAY_MINUTES}`);
-					console.log(`[INFO] query: ${query}`);
-					console.log(`[INFO] lastExternalReqTimeForQuery: ${lastExternalReqTimeForQuery}`);
 				}
 
 				resJSON.cryptocurrencies = cryptocurrencies;

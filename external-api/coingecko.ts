@@ -12,7 +12,7 @@ export class ExternalRequestError extends
 {}
 
 
-export const queryCryptocurrency = async (query: string): Promise<CoingeckoCoin[]> =>
+export const queryForCryptocurrency = async (query: string): Promise<CoingeckoCoin[]> =>
 {
 	try
 	{
