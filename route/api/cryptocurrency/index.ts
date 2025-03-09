@@ -106,13 +106,15 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				);
 
 				const [
-					queryCryptocurrency
+					queryCryptocurrency,
 				]: [
 					any[],
 					any
 				] = await mySQLPool.promise().query(
 					"SELECT last_request_timestamp FROM query_cryptocurrency WHERE query = ?;",
-					[query]
+					[
+						query,
+					]
 				);
 
 				const lastExternalReqTimestamp = queryCryptocurrency.length > 0 ? new Date(
@@ -121,7 +123,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				resJSON.externalRequestRequired = !lastExternalReqTimestamp || (
 					now.getTime() - lastExternalReqTimestamp.getTime()
-				) >= EXTERNAL_CALL_DELAY_MS
+				) >= EXTERNAL_CALL_DELAY_MS;
 
 				if (resJSON.externalRequestRequired)
 				{
@@ -135,7 +137,11 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 								last_request_timestamp = ?
 							;
 						`,
-						[query, now, now]
+						[
+							query,
+							now,
+							now,
+						]
 					);
 
 					const externalAPIResults: CoingeckoCoin[] = await queryForCryptocurrency(query);
