@@ -6,7 +6,9 @@ import routeAPICryptocurrency from "./index";
 import routeApi from "../index";
 import routeApiUser from "../user/index";
 import config from "../../../config";
+import { queryCryptocurrency } from "../../../external-api/coingecko";
 import DBBuilder, { dBDrop } from "../../../sql/db-builder";
+
 
 const ASSET_NAME = "US Dollar Coin";
 const ASSET_SYMBOL = "USDC";
@@ -20,6 +22,10 @@ let token: string;
 let app: express.Express;
 let mySQLPool: mysql.Pool;
 
+// Mock the external API
+jest.mock("../../../external-api/coingecko", () => ({
+	queryCryptocurrency: jest.fn(),
+}));
 
 afterAll(async () =>
 {
@@ -81,6 +87,9 @@ beforeEach(async () =>
 
 describe("Request: GET", () =>
 {
+	const COINGECKO_ID = "usdc";
+	const QUERY = "USD";
+
 	describe("Route: /api/cryptocurrency/search/:query", () =>
 	{
 		describe("Expected Failure", () =>
@@ -99,6 +108,105 @@ describe("Request: GET", () =>
 					404
 				);
 			});
+		});
+	});
+
+	describe("Expected Success", () => {
+		it("Should return up to 10 database results without external call", async () => {
+			// TODO This test is failing because the queryCryptocurrency function is being a jest test and
+			// since i havent mocked it here yet i am getting an error
+			// Insert 15 cryptocurrencies into the database
+			for (let i = 0; i < 15; i++)
+			{
+				await mySQLPool.promise().query(
+					"INSERT INTO cryptocurrency (symbol, name, coingecko_id) VALUES (?, ?, ?);",
+					[`USD${i}`, `US Dollar ${i}`, `usdc${i}`]
+				);
+			}
+
+			const res = await request(app).get(`/api/cryptocurrency/search/${QUERY}`).set(
+				"authorization",
+				`Bearer ${token}`
+			).expect(200);
+
+			// Capped at 10
+			expect(res.body.cryptocurrencies).toHaveLength(10);
+
+			// No external call yet
+			expect(res.body.externalAPIResults).toHaveLength(0);
+
+			expect(res.body.cryptocurrencies.every((c: ICryptocurrency) => c.symbol.includes(QUERY))).toBe(true);
+		});
+
+		it("Should call external API and sync new results, still capping at 10", async () => {
+			// Mock external API response
+			const mockCoins = [
+				{ id: "usdc1", symbol: "USD1", name: "US Dollar 1" },
+				{ id: "usdc2", symbol: "USD2", name: "US Dollar 2" },
+			];
+
+			(queryCryptocurrency as jest.Mock).mockResolvedValueOnce(mockCoins);
+
+			// Insert some initial data
+			await mySQLPool.promise().query(
+				"INSERT INTO cryptocurrency (symbol, name, coingecko_id) VALUES (?, ?, ?);",
+				["USD0", "US Dollar 0", "usdc0"]
+			);
+
+			const res = await request(app)
+				.get(`/api/cryptocurrency/search/${QUERY}`)
+				.set("authorization", `Bearer ${token}`)
+				.expect(200);
+
+			const body = res.body;
+			expect(body.cryptocurrencies).toHaveLength(3); // Initial 1 + 2 new, but should cap at 10 if more
+			expect(body.externalAPIResults).toHaveLength(2); // Full external response
+			expect(queryCryptocurrency).toHaveBeenCalledWith(QUERY);
+
+			// Check database sync
+			const [dbCryptos] = await mySQLPool.promise().query<ICryptocurrency[]>(
+				"SELECT * FROM cryptocurrency;"
+			);
+			expect(dbCryptos.length).toBe(3); // 1 initial + 2 synced
+			expect(dbCryptos.some((c) => c.coingecko_id === "usdc1")).toBe(true);
+			expect(dbCryptos.some((c) => c.coingecko_id === "usdc2")).toBe(true);
+		});
+
+		it("Should respect external API delay and return only DB results", async () => {
+			// Mock external API response
+			const mockCoins = [{ id: "usdc1", symbol: "USD1", name: "US Dollar 1" }];
+			(queryCryptocurrency as jest.Mock).mockResolvedValue(mockCoins);
+
+			// First call: triggers external API
+			await request(app)
+				.get(`/api/cryptocurrency/search/${QUERY}`)
+				.set("authorization", `Bearer ${token}`)
+				.expect(200);
+
+			// Second call: within 1440 minutes, should not call external API again
+			const res = await request(app)
+				.get(`/api/cryptocurrency/search/${QUERY}`)
+				.set("authorization", `Bearer ${token}`)
+				.expect(200);
+
+			const body = res.body;
+			expect(body.cryptocurrencies.length).toBeLessThanOrEqual(10); // Still capped
+			expect(body.externalAPIResults).toHaveLength(0); // No external call
+			expect(queryCryptocurrency).toHaveBeenCalledTimes(1); // Only called once
+		});
+
+		it("Should return empty arrays if no matches found", async () => {
+			// Mock external API to return empty array
+			(queryCryptocurrency as jest.Mock).mockResolvedValueOnce([]);
+
+			const res = await request(app)
+				.get(`/api/cryptocurrency/search/NONEXISTENT`)
+				.set("authorization", `Bearer ${token}`)
+				.expect(200);
+
+			const body = res.body;
+			expect(body.cryptocurrencies).toHaveLength(0);
+			expect(body.externalAPIResults).toHaveLength(0);
 		});
 	});
 });
