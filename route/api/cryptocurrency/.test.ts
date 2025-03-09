@@ -79,13 +79,34 @@ beforeEach(async () =>
 });
 
 
+describe("Request: GET", () =>
+{
+	describe("Route: /api/cryptocurrency/search/:query", () =>
+	{
+		describe("Expected Failure", () =>
+		{
+			it("[auth] Should require a user token..", async () =>
+			{
+				await request(app).get("/api/cryptocurrency/search/query").send().expect(401);
+			});
+
+			it("Should fail if coingecko_id is missing.", async () =>
+			{
+				await request(app).post("/api/cryptocurrency/create").set("authorization", `Bearer ${token}`).send({
+					load: { name: ASSET_NAME, symbol: ASSET_SYMBOL } as CryptocurrencyCreate
+				}).expect(400);
+			});
+		});
+	});
+});
+
 describe("Request: POST", () =>
 {
 	describe("Route: /api/cryptocurrency/create", () =>
 	{
 		describe("Expected Failure", () =>
 		{
-			it("[auth] Should require a user token.", async () =>
+			it("[auth] Should require a user token..", async () =>
 			{
 				await request(app).post("/api/cryptocurrency/create").send().expect(401);
 
