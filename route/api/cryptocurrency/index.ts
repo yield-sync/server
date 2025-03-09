@@ -211,60 +211,10 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(error);
 			}
 		}
-	).post(
-		/**
-		* @route POST /api/cryptocurrency/create
-		* @desc Create asset
-		* @access authorized:admin
-		*/
-		"/create",
-		userAdmin(mySQLPool),
-		loadRequired(),
-		async (req: express.Request, res: express.Response) =>
-		{
-			const { coingecko_id, name = null, symbol = null, }: CryptocurrencyCreate = req.body.load;
-			try
-			{
-				if (!coingecko_id)
-				{
-					res.status(hTTPStatus.BAD_REQUEST).send("Invalid or missing coingecko_id");
-					return;
-				}
-
-				const [
-					cryptocurrencyWithCoinGeckoId,
-				] = await mySQLPool.promise().query(
-					"SELECT id FROM cryptocurrency WHERE coingecko_id = ?;",
-					[
-						coingecko_id,
-					]
-				);
-
-				if ((cryptocurrencyWithCoinGeckoId as any[]).length > 0)
-				{
-					res.status(hTTPStatus.CONFLICT).send("coingecko_id already found");
-					return;
-				}
-
-				// Insert the asset
-				await mySQLPool.promise().query(
-					"INSERT INTO cryptocurrency (symbol, name, coingecko_id) VALUES (?, ?, ?);",
-					[
-						symbol,
-						name,
-						coingecko_id,
-					]
-				);
-
-				res.status(hTTPStatus.CREATED).send("Created cryptocurrency");
-			}
-			catch (error)
-			{
-				console.log(error);
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(error);
-			}
-		}
 	).put(
+		/**
+		* @route PUT /api/cryptocurrency/update/:cryptoid
+		*/
 		"/update/:cryptoid",
 		userAdmin(mySQLPool),
 		loadRequired(),

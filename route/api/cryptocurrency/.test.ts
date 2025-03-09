@@ -252,80 +252,26 @@ describe("Request: GET", () =>
 	});
 });
 
-describe("Request: POST", () =>
-{
-	describe("Route: /api/cryptocurrency/create", () =>
-	{
-		describe("Expected Failure", () =>
-		{
-			it("[auth] Should require a user token..", async () =>
-			{
-				await request(app).post("/api/cryptocurrency/create").send().expect(401);
-
-				const [cryptos]: any[] = await mySQLPool.promise().query("SELECT * FROM cryptocurrency;");
-
-				expect(Array.isArray(cryptos)).toBe(true);
-
-				expect(cryptos.length).toBe(0);
-			});
-
-			it("Should fail if coingecko_id is missing.", async () =>
-			{
-				await request(app).post("/api/cryptocurrency/create").set("authorization", `Bearer ${token}`).send({
-					load: { name: ASSET_NAME, symbol: ASSET_SYMBOL } as CryptocurrencyCreate
-				}).expect(400);
-			});
-		});
-
-		describe("Expected Success", () =>
-		{
-			it("Should create asset.", async () =>
-			{
-				const res = await request(app).post("/api/cryptocurrency/create").set("authorization", `Bearer ${token}`).send({
-					load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, coingecko_id: COINGECKO_ID } as CryptocurrencyCreate
-				});
-
-				expect(res.statusCode).toBe(201);
-
-				const [cryptos]: any[] = await mySQLPool.promise().query("SELECT * FROM cryptocurrency WHERE coingecko_id = ?;", [COINGECKO_ID]);
-
-				expect(Array.isArray(cryptos)).toBe(true);
-				expect(cryptos.length).toBe(1);
-				expect(cryptos[0].coingecko_id).toBe(COINGECKO_ID);
-			});
-		});
-
-		describe("Expected Failure Part 2", () =>
-		{
-			it("Should not allow duplicate coingecko_id.", async () =>
-			{
-				await request(app).post("/api/cryptocurrency/create").set("authorization", `Bearer ${token}`).send({
-					load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, coingecko_id: COINGECKO_ID } as CryptocurrencyCreate
-				});
-
-				const res = await request(app).post("/api/cryptocurrency/create").set("authorization", `Bearer ${token}`).send({
-					load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, coingecko_id: COINGECKO_ID } as CryptocurrencyCreate
-				});
-
-				expect(res.statusCode).toBe(409);
-				expect(res.error.text).toBe("coingecko_id already found");
-			});
-		});
-	});
-});
-
 describe("Request: PUT", () =>
 {
 	describe("Expected Success", () =>
 	{
 		describe("Route: /api/cryptocurrency/update", () =>
 		{
+			beforeEach(async () => {
+				await mySQLPool.promise().query(
+					"INSERT INTO cryptocurrency (symbol, name, coingecko_id) VALUES (?, ?, ?);",
+					[
+						ASSET_SYMBOL,
+						ASSET_NAME,
+						COINGECKO_ID,
+					]
+				);
+			});
+
+
 			it("Should update asset name successfully", async () =>
 			{
-				await request(app).post("/api/cryptocurrency/create").set("authorization", `Bearer ${token}`).send({
-					load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, coingecko_id: COINGECKO_ID } as CryptocurrencyCreate
-				});
-
 				let cryptos;
 
 				[cryptos] = await mySQLPool.promise().query(
@@ -360,12 +306,20 @@ describe("Request: DELETE", () =>
 {
 	describe("Route: /api/cryptocurrency/delete", () =>
 	{
+		beforeEach(async () => {
+			await mySQLPool.promise().query(
+				"INSERT INTO cryptocurrency (symbol, name, coingecko_id) VALUES (?, ?, ?);",
+				[
+					ASSET_SYMBOL,
+					ASSET_NAME,
+					COINGECKO_ID,
+				]
+			);
+		});
+
+
 		it("Should delete asset successfully", async () =>
 		{
-			await request(app).post("/api/cryptocurrency/create").set("authorization", `Bearer ${token}`).send({
-				load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, coingecko_id: COINGECKO_ID } as CryptocurrencyCreate
-			});
-
 			let cryptos;
 
 			[cryptos] = await mySQLPool.promise().query(
