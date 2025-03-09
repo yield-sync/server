@@ -104,21 +104,23 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				);
 
 				const [
-					rows
+					queryCryptocurrency
 				]: [
 					any[],
 					any
 				] = await mySQLPool.promise().query(
-					"SELECT last_query_timestamp FROM query WHERE query = ?;",
+					"SELECT last_request_timestamp FROM query_cryptocurrency WHERE query = ?;",
 					[query]
 				);
 
-				const lastQueryTimestamp = rows.length > 0 ? new Date(rows[0].last_query_timestamp) : null;
+				const lastRequestTimestamp = queryCryptocurrency.length > 0 ? new Date(
+					queryCryptocurrency[0].last_request_timestamp
+				) : null;
 
-				if (!lastQueryTimestamp || (now.getTime() - lastQueryTimestamp.getTime()) >= EXTERNAL_CALL_DELAY_MS)
+				if (!lastRequestTimestamp || (now.getTime() - lastRequestTimestamp.getTime()) >= EXTERNAL_CALL_DELAY_MS)
 				{
 					await mySQLPool.promise().query(
-						"iNSERT INTO query (query, last_query_timestamp) VALUES (?, ?) ON DUPLICATE KEY UPDATE last_query_timestamp = ?;",
+						"iNSERT INTO query_cryptocurrency (query, last_request_timestamp) VALUES (?, ?) ON DUPLICATE KEY UPDATE last_request_timestamp = ?;",
 						[query, now, now]
 					);
 

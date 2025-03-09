@@ -54,11 +54,11 @@ const queries: string[] = [
 	`,
 	// 
 	`
-		CREATE TABLE query (
+		CREATE TABLE query_cryptocurrency (
 			id INT AUTO_INCREMENT PRIMARY KEY,
-			query VARCHAR(255) NOT NULL, -- Adjust length as needed
-			last_query_timestamp DATETIME NOT NULL,
-			UNIQUE KEY unique_query (query) -- Ensures only one timestamp per query
+			query VARCHAR(255) NOT NULL,
+			last_request_timestamp DATETIME NOT NULL,
+			UNIQUE KEY unique_query (query)
 		);
 	`,
 	// stock_industry
