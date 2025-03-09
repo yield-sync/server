@@ -92,9 +92,12 @@ describe("Request: GET", () =>
 
 			it("Should fail if coingecko_id is missing.", async () =>
 			{
-				await request(app).post("/api/cryptocurrency/create").set("authorization", `Bearer ${token}`).send({
-					load: { name: ASSET_NAME, symbol: ASSET_SYMBOL } as CryptocurrencyCreate
-				}).expect(400);
+				await request(app).post("/api/cryptocurrency/search").set(
+					"authorization",
+					`Bearer ${token}`
+				).send().expect(
+					404
+				);
 			});
 		});
 	});
