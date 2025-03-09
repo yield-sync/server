@@ -52,6 +52,15 @@ const queries: string[] = [
 			FOREIGN KEY (cryptocurrency_id) REFERENCES cryptocurrency(id)
 		);
 	`,
+	// 
+	`
+		CREATE TABLE query (
+			id INT AUTO_INCREMENT PRIMARY KEY,
+			query VARCHAR(255) NOT NULL, -- Adjust length as needed
+			last_query_timestamp DATETIME NOT NULL,
+			UNIQUE KEY unique_query (query) -- Ensures only one timestamp per query
+		);
+	`,
 	// stock_industry
 	`
 		CREATE TABLE stock_industry (

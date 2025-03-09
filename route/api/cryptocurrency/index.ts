@@ -11,8 +11,6 @@ import { sanitizeQuery } from "../../../util/sanitizer";
 const EXTERNAL_CALL_DELAY_MINUTES: number = 1440;
 const EXTERNAL_CALL_DELAY_MS: number = EXTERNAL_CALL_DELAY_MINUTES * 60 * 1000;
 
-const lastExternalReqTimes: Map<string, Date> = new Map();
-
 
 export default (mySQLPool: mysql.Pool): express.Router =>
 {
@@ -105,15 +103,24 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					]
 				);
 
-				const lastExternalReqTimeForQuery = lastExternalReqTimes.get(query);
+				const [
+					rows
+				]: [
+					any[],
+					any
+				] = await mySQLPool.promise().query(
+					"SELECT last_query_timestamp FROM query WHERE query = ?;",
+					[query]
+				);
 
-				if (
-					!lastExternalReqTimeForQuery || (
-						now.getTime() - lastExternalReqTimeForQuery.getTime()
-					) >= EXTERNAL_CALL_DELAY_MS
-				)
+				const lastQueryTimestamp = rows.length > 0 ? new Date(rows[0].last_query_timestamp) : null;
+
+				if (!lastQueryTimestamp || (now.getTime() - lastQueryTimestamp.getTime()) >= EXTERNAL_CALL_DELAY_MS)
 				{
-					lastExternalReqTimes.set(query, now);
+					await mySQLPool.promise().query(
+						"iNSERT INTO query (query, last_query_timestamp) VALUES (?, ?) ON DUPLICATE KEY UPDATE last_query_timestamp = ?;",
+						[query, now, now]
+					);
 
 					const externalAPIResults: CoingeckoCoin[] = await queryCryptocurrency(query);
 
