@@ -109,7 +109,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					queryCryptocurrency,
 				]: [
 					any[],
-					any
+					FieldPacket[]
 				] = await mySQLPool.promise().query(
 					"SELECT last_request_timestamp FROM query_cryptocurrency WHERE query = ?;",
 					[
