@@ -52,7 +52,7 @@ const queries: string[] = [
 			FOREIGN KEY (cryptocurrency_id) REFERENCES cryptocurrency(id)
 		);
 	`,
-	// 
+	// query_cryptocurrency
 	`
 		CREATE TABLE query_cryptocurrency (
 			id INT AUTO_INCREMENT PRIMARY KEY,
