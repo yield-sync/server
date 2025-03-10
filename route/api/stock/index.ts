@@ -9,6 +9,10 @@ import { hTTPStatus, stockExchanges } from "../../../constants";
 import { sanitizeQuery } from "../../../util/sanitizer";
 
 
+const EXTERNAL_CALL_DELAY_MINUTES: number = 144000;
+const EXTERNAL_CALL_DELAY_MS: number = EXTERNAL_CALL_DELAY_MINUTES * 60 * 1000;
+
+
 export default (mySQLPool: mysql.Pool): express.Router =>
 {
 	return express.Router().get(
@@ -50,14 +54,39 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		user(mySQLPool),
 		async (req: express.Request, res: express.Response) =>
 		{
+			/*
+			* 1) Search for company in database that satisfies the query..
+			* 2) If a company is found in the database AND 100 days has NOT passed from last external request update:
+			*     a) Check that the ISIN matches the ISIN provided by the external source
+			*         i) If matches -> Return
+			*         ii) Else ->
+			*             !) Store the ISIN from the database in a variable
+			*             @) Update the ISIN in database to one provided by External source
+			*             #) Search for company that has old ISIN From External source
+			*             $) Add the company found
+			* 3) Else Add the company to the database
+			*/
+
+			const now = new Date();
+
+			let resJSON: {
+				externalRequestRequired: boolean,
+				stocks: IStock[]
+				externalAPIResults: CoingeckoCoin[]
+			} = {
+				externalRequestRequired: false,
+				stocks: [
+				],
+				externalAPIResults: [
+				],
+			};
+
 			const query: string = sanitizeQuery(req.params.query);
 
 			try
 			{
-				let stocks: IStock[];
-
 				[
-					stocks,
+					resJSON.stocks,
 				] = await mySQLPool.promise().query<IStock[]>(
 					"SELECT * FROM stock WHERE symbol = ? OR name LIKE ?;",
 					[
@@ -66,66 +95,80 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					]
 				);
 
-				if (stocks.length > 0)
+				const [
+					queryStock,
+				]: [
+					any[],
+					FieldPacket[]
+				] = await mySQLPool.promise().query(
+					"SELECT last_request_timestamp FROM query_stock WHERE query = ?;",
+					[
+						query,
+					]
+				);
+
+				const lastExternalReqTimestamp = queryStock.length > 0 ? new Date(
+					queryStock[0].last_request_timestamp
+				) : null;
+
+				resJSON.externalRequestRequired = !lastExternalReqTimestamp || (
+					now.getTime() - lastExternalReqTimestamp.getTime()
+				) >= EXTERNAL_CALL_DELAY_MS;
+
+
+				if (resJSON.externalRequestRequired)
 				{
-					res.status(hTTPStatus.ACCEPTED).json({
-						stock: stocks[0],
-					});
-					return;
-				}
-
-				try
-				{
-					const { uRL, key, } = config.api.financialModelingPrep;
-
-					const externalRes = await axios.get(
-						`${uRL}/api/v3/profile/${query}?apikey=${key}`
-					);
-
-					if (externalRes.data.length == 0)
+					try
 					{
-						res.status(hTTPStatus.NOT_FOUND).json({
-							message: "Could not find stock in database OR external API",
+						const { uRL, key, } = config.api.financialModelingPrep;
+
+						const externalRes = await axios.get(
+							`${uRL}/api/v3/profile/${query}?apikey=${key}`
+						);
+
+						if (externalRes.data.length == 0)
+						{
+							res.status(hTTPStatus.NOT_FOUND).json({
+								message: "Could not find stock in database OR external API",
+							});
+							return;
+						}
+
+
+						await mySQLPool.promise().query(
+							"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
+							[
+								externalRes.data[0].symbol,
+								externalRes.data[0].companyName,
+								externalRes.data[0].exchangeShortName.toLowerCase(),
+								externalRes.data[0].isin,
+							]
+						);
+
+						[
+							resJSON.stocks,
+						] = await mySQLPool.promise().query<IStock[]>(
+							"SELECT * FROM stock WHERE symbol = ?;",
+							[
+								externalRes.data[0].symbol,
+							]
+						);
+
+						resJSON.externalAPIResults = externalRes.data;
+					}
+					catch (error)
+					{
+						console.error("Error fetching external API:", error);
+						res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+							message: `Failed to fetch data from external API: ${error}`,
 						});
+
 						return;
 					}
-
-
-					await mySQLPool.promise().query(
-						"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
-						[
-							externalRes.data[0].symbol,
-							externalRes.data[0].companyName,
-							externalRes.data[0].exchangeShortName.toLowerCase(),
-							externalRes.data[0].isin,
-						]
-					);
-
-					[
-						stocks,
-					] = await mySQLPool.promise().query<IStock[]>(
-						"SELECT * FROM stock WHERE symbol = ?;",
-						[
-							externalRes.data[0].symbol,
-						]
-					);
-
-					res.status(hTTPStatus.ACCEPTED).json({
-						stocks: stocks[0],
-						apiResult: externalRes.data,
-					});
-
-					return;
 				}
-				catch (error)
-				{
-					console.error("Error fetching external API:", error);
-					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
-						message: `Failed to fetch data from external API: ${error}`,
-					});
 
-					return;
-				}
+				res.status(hTTPStatus.ACCEPTED).json(resJSON);
+				return;
 			}
 			catch (error)
 			{

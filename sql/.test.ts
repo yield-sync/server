@@ -59,6 +59,7 @@ describe("Database Initialization", () =>
 				"portfolio_asset",
 				"user",
 				"query_cryptocurrency",
+				"query_stock",
 				"stock",
 				"verification"
 			])

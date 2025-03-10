@@ -96,6 +96,22 @@ describe("Request: GET", () => {
 
 
 		it("Should return stock from DB if it exists and NOT make external request..", async () => {
+			const fiveDaysAfter = new Date((new Date()).getTime() + 5 * 24 * 60 * 60 * 1000);
+
+			// Add a last_request_timestamp so far in the future that the external request cannot trigger
+			await mySQLPool.promise().query(
+				`
+					INSERT INTO
+						query_stock (query, last_request_timestamp)
+					VALUES
+						(?, ?)
+					ON DUPLICATE KEY UPDATE
+						last_request_timestamp = ?
+					;
+				`,
+				[ticker, fiveDaysAfter, fiveDaysAfter]
+			);
+
 			await mySQLPool.promise().query(
 				"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
 				[
@@ -111,13 +127,16 @@ describe("Request: GET", () => {
 			expect(res.statusCode).toBe(202);
 
 			expect(res.body).toEqual({
-			stock: {
-				id: 1,
-				symbol: ticker,
-				name: companyName,
-				exchange: exchange,
-				isin: isin
-			}
+				externalRequestRequired: false,
+				stocks: [{
+					id: 1,
+					symbol: ticker,
+					name: companyName,
+					exchange: exchange,
+					isin: isin
+				}],
+				externalAPIResults: [
+				],
 			});
 
 			expect(axios.get).not.toHaveBeenCalled();
@@ -139,14 +158,15 @@ describe("Request: GET", () => {
 			expect(res.statusCode).toBe(202);
 
 			expect(res.body).toEqual({
-				stocks: {
+				externalRequestRequired: true,
+				stocks: [{
 					id: 1,
 					symbol: ticker,
 					name: companyName,
 					exchange: exchange,
 					isin: isin
-				},
-				apiResult: [{
+				}],
+				externalAPIResults: [{
 					symbol: ticker,
 					companyName: companyName,
 					exchangeShortName: exchange,

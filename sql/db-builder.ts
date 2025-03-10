@@ -61,6 +61,15 @@ const queries: string[] = [
 			UNIQUE KEY unique_query (query)
 		);
 	`,
+	// query_stock
+	`
+		CREATE TABLE query_stock (
+			id INT AUTO_INCREMENT PRIMARY KEY,
+			query VARCHAR(255) NOT NULL,
+			last_request_timestamp DATETIME NOT NULL,
+			UNIQUE KEY unique_query (query)
+		);
+	`,
 	// stock_industry
 	`
 		CREATE TABLE stock_industry (
