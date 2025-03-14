@@ -49,7 +49,7 @@ declare global
 	};
 
 	type StockDelete = Load & {
-		stock_id: string,
+		stock_id: number,
 	};
 
 	type PortfolioAssetCreate = Load & {

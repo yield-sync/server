@@ -3,11 +3,13 @@ import mysql from "mysql2";
 
 import { loadRequired } from "../../../middleware/load";
 import { user, userAdmin } from "../../../middleware/token";
-import { hTTPStatus, stockExchanges } from "../../../constants";
+import { hTTPStatus } from "../../../constants";
 import { getQueryStockByQuery, updateQueryStock } from "../../../handler/query_stock";
 import {
 	createStock,
+	deleteStock,
 	getStock,
+	getStockById,
 	getStockByIsin,
 	getStockBySymbol,
 	makeStockSymbolUnknown,
@@ -55,12 +57,12 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		{
 			let response: {
 				timestamp: Date,
-				symbol: string,
+				query: string,
 				refreshRequired: boolean,
 				stocks: IStock[]
 			} = {
 				timestamp: new Date(),
-				symbol: null,
+				query: null,
 				refreshRequired: false,
 				stocks: [
 				],
@@ -77,7 +79,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				response.symbol = symbol;
+				response.query = symbol;
 
 				response.stocks = await getStockBySymbol(mySQLPool, symbol);
 
@@ -281,154 +283,6 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		}
 	).post(
 		/**
-		* @route POST /api/stock/create
-		* @desc Create stock
-		* @access authorized:admin
-		*/
-		"/create",
-		userAdmin(mySQLPool),
-		loadRequired(),
-		async (req: express.Request, res: express.Response) =>
-		{
-			const { name, symbol, exchange, isin, }: StockCreate = req.body.load;
-
-			try
-			{
-				if (!exchange || !stockExchanges.includes(exchange))
-				{
-					res.status(hTTPStatus.BAD_REQUEST).send("Invalid or missing exchange");
-
-					return;
-				}
-
-				if (!isin)
-				{
-					res.status(hTTPStatus.BAD_REQUEST).send("ISIN is required for stock");
-					return;
-				}
-
-				const [
-					existingISIN,
-				] = await mySQLPool.promise().query(
-					"SELECT id FROM stock WHERE isin = ?;",
-					[
-						isin,
-					]
-				);
-
-				if ((existingISIN as any[]).length > 0)
-				{
-					res.status(hTTPStatus.CONFLICT).send("ISIN already exists");
-					return;
-				}
-
-				// Insert the stock
-				await mySQLPool.promise().query(
-					"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
-					[
-						symbol,
-						name,
-						exchange,
-						isin,
-					]
-				);
-
-				res.status(hTTPStatus.CREATED).send("Created stock");
-			}
-			catch (error)
-			{
-				console.error(error);
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(error);
-			}
-		}
-	).post(
-		/**
-		* @route POST /api/stock/update
-		* @desc Update an stock
-		* @access Admin only
-		*/
-		"/update",
-		userAdmin(mySQLPool),
-		loadRequired(),
-		async (req: express.Request, res: express.Response) =>
-		{
-			const { stock_id, exchange, isin, name, symbol, }: StockUpdate = req.body.load;
-
-			try
-			{
-				if (!stock_id)
-				{
-					res.status(hTTPStatus.BAD_REQUEST).send("stock_id is required");
-					return;
-				}
-
-				if (!exchange || !stockExchanges.includes(exchange))
-				{
-					res.status(hTTPStatus.BAD_REQUEST).send("Invalid or missing exchange");
-
-					return;
-				}
-
-				if (!isin)
-				{
-					res.status(hTTPStatus.BAD_REQUEST).send("ISIN is required for stock");
-					return;
-				}
-
-				let existingStock: IStock[];
-
-				[
-					existingStock,
-				] = await mySQLPool.promise().query<IStock[]>(
-					"SELECT * FROM stock WHERE id = ?;",
-					[
-						stock_id,
-					]
-				);
-
-				if ((existingStock as any[]).length === 0)
-				{
-					res.status(hTTPStatus.NOT_FOUND).send("Stock not found");
-					return;
-				}
-
-				const [
-					existingISIN,
-				] = await mySQLPool.promise().query(
-					"SELECT id FROM stock WHERE isin = ? AND id != ?;",
-					[
-						isin,
-						stock_id,
-					]
-				);
-
-				if ((existingISIN as any[]).length > 0)
-				{
-					res.status(hTTPStatus.CONFLICT).send("ISIN already exists");
-					return;
-				}
-
-				await mySQLPool.promise().query(
-					"UPDATE stock SET name = ?, symbol = ?, exchange = ?, isin = ? WHERE id = ?;",
-					[
-						name,
-						symbol,
-						exchange,
-						isin,
-						stock_id,
-					]
-				);
-
-				res.status(hTTPStatus.OK).send("Updated stock");
-			}
-			catch (error)
-			{
-				console.error(error);
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(error);
-			}
-		}
-	).post(
-		/**
 		* @route POST /api/stock/delete
 		* @desc Delete assset
 		* @access authorized:admin
@@ -449,14 +303,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				}
 
 				// Ensure stock exists
-				const [
-					existingStock,
-				] = await mySQLPool.promise().query(
-					"SELECT id FROM stock WHERE id = ?;",
-					[
-						stock_id,
-					]
-				);
+				const existingStock = await getStockById(mySQLPool, stock_id);
 
 				if ((existingStock as any[]).length === 0)
 				{
@@ -464,12 +311,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				await mySQLPool.promise().query(
-					"DELETE FROM stock WHERE id = ?;",
-					[
-						stock_id,
-					]
-				);
+				await deleteStock(mySQLPool, stock_id);
 
 				res.status(hTTPStatus.OK).send("Deleted stock");
 			}

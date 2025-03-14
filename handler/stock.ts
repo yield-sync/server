@@ -20,11 +20,45 @@ export const createStock = async (
 	);
 }
 
+export const deleteStock = async (
+	mySQLPool: mysql.Pool,
+	id: number
+): Promise<IStock[]> =>
+{
+	let [
+		stocks,
+	] = await mySQLPool.promise().query<IStock[]>(
+		"DELETE FROM stock WHERE id = ?;",
+		[
+			id,
+		]
+	);
+
+	return stocks;
+}
+
 export const getStock = async (mySQLPool: mysql.Pool): Promise<IStock[]> =>
 {
 	let [
 		stocks,
 	] = await mySQLPool.promise().query<IStock[]>("SELECT * FROM stock;");
+
+	return stocks;
+}
+
+export const getStockById = async (
+	mySQLPool: mysql.Pool,
+	id: number
+): Promise<IStock[]> =>
+{
+	let [
+		stocks,
+	] = await mySQLPool.promise().query<IStock[]>(
+		"SELECT id FROM stock WHERE id = ?;",
+		[
+			id,
+		]
+	);
 
 	return stocks;
 }
