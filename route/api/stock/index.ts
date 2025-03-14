@@ -4,7 +4,8 @@ import mysql from "mysql2";
 import { loadRequired } from "../../../middleware/load";
 import { user, userAdmin } from "../../../middleware/token";
 import { hTTPStatus, stockExchanges } from "../../../constants";
-import { getStockBySymbol } from "../../../handler/stock"
+import { updateQueryStock } from "../../../handler/query_stock";
+import { createStock, getStock, getStockByIsin, getStockBySymbol, updateStock } from "../../../handler/stock"
 import { sanitizeSymbolQuery } from "../../../util/sanitizer";
 import { queryForStock, queryForStockByISIN } from "../../../external-api/FinancialModelingPrep";
 
@@ -26,21 +27,11 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		{
 			try
 			{
-				let stocks: IStock[];
-
-				[
-					stocks,
-				] = await mySQLPool.promise().query<IStock[]>("SELECT * FROM stock;");
-
-				res.status(hTTPStatus.OK).send(stocks);
-
-				return;
+				res.status(hTTPStatus.OK).json(await getStock(mySQLPool));
 			}
 			catch (error)
 			{
 				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(error);
-
-				return;
 			}
 		}
 	).get(
@@ -99,18 +90,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					}
 
 					// Update the timestamp of the query
-					await mySQLPool.promise().query(
-						`
-							INSERT INTO
-								query_stock (query, last_refresh_timestamp)
-							VALUES
-								(?, ?)
-							ON DUPLICATE KEY UPDATE
-								last_refresh_timestamp = ?
-							;
-						`,
-						[symbol, timestamp, timestamp]
-					);
+					await updateQueryStock(mySQLPool, symbol, timestamp);
 
 					/**
 					* @dev It could be possible that the symbol is new but the company is already in the DB under an old
@@ -118,25 +98,18 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					* stock with that isin to have the new symbol and company name
 					*/
 
-					const [stocksWithExternalIsinId] = await mySQLPool.promise().query<IStock[]>(
-						"SELECT id FROM stock WHERE isin = ?;",
-						[
-							stockQueryResult.isin,
-						]
-					);
+					const stocksWithExternalIsinId = await getStockByIsin(mySQLPool, stockQueryResult.isin);
 
 					// If not found..
 					if (stocksWithExternalIsinId.length == 0)
 					{
 						// Insert new stock
-						await mySQLPool.promise().query(
-							"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
-							[
-								stockQueryResult.symbol,
-								stockQueryResult.name,
-								stockQueryResult.exchange.toLowerCase(),
-								stockQueryResult.isin,
-							]
+						await createStock(
+							mySQLPool,
+							stockQueryResult.symbol,
+							stockQueryResult.name,
+							stockQueryResult.exchange.toLowerCase(),
+							stockQueryResult.isin,
 						);
 					}
 					else
@@ -148,13 +121,12 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 						*/
 
 						// Update the existing stock with the isin
-						await mySQLPool.promise().query(
-							"UPDATE stock SET name = ?, symbol = ? WHERE id = ?;",
-							[
-								stockQueryResult.name,
-								stockQueryResult.symbol,
-								stocksWithExternalIsinId[0].id,
-							]
+						await updateStock(
+							mySQLPool,
+							stockQueryResult.name,
+							stockQueryResult.symbol,
+							stockQueryResult.exchange.toLowerCase(),
+							stocksWithExternalIsinId[0].id,
 						);
 
 					}
