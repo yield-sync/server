@@ -4,7 +4,7 @@ import mysql from "mysql2";
 import { loadRequired } from "../../../middleware/load";
 import { user, userAdmin } from "../../../middleware/token";
 import { hTTPStatus } from "../../../constants";
-import { queryForCryptocurrency } from "../../../external-api/coingecko";
+import externalAPI from "../../../external-api/coingecko";
 import { sanitizeQuery } from "../../../util/sanitizer";
 
 
@@ -144,7 +144,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 						]
 					);
 
-					const externalAPIResults: CoingeckoCoin[] = await queryForCryptocurrency(query);
+					const externalAPIResults: CoingeckoCoin[] = await externalAPI.queryForCryptocurrency(query);
 
 					resJSON.externalAPIResults = externalAPIResults;
 

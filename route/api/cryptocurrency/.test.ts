@@ -6,7 +6,7 @@ import routeAPICryptocurrency from "./index";
 import routeApi from "../index";
 import routeApiUser from "../user/index";
 import config from "../../../config";
-import { queryForCryptocurrency } from "../../../external-api/coingecko";
+import externalAPI from "../../../external-api/coingecko";
 import DBBuilder, { dBDrop } from "../../../sql/db-builder";
 
 
@@ -155,12 +155,12 @@ describe("Request: GET", () =>
 
 			it("Should call external API and sync new results, still capping at 10..", async () => {
 				// Mock external API response
-				(queryForCryptocurrency as jest.Mock).mockResolvedValueOnce([
+				(externalAPI.queryForCryptocurrency as jest.Mock).mockResolvedValueOnce([
 					{ id: "usdc-1", symbol: QUERY, name: "US Dollar 1" },
 					{ id: "usdc-2", symbol: QUERY, name: "US Dollar 2" },
 				]);
 
-				expect(queryForCryptocurrency).toHaveBeenCalledTimes(0);
+				expect(externalAPI.queryForCryptocurrency).toHaveBeenCalledTimes(0);
 
 				// Insert some initial data
 				await mySQLPool.promise().query(
@@ -181,7 +181,7 @@ describe("Request: GET", () =>
 				// Full external response
 				expect(res.body.externalAPIResults).toHaveLength(2);
 
-				expect(queryForCryptocurrency).toHaveBeenCalledWith(QUERY);
+				expect(externalAPI.queryForCryptocurrency).toHaveBeenCalledWith(QUERY);
 
 				// Check database sync
 				const [dbCryptos] = await mySQLPool.promise().query<ICryptocurrency[]>(
@@ -198,12 +198,12 @@ describe("Request: GET", () =>
 
 			it("Should respect external API delay and return only DB results..", async () => {
 				// Mock external API response
-				(queryForCryptocurrency as jest.Mock).mockResolvedValueOnce([
+				(externalAPI.queryForCryptocurrency as jest.Mock).mockResolvedValueOnce([
 					{ id: "usdc-1", symbol: QUERY, name: "US Dollar 1" },
 					{ id: "usdc-2", symbol: QUERY, name: "US Dollar 2" },
 				]);
 
-				expect(queryForCryptocurrency).toHaveBeenCalledTimes(0);
+				expect(externalAPI.queryForCryptocurrency).toHaveBeenCalledTimes(0);
 
 				// First call: triggers external API
 				const res = await request(app).get(`/api/cryptocurrency/search/${QUERY}`).set(
@@ -213,7 +213,7 @@ describe("Request: GET", () =>
 
 				expect(res.body.externalRequestRequired).toBeTruthy();
 
-				expect(queryForCryptocurrency).toHaveBeenCalledTimes(1);
+				expect(externalAPI.queryForCryptocurrency).toHaveBeenCalledTimes(1);
 
 				// Second call: within 1440 minutes, should not call external API again
 				const res2 = await request(app).get(`/api/cryptocurrency/search/${QUERY}`).set(
@@ -230,12 +230,12 @@ describe("Request: GET", () =>
 				expect(res2.body.externalAPIResults).toHaveLength(0);
 
 				// Only called once
-				expect(queryForCryptocurrency).toHaveBeenCalledTimes(1);
+				expect(externalAPI.queryForCryptocurrency).toHaveBeenCalledTimes(1);
 			});
 
 			it("Should return empty arrays if no matches found..", async () => {
 				// Mock external API to return empty array
-				(queryForCryptocurrency as jest.Mock).mockResolvedValueOnce([]);
+				(externalAPI.queryForCryptocurrency as jest.Mock).mockResolvedValueOnce([]);
 
 				const res = await request(app).get(`/api/cryptocurrency/search/${QUERY}`).set(
 					"authorization",

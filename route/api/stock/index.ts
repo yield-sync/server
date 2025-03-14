@@ -17,7 +17,7 @@ import {
 	updateStockSymbolAndName
 } from "../../../handler/stock"
 import { sanitizeSymbolQuery } from "../../../util/sanitizer";
-import { queryForStock, queryForStockByISIN } from "../../../external-api/FinancialModelingPrep";
+import externalSource from "../../../external-api/FinancialModelingPrep";
 
 
 const EXTERNAL_CALL_DELAY_MINUTES: number = 144000;
@@ -88,7 +88,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				{
 					response.refreshRequired = true;
 
-					const stockQueryResult = await queryForStock(symbol);
+					const stockQueryResult = await externalSource.queryForStock(symbol);
 
 					if (!stockQueryResult)
 					{
@@ -170,103 +170,101 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 					return;
 				}
-				const stockQueryResult = await queryForStock(symbol);
+
+				const stockQueryResult = await externalSource.queryForStock(symbol);
 
 				if (!stockQueryResult)
 				{
-					res.status(hTTPStatus.BAD_REQUEST).json(response);
+					res.status(hTTPStatus.BAD_REQUEST).send("Nothing returned from external source");
 
 					return;
 				}
 
-				if (response.stocks[0].isin == stockQueryResult.isin)
+				if (response.stocks[0].isin != stockQueryResult.isin)
 				{
+					/**
+					* @notice If this happens then it means that the the symbol now belongs to a different company.
+					*/
+
+					/**
+					* @dev
+					* 1) To prevent a UNIQUE contraint error update the stock in the DB with theresponse.stocks[0].id as
+					* the id and make the symbol unknown
+					*/
+					await makeStockSymbolUnknown(mySQLPool, response.stocks[0].id);
+
+					/**
+					* @dev
+					* 2) Query DB for existing stock that has its isin = stockQueryResult.isin, and do the
+					* following:
+					*     a) Set the symbol to stockQueryResult.symbol
+					*     b) Set the name to stockQueryResult.name
+					*     c) Set the exchange to stockQueryResult.exchange
+					*/
+					const stockWithExternalISIN = await getStockByIsin(mySQLPool, stockQueryResult.isin)
+
+					// If already exists..
+					if (stockWithExternalISIN.length == 0)
+					{
+						// Insert the stock with new isin
+						await createStock(
+							mySQLPool,
+							stockQueryResult.symbol,
+							stockQueryResult.name,
+							stockQueryResult.exchange.toLowerCase(),
+							stockQueryResult.isin,
+						);
+					}
+					else
+					{
+						// Update the existing stock with isin
+						await updateStockSymbolAndName(
+							mySQLPool,
+							stockQueryResult.symbol,
+							stockQueryResult.name,
+							stockWithExternalISIN[0].id,
+						);
+					}
+
+					/**
+					 * @dev
+					 * 4) We have to update the symbol, name, and exchange for the stock that we set symbol to "0"
+					 *     a) Query external source for stock with isin of response.stocks[0].isin
+					 *     b) Store the data
+					*/
+
+					// Insert new stock into DB
+					const stockQueryByIsinResult = await externalSource.queryForStockByIsin(response.stocks[0].isin);
+
+					if (stockQueryByIsinResult)
+					{
+						/**
+						* @dev
+						* 5) Query DB for stock that has its isin = response.stocks[0].isin, and do the following:
+						*     a) Set the symbol to stockQueryResult.symbol
+						*     b) Set the name to stockQueryResult.name
+						*     c) Set the exchange to stockQueryResult.exchange
+						*/
+
+						// Update the existing stock with isin
+						// Update the existing stock with isin
+						await updateStockSymbolAndName(
+							mySQLPool,
+							stockQueryByIsinResult.symbol,
+							stockQueryByIsinResult.name,
+							response.stocks[0].id,
+						);
+					}
+					else
+					{
+						console.error(`Nothing was found for ${response.stocks[0].id}. Symbol will remain "0".`);
+					}
+
 					response.stocks = await getStockBySymbol(mySQLPool, symbol);
 
 					res.status(hTTPStatus.ACCEPTED).json(response);
 
 					return;
-				}
-
-				/**
-				* @dev If this happens then it means that the the symbol now belongs to a different underlying
-				* company.
-				*/
-
-				/**
-				* @dev
-				* 1) To prevent the UNIQUE contraint error for the next step, update the stock in the DB with
-				* the id = response.stocks[0].id and do the following:
-				*     a) Set the symbol to #
-				*     b) Set the name to #
-				*/
-				await makeStockSymbolUnknown(mySQLPool, response.stocks[0].id);
-
-				/**
-				* @dev
-				* 2) Query DB for existing stock that has its isin = stockQueryResult.isin, and do the
-				* following:
-				*     a) Set the symbol to stockQueryResult.symbol
-				*     b) Set the name to stockQueryResult.name
-				*     c) Set the exchange to stockQueryResult.exchange
-				*/
-				const stockWithExternalISIN = await getStockByIsin(mySQLPool, stockQueryResult.isin)
-
-				// If already exists..
-				if (stockWithExternalISIN.length == 0)
-				{
-					// Insert the stock with new isin
-					await createStock(
-						mySQLPool,
-						stockQueryResult.symbol,
-						stockQueryResult.name,
-						stockQueryResult.exchange.toLowerCase(),
-						stockQueryResult.isin,
-					);
-				}
-				else
-				{
-					// Update the existing stock with isin
-					await updateStockSymbolAndName(
-						mySQLPool,
-						stockQueryResult.symbol,
-						stockQueryResult.name,
-						stockWithExternalISIN[0].id,
-					);
-				}
-
-				/**
-				 * @dev
-				 * 4) We have to update the symbol, name, and exchange for the stock that we set symbol to "0"
-				 *     a) Query external source for stock with isin of response.stocks[0].isin
-				 *     b) Store the data
-				*/
-
-				// Insert new stock into DB
-				const stockQueryByIsinResult = await queryForStockByISIN(response.stocks[0].isin);
-
-				if (stockQueryByIsinResult)
-				{
-					/**
-					* @dev
-					* 5) Query DB for stock that has its isin = response.stocks[0].isin, and do the following:
-					*     a) Set the symbol to stockQueryResult.symbol
-					*     b) Set the name to stockQueryResult.name
-					*     c) Set the exchange to stockQueryResult.exchange
-					*/
-
-					// Update the existing stock with isin
-					// Update the existing stock with isin
-					await updateStockSymbolAndName(
-						mySQLPool,
-						stockQueryByIsinResult.symbol,
-						stockQueryByIsinResult.name,
-						response.stocks[0].id,
-					);
-				}
-				else
-				{
-					console.error(`Nothing was found for ${response.stocks[0].id}. Symbol will remain "0".`);
 				}
 
 				response.stocks = await getStockBySymbol(mySQLPool, symbol);

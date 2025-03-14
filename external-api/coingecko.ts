@@ -12,25 +12,27 @@ export class ExternalRequestError extends
 {}
 
 
-export const queryForCryptocurrency = async (query: string): Promise<CoingeckoCoin[]> =>
-{
-	try
+export default {
+	queryForCryptocurrency: async (query: string): Promise<CoingeckoCoin[]> =>
 	{
-		const cleanedQuery: string = sanitizeQuery(query);
+		try
+		{
+			const cleanedQuery: string = sanitizeQuery(query);
 
-		const response = await axios.request({
-			method: "GET",
-			url: `${uRL}/api/v3/search?query=${cleanedQuery}`,
-			headers: {
-				accept: "application/json",
-				"x-cg-demo-api-key": key,
-			},
-		});
+			const response = await axios.request({
+				method: "GET",
+				url: `${uRL}/api/v3/search?query=${cleanedQuery}`,
+				headers: {
+					accept: "application/json",
+					"x-cg-demo-api-key": key,
+				},
+			});
 
-		return response.data.coins;
-	}
-	catch (error)
-	{
-		throw new ExternalRequestError("Error fetching external API: " + error);
+			return response.data.coins;
+		}
+		catch (error)
+		{
+			throw new ExternalRequestError("Error fetching external API: " + error);
+		}
 	}
 };
