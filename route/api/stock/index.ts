@@ -4,6 +4,7 @@ import mysql from "mysql2";
 import { loadRequired } from "../../../middleware/load";
 import { user, userAdmin } from "../../../middleware/token";
 import { hTTPStatus, stockExchanges } from "../../../constants";
+import { getStockBySymbol } from "../../../handler/stock"
 import { sanitizeSymbolQuery } from "../../../util/sanitizer";
 import { queryForStock, queryForStockByISIN } from "../../../external-api/FinancialModelingPrep";
 
@@ -53,14 +54,28 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		user(mySQLPool),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const now = new Date();
+			const timestamp = new Date();
 
-			const symbol: string = sanitizeSymbolQuery(req.params.symbol);
+			if (!req.params.query)
+			{
+				res.status(hTTPStatus.BAD_REQUEST).json("No query passed");
+				return;
+			}
 
-			let resJSON: {
+			const symbol: string = sanitizeSymbolQuery(req.params.query);
+
+			if (symbol == "QUERY")
+			{
+				res.status(hTTPStatus.BAD_REQUEST).json("Invalid query passed");
+				return;
+			}
+
+			let response: {
+				symbol: string,
 				refreshRequired: boolean,
 				stocks: IStock[]
 			} = {
+				symbol,
 				refreshRequired: false,
 				stocks: [
 				],
@@ -68,21 +83,20 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 			try
 			{
-				[
-					resJSON.stocks,
-				] = await mySQLPool.promise().query<IStock[]>(
-					"SELECT * FROM stock WHERE symbol = ?;",
-					[
-						symbol
-					]
-				);
+				response.stocks = await getStockBySymbol(mySQLPool, symbol);
 
 				// If symbol not found in DB..
-				if (resJSON.stocks.length == 0)
+				if (response.stocks.length == 0)
 				{
-					resJSON.refreshRequired = true;
+					response.refreshRequired = true;
 
 					const stockQueryResult = await queryForStock(symbol);
+
+					if (!stockQueryResult)
+					{
+						res.status(hTTPStatus.BAD_REQUEST).json("Nothing found from external source");
+						return;
+					}
 
 					// Update the timestamp of the query
 					await mySQLPool.promise().query(
@@ -95,7 +109,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 								last_refresh_timestamp = ?
 							;
 						`,
-						[symbol, now, now]
+						[symbol, timestamp, timestamp]
 					);
 
 					/**
@@ -145,15 +159,9 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 					}
 
-					// Get the stocks
-					[resJSON.stocks] = await mySQLPool.promise().query<IStock[]>(
-						"SELECT * FROM stock WHERE symbol = ?;",
-						[
-							stockQueryResult.symbol,
-						]
-					);
+					response.stocks = await getStockBySymbol(mySQLPool, symbol);
 
-					res.status(hTTPStatus.ACCEPTED).json(resJSON);
+					res.status(hTTPStatus.ACCEPTED).json(response);
 
 					return;
 				}
@@ -178,23 +186,23 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				) : null;
 
 				// Determin if a request is required
-				resJSON.refreshRequired = !lastRefreshTimestamp || (
-					now.getTime() - lastRefreshTimestamp.getTime()
+				response.refreshRequired = !lastRefreshTimestamp || (
+					timestamp.getTime() - lastRefreshTimestamp.getTime()
 				) >= EXTERNAL_CALL_DELAY_MS;
 
 
-				if (resJSON.refreshRequired)
+				if (response.refreshRequired)
 				{
 					const stockQueryResult = await queryForStock(symbol);
 
 					if (!stockQueryResult)
 					{
-						res.status(hTTPStatus.BAD_REQUEST).json(resJSON);
+						res.status(hTTPStatus.BAD_REQUEST).json(response);
 
 						return;
 					}
 
-					if (resJSON.stocks[0].isin != stockQueryResult.isin)
+					if (response.stocks[0].isin != stockQueryResult.isin)
 					{
 						/**
 						* @dev If this happens then it means that the the symbol now belongs to a different underlying
@@ -204,13 +212,13 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 						/**
 						* @dev
 						* 1) To prevent the UNIQUE contraint error for the next step, update the stock in the DB with
-						* the id = resJSON.stocks[0].id and do the following:
+						* the id = response.stocks[0].id and do the following:
 						*     a) Set the symbol to #
 						*     b) Set the name to #
 						*/
 						await mySQLPool.promise().query(
 							"UPDATE stock SET symbol = ? WHERE id = ?;",
-							["0", resJSON.stocks[0].id]
+							["0", response.stocks[0].id]
 						);
 
 						/**
@@ -258,18 +266,18 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 						/**
 						 * @dev
 						 * 4) We have to update the symbol, name, and exchange for the stock that we set symbol to "0"
-						 *     a) Query external source for stock with isin of resJSON.stocks[0].isin
+						 *     a) Query external source for stock with isin of response.stocks[0].isin
 						 *     b) Store the data
 						*/
 
 						// Insert new stock into DB
-						const stockQueryByIsinResult = await queryForStockByISIN(resJSON.stocks[0].isin);
+						const stockQueryByIsinResult = await queryForStockByISIN(response.stocks[0].isin);
 
 						if (stockQueryByIsinResult)
 						{
 							/**
 							* @dev
-							* 5) Query DB for stock that has its isin = resJSON.stocks[0].isin, and do the following:
+							* 5) Query DB for stock that has its isin = response.stocks[0].isin, and do the following:
 							*     a) Set the symbol to stockQueryResult.symbol
 							*     b) Set the name to stockQueryResult.name
 							*     c) Set the exchange to stockQueryResult.exchange
@@ -281,26 +289,20 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 								[
 									stockQueryByIsinResult.symbol,
 									stockQueryByIsinResult.name,
-									resJSON.stocks[0].id,
+									response.stocks[0].id,
 								]
 							);
 						}
 						else
 						{
-							console.error(`Nothing was found for ${resJSON.stocks[0].id}. Symbol will remain "0".`);
+							console.error(`Nothing was found for ${response.stocks[0].id}. Symbol will remain "0".`);
 						}
 					}
 
-					// Fetch updated stock info
-					[resJSON.stocks] = await mySQLPool.promise().query<IStock[]>(
-						"SELECT * FROM stock WHERE symbol = ?;",
-						[
-							symbol,
-						]
-					);
+					response.stocks = await getStockBySymbol(mySQLPool, symbol);
 				}
 
-				res.status(hTTPStatus.ACCEPTED).json(resJSON);
+				res.status(hTTPStatus.ACCEPTED).json(response);
 				return;
 			}
 			catch (error)
