@@ -30,7 +30,7 @@ const queries: string[] = [
 			isin VARCHAR(12) NOT NULL UNIQUE,
 			exchange VARCHAR(10) NOT NULL CHECK (exchange IN (${sQLStockExchanges})),
 			name VARCHAR(255) NOT NULL,
-			symbol VARCHAR(255) NOT NULL
+			symbol VARCHAR(255) NOT NULL UNIQUE
 		);
 	`,
 	// cryptocurrency
@@ -56,18 +56,20 @@ const queries: string[] = [
 	`
 		CREATE TABLE query_cryptocurrency (
 			id INT AUTO_INCREMENT PRIMARY KEY,
-			query VARCHAR(255) NOT NULL,
+			query VARCHAR(50) NOT NULL,
 			last_request_timestamp DATETIME NOT NULL,
 			UNIQUE KEY unique_query (query)
 		);
 	`,
 	// query_stock
+	// TODO: Add tests for checking length of query and compliance to contstraint
 	`
 		CREATE TABLE query_stock (
 			id INT AUTO_INCREMENT PRIMARY KEY,
-			query VARCHAR(255) NOT NULL,
+			query VARCHAR(10) NOT NULL,
 			last_request_timestamp DATETIME NOT NULL,
-			UNIQUE KEY unique_query (query)
+			UNIQUE KEY unique_query (query),
+			CONSTRAINT check_query_format CHECK (query REGEXP '^[A-Za-z]{1,10}$')
 		);
 	`,
 	// stock_industry
