@@ -74,7 +74,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				if (symbol == "QUERY")
 				{
-					res.status(hTTPStatus.BAD_REQUEST).json("Invalid query passed");
+					res.status(hTTPStatus.BAD_REQUEST).send("Invalid query passed");
 
 					return;
 				}
@@ -92,7 +92,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 					if (!stockQueryResult)
 					{
-						res.status(hTTPStatus.BAD_REQUEST).json("Nothing found from external source");
+						res.status(hTTPStatus.BAD_REQUEST).send("Nothing found from external source");
 
 						return;
 					}
