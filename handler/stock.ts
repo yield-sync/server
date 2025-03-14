@@ -1,21 +1,15 @@
 import mysql from "mysql2";
 
 
-export const createStock = async (
-	mySQLPool: mysql.Pool,
-	symbol: string,
-	name: string,
-	exchange: string,
-	isin: string,
-) =>
+export const createStock = async (mySQLPool: mysql.Pool, stock: StockCreate,) =>
 {
 	await mySQLPool.promise().query(
 		"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
 		[
-			symbol,
-			name,
-			exchange.toLowerCase(),
-			isin,
+			stock.symbol,
+			stock.name,
+			stock.exchange.toLowerCase(),
+			stock.isin,
 		]
 	);
 }

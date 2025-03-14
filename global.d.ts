@@ -40,13 +40,12 @@ declare global
 		symbol?: string;
 	};
 
-	type StockUpdate = Load & {
-		stock_id: string;
-		exchange: string;
-		isin: string;
-		name?: string;
-		symbol?: string;
-	};
+	type StockSearchQuery = {
+		timestamp: Date,
+		query: string,
+		refreshRequired: boolean,
+		stocks: IStock[]
+	}
 
 	type StockDelete = Load & {
 		stock_id: number,
