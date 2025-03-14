@@ -20,3 +20,23 @@ export const updateQueryStock = async (
 		[query, last_refresh_timestamp, last_refresh_timestamp]
 	);
 }
+
+export const getQueryStockByQuery = async (
+	mySQLPool: mysql.Pool,
+	query: string
+): Promise<any[]> =>
+{
+	const [
+		queryStock,
+	]: [
+		any[],
+		FieldPacket[]
+	] = await mySQLPool.promise().query(
+		"SELECT * FROM query_stock WHERE query = ?;",
+		[
+			query,
+		]
+	);
+
+	return queryStock;
+}

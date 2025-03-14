@@ -81,3 +81,30 @@ export const updateStock = async (
 		]
 	);
 }
+
+export const updateStockSymbolAndName = async (
+	mySQLPool: mysql.Pool,
+	symbol: string,
+	name: string,
+	id: number,
+) =>
+{
+	await mySQLPool.promise().query(
+		"UPDATE stock SET symbol = ?, name = ? WHERE id = ?;",
+		[
+			symbol,
+			name,
+			id,
+		]
+	);
+}
+
+export const makeStockSymbolUnknown = async (mySQLPool: mysql.Pool, id: number,) =>
+{
+	await mySQLPool.promise().query(
+		"UPDATE stock SET symbol = 0 WHERE id = ?;",
+		[
+			id,
+		]
+	);
+}
