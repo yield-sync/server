@@ -137,6 +137,7 @@ export const makeStockSymbolUnknown = async (mySQLPool: mysql.Pool, id: number,)
 	);
 }
 
+
 export default {
 	createStock,
 	deleteStock,

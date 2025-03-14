@@ -40,3 +40,9 @@ export const getQueryStockByQuery = async (
 
 	return queryStock;
 }
+
+
+export default {
+	updateQueryStockTimestamp,
+	getQueryStockByQuery,
+};
