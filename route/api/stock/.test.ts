@@ -98,15 +98,15 @@ describe("Request: GET", () => {
 		it("Should return stock from DB if it exists and NOT make external request..", async () => {
 			const fiveDaysAfter = new Date((new Date()).getTime() + 5 * 24 * 60 * 60 * 1000);
 
-			// Add a last_request_timestamp so far in the future that the external request cannot trigger
+			// Add a last_refresh_timestamp so far in the future that the external request cannot trigger
 			await mySQLPool.promise().query(
 				`
 					INSERT INTO
-						query_stock (query, last_request_timestamp)
+						query_stock (query, last_refresh_timestamp)
 					VALUES
 						(?, ?)
 					ON DUPLICATE KEY UPDATE
-						last_request_timestamp = ?
+						last_refresh_timestamp = ?
 					;
 				`,
 				[ticker, fiveDaysAfter, fiveDaysAfter]

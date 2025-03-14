@@ -57,7 +57,7 @@ const queries: string[] = [
 		CREATE TABLE query_cryptocurrency (
 			id INT AUTO_INCREMENT PRIMARY KEY,
 			query VARCHAR(50) NOT NULL,
-			last_request_timestamp DATETIME NOT NULL,
+			last_refresh_timestamp DATETIME NOT NULL,
 			UNIQUE KEY unique_query (query)
 		);
 	`,
@@ -67,7 +67,7 @@ const queries: string[] = [
 		CREATE TABLE query_stock (
 			id INT AUTO_INCREMENT PRIMARY KEY,
 			query VARCHAR(10) NOT NULL,
-			last_request_timestamp DATETIME NOT NULL,
+			last_refresh_timestamp DATETIME NOT NULL,
 			UNIQUE KEY unique_query (query),
 			CONSTRAINT check_query_format CHECK (query REGEXP '^[A-Za-z]{1,10}$')
 		);

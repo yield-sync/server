@@ -18,7 +18,7 @@ export function sanitizeQuery(input: unknown): string
 	return trimmed.replace(/[^a-zA-Z0-9.]/g, "");
 }
 
-export function sanitizeTickerQuery(input: unknown): string
+export function sanitizeSymbolQuery(input: unknown): string
 {
 	if (typeof input !== "string")
 	{

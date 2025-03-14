@@ -1,12 +1,11 @@
-import axios from "axios";
 import express from "express";
 import mysql from "mysql2";
 
-import config from "../../../config/index";
 import { loadRequired } from "../../../middleware/load";
 import { user, userAdmin } from "../../../middleware/token";
 import { hTTPStatus, stockExchanges } from "../../../constants";
-import { sanitizeQuery } from "../../../util/sanitizer";
+import { sanitizeSymbolQuery } from "../../../util/sanitizer";
+import { queryForStock, queryForStockByISIN } from "../../../external-api/FinancialModelingPrep";
 
 
 const EXTERNAL_CALL_DELAY_MINUTES: number = 144000;
@@ -45,7 +44,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		}
 	).get(
 		/**
-		* @route GET /api/stock/search/:query
+		* @route GET /api/stock/search/:symbol
 		* @desc Search for a stock and add it to DB if it doesnt exist
 		* @param query {string} to search for
 		* @access authorized:user
@@ -54,46 +53,112 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		user(mySQLPool),
 		async (req: express.Request, res: express.Response) =>
 		{
-			/*
-			* 1) Search for company in database that satisfies the query..
-			* 2) If a company is found in the database AND 100 days has NOT passed from last external request update:
-			*     a) Check that the ISIN matches the ISIN provided by the external source
-			*         i) If matches -> Return
-			*         ii) Else ->
-			*             !) Store the ISIN from the database in a variable
-			*             @) Update the ISIN in database to one provided by External source
-			*             #) Search for company that has old ISIN From External source
-			*             $) Add the company found
-			* 3) Else Add the company to the database
-			*/
-
 			const now = new Date();
 
+			const symbol: string = sanitizeSymbolQuery(req.params.symbol);
+
 			let resJSON: {
-				externalRequestRequired: boolean,
+				refreshRequired: boolean,
 				stocks: IStock[]
-				externalAPIResults: CoingeckoCoin[]
 			} = {
-				externalRequestRequired: false,
+				refreshRequired: false,
 				stocks: [
 				],
-				externalAPIResults: [
-				],
 			};
-
-			const query: string = sanitizeQuery(req.params.query);
 
 			try
 			{
 				[
 					resJSON.stocks,
 				] = await mySQLPool.promise().query<IStock[]>(
-					"SELECT * FROM stock WHERE symbol = ? OR name LIKE ?;",
+					"SELECT * FROM stock WHERE symbol = ?;",
 					[
-						query,
-						`%${query}%`,
+						symbol
 					]
 				);
+
+				// If symbol not found in DB..
+				if (resJSON.stocks.length == 0)
+				{
+					resJSON.refreshRequired = true;
+
+					const stockQueryResult = await queryForStock(symbol);
+
+					// Update the timestamp of the query
+					await mySQLPool.promise().query(
+						`
+							INSERT INTO
+								query_stock (query, last_refresh_timestamp)
+							VALUES
+								(?, ?)
+							ON DUPLICATE KEY UPDATE
+								last_refresh_timestamp = ?
+							;
+						`,
+						[symbol, now, now]
+					);
+
+					/**
+					* @dev It could be possible that the symbol is new but the company is already in the DB under an old
+					* symbol and name. To solve this check that the isin is not already in use. If so then update the
+					* stock with that isin to have the new symbol and company name
+					*/
+
+					const [stocksWithExternalIsinId] = await mySQLPool.promise().query<IStock[]>(
+						"SELECT id FROM stock WHERE isin = ?;",
+						[
+							stockQueryResult.isin,
+						]
+					);
+
+					// If not found..
+					if (stocksWithExternalIsinId.length == 0)
+					{
+						// Insert new stock
+						await mySQLPool.promise().query(
+							"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
+							[
+								stockQueryResult.symbol,
+								stockQueryResult.name,
+								stockQueryResult.exchange.toLowerCase(),
+								stockQueryResult.isin,
+							]
+						);
+					}
+					else
+					{
+						/**
+						* @dev It would normally be required to set any existing stocks with stockQueryResult.symbol to
+						* a placeholder value but since we are within a condition where nothing was found we can
+						* directly update the stock without worry of constrant
+						*/
+
+						// Update the existing stock with the isin
+						await mySQLPool.promise().query(
+							"UPDATE stock SET name = ?, symbol = ? WHERE id = ?;",
+							[
+								stockQueryResult.name,
+								stockQueryResult.symbol,
+								stocksWithExternalIsinId[0].id,
+							]
+						);
+
+					}
+
+					// Get the stocks
+					[resJSON.stocks] = await mySQLPool.promise().query<IStock[]>(
+						"SELECT * FROM stock WHERE symbol = ?;",
+						[
+							stockQueryResult.symbol,
+						]
+					);
+
+					res.status(hTTPStatus.ACCEPTED).json(resJSON);
+
+					return;
+				}
+
+				// Something was found in the DB at this point..
 
 				const [
 					queryStock,
@@ -101,70 +166,138 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					any[],
 					FieldPacket[]
 				] = await mySQLPool.promise().query(
-					"SELECT last_request_timestamp FROM query_stock WHERE query = ?;",
+					"SELECT last_refresh_timestamp FROM query_stock WHERE query = ?;",
 					[
-						query,
+						symbol,
 					]
 				);
 
-				const lastExternalReqTimestamp = queryStock.length > 0 ? new Date(
-					queryStock[0].last_request_timestamp
+				// Compute last refresh timestamp
+				const lastRefreshTimestamp = queryStock.length > 0 ? new Date(
+					queryStock[0].last_refresh_timestamp
 				) : null;
 
-				resJSON.externalRequestRequired = !lastExternalReqTimestamp || (
-					now.getTime() - lastExternalReqTimestamp.getTime()
+				// Determin if a request is required
+				resJSON.refreshRequired = !lastRefreshTimestamp || (
+					now.getTime() - lastRefreshTimestamp.getTime()
 				) >= EXTERNAL_CALL_DELAY_MS;
 
 
-				if (resJSON.externalRequestRequired)
+				if (resJSON.refreshRequired)
 				{
-					try
+					const stockQueryResult = await queryForStock(symbol);
+
+					if (!stockQueryResult)
 					{
-						const { uRL, key, } = config.api.financialModelingPrep;
-
-						const externalRes = await axios.get(
-							`${uRL}/api/v3/profile/${query}?apikey=${key}`
-						);
-
-						if (externalRes.data.length == 0)
-						{
-							res.status(hTTPStatus.NOT_FOUND).json({
-								message: "Could not find stock in database OR external API",
-							});
-							return;
-						}
-
-
-						await mySQLPool.promise().query(
-							"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
-							[
-								externalRes.data[0].symbol,
-								externalRes.data[0].companyName,
-								externalRes.data[0].exchangeShortName.toLowerCase(),
-								externalRes.data[0].isin,
-							]
-						);
-
-						[
-							resJSON.stocks,
-						] = await mySQLPool.promise().query<IStock[]>(
-							"SELECT * FROM stock WHERE symbol = ?;",
-							[
-								externalRes.data[0].symbol,
-							]
-						);
-
-						resJSON.externalAPIResults = externalRes.data;
-					}
-					catch (error)
-					{
-						console.error("Error fetching external API:", error);
-						res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
-							message: `Failed to fetch data from external API: ${error}`,
-						});
+						res.status(hTTPStatus.BAD_REQUEST).json(resJSON);
 
 						return;
 					}
+
+					if (resJSON.stocks[0].isin != stockQueryResult.isin)
+					{
+						/**
+						* @dev If this happens then it means that the the symbol now belongs to a different underlying
+						* company.
+						*/
+
+						/**
+						* @dev
+						* 1) To prevent the UNIQUE contraint error for the next step, update the stock in the DB with
+						* the id = resJSON.stocks[0].id and do the following:
+						*     a) Set the symbol to #
+						*     b) Set the name to #
+						*/
+						await mySQLPool.promise().query(
+							"UPDATE stock SET symbol = ? WHERE id = ?;",
+							["0", resJSON.stocks[0].id]
+						);
+
+						/**
+						* @dev
+						* 2) Query DB for existing stock that has its isin = stockQueryResult.isin, and do the
+						* following:
+						*     a) Set the symbol to stockQueryResult.symbol
+						*     b) Set the name to stockQueryResult.name
+						*     c) Set the exchange to stockQueryResult.exchange
+						*/
+						const [stockWithExternalISIN] = await mySQLPool.promise().query<IStock[]>(
+							"SELECT * FROM stock WHERE isin = ?;",
+							[
+								stockQueryResult.isin,
+							]
+						);
+
+						// If already exists..
+						if (stockWithExternalISIN.length == 0)
+						{
+							// Insert the stock with new isin
+							await mySQLPool.promise().query(
+								"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
+								[
+									stockQueryResult.symbol,
+									stockQueryResult.name,
+									stockQueryResult.exchange.toLowerCase(),
+									stockQueryResult.isin,
+								]
+							);
+						}
+						else
+						{
+							// Update the existing stock with isin
+							await mySQLPool.promise().query(
+								"UPDATE stock symbol = ?, SET name = ? WHERE id = ?;",
+								[
+									stockQueryResult.symbol,
+									stockQueryResult.name,
+									stockWithExternalISIN[0].id,
+								]
+							);
+						}
+
+						/**
+						 * @dev
+						 * 4) We have to update the symbol, name, and exchange for the stock that we set symbol to "0"
+						 *     a) Query external source for stock with isin of resJSON.stocks[0].isin
+						 *     b) Store the data
+						*/
+
+						// Insert new stock into DB
+						const stockQueryByIsinResult = await queryForStockByISIN(resJSON.stocks[0].isin);
+
+						if (stockQueryByIsinResult)
+						{
+							/**
+							* @dev
+							* 5) Query DB for stock that has its isin = resJSON.stocks[0].isin, and do the following:
+							*     a) Set the symbol to stockQueryResult.symbol
+							*     b) Set the name to stockQueryResult.name
+							*     c) Set the exchange to stockQueryResult.exchange
+							*/
+
+							// Update the existing stock with isin
+							await mySQLPool.promise().query(
+								"UPDATE stock symbol = ?, SET name = ? WHERE id = ?;",
+								[
+									stockQueryByIsinResult.symbol,
+									stockQueryByIsinResult.name,
+									resJSON.stocks[0].id,
+								]
+							);
+						}
+						else
+						{
+							console.error(`Nothing was found for ${resJSON.stocks[0].id}. Symbol will remain "0".`);
+						}
+					}
+
+					// Fetch updated stock info
+					[resJSON.stocks] = await mySQLPool.promise().query<IStock[]>(
+						"SELECT * FROM stock WHERE symbol = ?;",
+						[
+							symbol,
+						]
+					);
 				}
 
 				res.status(hTTPStatus.ACCEPTED).json(resJSON);
