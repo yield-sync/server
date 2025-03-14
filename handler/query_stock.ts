@@ -1,7 +1,7 @@
 import mysql from "mysql2";
 
 
-export const updateQueryStock = async (
+export const updateQueryStockTimestamp = async (
 	mySQLPool: mysql.Pool,
 	query: string,
 	last_refresh_timestamp: Date

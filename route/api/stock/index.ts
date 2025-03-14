@@ -4,7 +4,7 @@ import mysql from "mysql2";
 import { loadRequired } from "../../../middleware/load";
 import { user, userAdmin } from "../../../middleware/token";
 import { hTTPStatus } from "../../../constants";
-import { getQueryStockByQuery, updateQueryStock } from "../../../handler/query_stock";
+import { getQueryStockByQuery, updateQueryStockTimestamp } from "../../../handler/query_stock";
 import {
 	createStock,
 	deleteStock,
@@ -98,7 +98,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					}
 
 					// Update the timestamp of the query
-					await updateQueryStock(mySQLPool, symbol, response.timestamp);
+					await updateQueryStockTimestamp(mySQLPool, symbol, response.timestamp);
 
 					/**
 					* @dev It could be possible that the symbol is new but the company is already in the DB under an old
