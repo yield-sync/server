@@ -53,34 +53,31 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		user(mySQLPool),
 		async (req: express.Request, res: express.Response) =>
 		{
+			let response: {
+				timestamp: Date,
+				symbol: string,
+				refreshRequired: boolean,
+				stocks: IStock[]
+			} = {
+				timestamp: new Date(),
+				symbol: null,
+				refreshRequired: false,
+				stocks: [
+				],
+			};
+
 			try
 			{
-				const timestamp = new Date();
-
-				if (!req.params.query)
-				{
-					res.status(hTTPStatus.BAD_REQUEST).json("No query passed");
-					return;
-				}
-
 				const symbol: string = sanitizeSymbolQuery(req.params.query);
 
 				if (symbol == "QUERY")
 				{
 					res.status(hTTPStatus.BAD_REQUEST).json("Invalid query passed");
+
 					return;
 				}
 
-				let response: {
-					symbol: string,
-					refreshRequired: boolean,
-					stocks: IStock[]
-				} = {
-					symbol,
-					refreshRequired: false,
-					stocks: [
-					],
-				};
+				response.symbol = symbol;
 
 				response.stocks = await getStockBySymbol(mySQLPool, symbol);
 
@@ -99,7 +96,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					}
 
 					// Update the timestamp of the query
-					await updateQueryStock(mySQLPool, symbol, timestamp);
+					await updateQueryStock(mySQLPool, symbol, response.timestamp);
 
 					/**
 					* @dev It could be possible that the symbol is new but the company is already in the DB under an old
@@ -159,7 +156,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				// Determin if a request is required
 				response.refreshRequired = !lastRefreshTimestamp || (
-					timestamp.getTime() - lastRefreshTimestamp.getTime()
+					response.timestamp.getTime() - lastRefreshTimestamp.getTime()
 				) >= EXTERNAL_CALL_DELAY_MS;
 
 
