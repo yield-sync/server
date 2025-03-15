@@ -4,18 +4,8 @@ import mysql from "mysql2";
 import { loadRequired } from "../../../middleware/load";
 import { user, userAdmin } from "../../../middleware/token";
 import { hTTPStatus } from "../../../constants";
-import { getQueryStockByQuery, updateQueryStockTimestamp } from "../../../db-handler/query_stock";
-import {
-	createStock,
-	deleteStock,
-	getStock,
-	getStockById,
-	getStockByIsin,
-	getStockBySymbol,
-	makeStockSymbolUnknown,
-	updateStock,
-	updateStockSymbolAndName
-} from "../../../db-handler/stock"
+import DBHandlerQueryStock from "../../../db-handler/query_stock";
+import DBHandlerStock from "../../../db-handler/stock"
 import { sanitizeSymbolQuery } from "../../../util/sanitizer";
 import externalSource from "../../../external-api/FinancialModelingPrep";
 
@@ -37,7 +27,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		{
 			try
 			{
-				res.status(hTTPStatus.OK).json(await getStock(mySQLPool));
+				res.status(hTTPStatus.OK).json(await DBHandlerStock.getStock(mySQLPool));
 			}
 			catch (error)
 			{
@@ -74,7 +64,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				response.stocks = await getStockBySymbol(mySQLPool, symbol);
+				response.stocks = await DBHandlerStock.getStockBySymbol(mySQLPool, symbol);
 
 				if (response.stocks.length == 0)
 				{
@@ -89,7 +79,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 						return;
 					}
 
-					await updateQueryStockTimestamp(mySQLPool, symbol, timestamp);
+					await DBHandlerQueryStock.updateQueryStockTimestamp(mySQLPool, symbol, timestamp);
 
 					/**
 					* @dev It could be possible that the symbol is new but the company is already in the DB under an old
@@ -97,15 +87,18 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					* with that isin to have the new symbol and company name received from external source.
 					*/
 
-					const stocksWithExternalIsinId = await getStockByIsin(mySQLPool, stockQueryResult.isin);
+					const stocksWithExternalIsinId = await DBHandlerStock.getStockByIsin(
+						mySQLPool,
+						stockQueryResult.isin
+					);
 
 					if (stocksWithExternalIsinId.length == 0)
 					{
-						await createStock(mySQLPool, stockQueryResult);
+						await DBHandlerStock.createStock(mySQLPool, stockQueryResult);
 					}
 					else
 					{
-						await updateStock(
+						await DBHandlerStock.updateStock(
 							mySQLPool,
 							stockQueryResult.name,
 							stockQueryResult.symbol,
@@ -115,7 +108,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					}
 
 
-					response.stocks = await getStockBySymbol(mySQLPool, symbol);
+					response.stocks = await DBHandlerStock.getStockBySymbol(mySQLPool, symbol);
 
 					res.status(hTTPStatus.ACCEPTED).json(response);
 
@@ -127,7 +120,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				* refreshing
 				*/
 
-				const queryStock = await getQueryStockByQuery(mySQLPool, symbol);
+				const queryStock = await DBHandlerQueryStock.getQueryStockByQuery(mySQLPool, symbol);
 
 				const lastRefreshTimestamp = queryStock.length > 0 ? new Date(
 					queryStock[0].last_refresh_timestamp
@@ -140,7 +133,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				if (!response.refreshRequired)
 				{
-					response.stocks = await getStockBySymbol(mySQLPool, symbol);
+					response.stocks = await DBHandlerStock.getStockBySymbol(mySQLPool, symbol);
 
 					res.status(hTTPStatus.ACCEPTED).json(response);
 
@@ -162,17 +155,17 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					* @notice If this happens then it means that the the symbol now belongs to a different company.
 					*/
 
-					await makeStockSymbolUnknown(mySQLPool, response.stocks[0].id);
+					await DBHandlerStock.makeStockSymbolUnknown(mySQLPool, response.stocks[0].id);
 
-					const stockWithExternalISIN = await getStockByIsin(mySQLPool, stockQueryResult.isin)
+					const stockWithExternalISIN = await DBHandlerStock.getStockByIsin(mySQLPool, stockQueryResult.isin)
 
 					if (stockWithExternalISIN.length == 0)
 					{
-						await createStock(mySQLPool, stockQueryResult);
+						await DBHandlerStock.createStock(mySQLPool, stockQueryResult);
 					}
 					else
 					{
-						await updateStockSymbolAndName(
+						await DBHandlerStock.updateStockSymbolAndName(
 							mySQLPool,
 							stockQueryResult.symbol,
 							stockQueryResult.name,
@@ -184,7 +177,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 					if (stockQueryByIsinResult)
 					{
-						await updateStockSymbolAndName(
+						await DBHandlerStock.updateStockSymbolAndName(
 							mySQLPool,
 							stockQueryByIsinResult.symbol,
 							stockQueryByIsinResult.name,
@@ -197,7 +190,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					}
 				}
 
-				response.stocks = await getStockBySymbol(mySQLPool, symbol);
+				response.stocks = await DBHandlerStock.getStockBySymbol(mySQLPool, symbol);
 
 				res.status(hTTPStatus.ACCEPTED).json(response);
 
@@ -231,7 +224,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				}
 
 				// Ensure stock exists
-				const existingStock = await getStockById(mySQLPool, stock_id);
+				const existingStock = await DBHandlerStock.getStockById(mySQLPool, stock_id);
 
 				if ((existingStock as any[]).length === 0)
 				{
@@ -239,7 +232,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				await deleteStock(mySQLPool, stock_id);
+				await DBHandlerStock.deleteStock(mySQLPool, stock_id);
 
 				res.status(hTTPStatus.OK).send("Deleted stock");
 			}
