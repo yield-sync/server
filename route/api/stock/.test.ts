@@ -343,12 +343,12 @@ describe("Request: GET", () => {
 			* agreement to do this and now trade under what was the once the others name and symbol.
 			*/
 
-			const afterAgreementOfWhatWasFormallyBananaIncSymbol = appleIncSymbol;
-			const afterAgreementOfWhatWasFormallyBananaIncName = appleIncName;
+			const afterAgreementBananaIncSymbol = appleIncSymbol;
+			const afterAgreementBananaIncName = appleIncName;
 
-			const afterAgreementOfWhatWasFormallyAppleIncSymbol = bananaIncSymbol;
-			const afterAgreementOfWhatWasFormallyAppleIncName = bananaIncName;
-			const afterAgreementOfWhatWasFormallyAppleIncIsin = bananaIncIsin;
+			const afterAgreementAppleIncSymbol = bananaIncSymbol;
+			const afterAgreementAppleIncName = bananaIncName;
+			const afterAgreementAppleIncIsin = bananaIncIsin;
 
 
 			// Mock the external API response
@@ -373,30 +373,30 @@ describe("Request: GET", () => {
 
 			expect(externalAPI.queryForStockByIsin).toHaveBeenCalledTimes(1);
 
-			const [afterAgreementOfWhatWasFormallyAppleStock] = await mySQLPool.promise().query<IStock>(
+			const [afterAgreementAppleStock] = await mySQLPool.promise().query<IStock>(
 				"SELECT * FROM stock WHERE symbol = ?;",
-				[afterAgreementOfWhatWasFormallyBananaIncSymbol]
+				[bananaIncSymbol]
 			);
 
-			expect(afterAgreementOfWhatWasFormallyAppleStock[0].isin).toBe(
-				afterAgreementOfWhatWasFormallyAppleIncIsin
+			expect(afterAgreementAppleStock[0].isin).toBe(
+				afterAgreementAppleIncIsin
 			);
 
-			expect(afterAgreementOfWhatWasFormallyAppleStock[0].name).toBe(
-				afterAgreementOfWhatWasFormallyBananaIncName
+			expect(afterAgreementAppleStock[0].name).toBe(
+				afterAgreementBananaIncName
 			);
 
-			const [afterAgreementOfWhatWasFormallyBananaStock] = await mySQLPool.promise().query<IStock>(
+			const [afterAgreementBananaStock] = await mySQLPool.promise().query<IStock>(
 				"SELECT * FROM stock WHERE isin = ?;",
 				[appleIncIsin]
 			);
 
-			expect(afterAgreementOfWhatWasFormallyBananaStock[0].symbol).toBe(
-				afterAgreementOfWhatWasFormallyAppleIncSymbol
+			expect(afterAgreementBananaStock[0].symbol).toBe(
+				afterAgreementAppleIncSymbol
 			);
 
-			expect(afterAgreementOfWhatWasFormallyBananaStock[0].name).toBe(
-				afterAgreementOfWhatWasFormallyAppleIncName
+			expect(afterAgreementBananaStock[0].name).toBe(
+				afterAgreementAppleIncName
 			);
 		});
 
