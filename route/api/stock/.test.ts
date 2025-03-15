@@ -131,7 +131,6 @@ describe("Request: GET", () => {
 				refreshRequired: false,
 				stocks: [{
 					id: 1,
-					symbol: ticker,
 					name: companyName,
 					exchange: exchange,
 					isin: isin
@@ -161,7 +160,6 @@ describe("Request: GET", () => {
 				query: ticker,
 				stocks: [{
 					id: 1,
-					symbol: ticker,
 					name: companyName,
 					exchange: exchange,
 					isin: isin

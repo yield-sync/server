@@ -41,7 +41,6 @@ declare global
 	};
 
 	type StockSearchQuery = {
-		query: string,
 		refreshRequired: boolean,
 		stocks: IStock[]
 	}

@@ -58,7 +58,6 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			const timestamp = new Date();
 
 			let response: StockSearchQuery = {
-				query: null,
 				refreshRequired: false,
 				stocks: [
 				],
@@ -75,8 +74,6 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				response.query = symbol;
-
 				response.stocks = await getStockBySymbol(mySQLPool, symbol);
 
 				if (response.stocks.length == 0)
@@ -87,7 +84,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 					if (!stockQueryResult)
 					{
-						res.status(hTTPStatus.BAD_REQUEST).send("Nothing found from external source");
+						res.status(hTTPStatus.BAD_REQUEST).send("Nothing found for query");
 
 						return;
 					}
@@ -96,13 +93,17 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 					/**
 					* @dev It could be possible that the symbol is new but the company is already in the DB under an old
-					* symbol and name. To solve this check that the isin is not already in use. If so then update the
-					* stock with that isin to have the new symbol and company name
+					* symbol and name. To solve this check if the isin is already in use. If so then update the stock
+					* with that isin to have the new symbol and company name received from external source.
 					*/
 
 					const stocksWithExternalIsinId = await getStockByIsin(mySQLPool, stockQueryResult.isin);
 
-					if (stocksWithExternalIsinId.length > 0)
+					if (stocksWithExternalIsinId.length == 0)
+					{
+						await createStock(mySQLPool, stockQueryResult);
+					}
+					else
 					{
 						await updateStock(
 							mySQLPool,
@@ -111,10 +112,6 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 							stockQueryResult.exchange.toLowerCase(),
 							stocksWithExternalIsinId[0].id,
 						);
-					}
-					else
-					{
-						await createStock(mySQLPool, stockQueryResult);
 					}
 
 
