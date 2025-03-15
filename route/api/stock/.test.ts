@@ -343,7 +343,6 @@ describe("Request: GET", () => {
 			* agreement to do this and now trade under what was the once the others name and symbol.
 			*/
 
-			const afterAgreementBananaIncSymbol = appleIncSymbol;
 			const afterAgreementBananaIncName = appleIncName;
 
 			const afterAgreementAppleIncSymbol = bananaIncSymbol;
@@ -375,7 +374,7 @@ describe("Request: GET", () => {
 
 			const [afterAgreementAppleStock] = await mySQLPool.promise().query<IStock>(
 				"SELECT * FROM stock WHERE symbol = ?;",
-				[bananaIncSymbol]
+				[appleIncSymbol]
 			);
 
 			expect(afterAgreementAppleStock[0].isin).toBe(
