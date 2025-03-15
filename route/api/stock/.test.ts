@@ -95,10 +95,45 @@ describe("Request: GET", () => {
 		});
 
 
-		it("should return 400 for an invalid query", async () => {
+		it("Should return 400 for an invalid query..", async () => {
 			const res = await request(app).get("/api/stock/search/QUERY").set("authorization", `Bearer ${token}`);
 
 			expect(res.statusCode).toBe(400);
+		});
+
+		it("Should update stock if ISIN remains the same but symbol changes..", async () => {
+			// Mock the external API response
+			(axios.get as jest.Mock).mockResolvedValueOnce({
+				data: [{
+					symbol: ticker,
+					companyName: companyName,
+					exchangeShortName: exchange,
+					isin: isin
+				}]
+			});
+
+			await mySQLPool.promise().query(
+				"UPDATE stock SET symbol = ?, name = ? WHERE isin = ?;",
+				[
+					'OLD',
+					'Old Name',
+					isin
+				]
+			);
+
+			const res = await request(app).get("/api/stock/search/AAPL").set("authorization", `Bearer ${token}`);
+
+			expect(res.statusCode).toBe(202);
+
+			const updatedStock = await mySQLPool.promise().query<IStock>("SELECT * FROM stock WHERE isin = ?;", [isin]);
+
+			expect(updatedStock[0].symbol).toBe(ticker);
+
+			expect(updatedStock[0].name).toBe(companyName);
+
+			expect(updatedStock[0].isin).toBe(isin);
+
+			expect(updatedStock[0].exchange).toBe(exchange);
 		});
 
 		it("Should return stock from DB if it exists and NOT make external request..", async () => {
