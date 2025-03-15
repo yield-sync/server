@@ -175,14 +175,16 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 						);
 					}
 
-					const stockQueryByIsinResult = await externalSource.queryForStockByIsin(response.stocks[0].isin);
+					const externalStockQueryByIsinResult = await externalSource.queryForStockByIsin(
+						response.stocks[0].isin
+					);
 
-					if (stockQueryByIsinResult)
+					if (externalStockQueryByIsinResult)
 					{
 						await DBHandlerStock.updateStockSymbolAndName(
 							mySQLPool,
-							stockQueryByIsinResult.symbol,
-							stockQueryByIsinResult.name,
+							externalStockQueryByIsinResult.symbol,
+							externalStockQueryByIsinResult.name,
 							response.stocks[0].id
 						);
 					}

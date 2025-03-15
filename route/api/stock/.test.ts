@@ -210,6 +210,12 @@ describe("Request: GET", () => {
 				expect.stringContaining(`${uRL}/api/v3/profile/${ticker}?apikey=${key}`)
 			);
 		});
+
+		it("Should refresh the stock if required..", async () => {});
+
+		it("Should create a new stock under the symbol that belonged to a previous stock..", async () => {});
+
+		it("Should update the symbol and name of an existing stock with an isin of the externally received isin..", async () => {});
 	});
 });
 
