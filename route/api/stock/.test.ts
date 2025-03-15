@@ -16,7 +16,7 @@ const EMAIL = "testemail@example.com";
 const PASSWORD = "testpassword!";
 
 const appleIncSymbol = "AAPL";
-const AppleIncName = "Apple Inc.";
+const appleIncName = "Apple Inc.";
 const exchange = "nasdaq";
 const appleIncIsin = "US0378331005";
 
@@ -115,7 +115,7 @@ describe("Request: GET", () => {
 			// Mock the external API response
 			(externalAPI.queryForStock as jest.Mock).mockResolvedValueOnce({
 				symbol: appleIncSymbol,
-				name: AppleIncName,
+				name: appleIncName,
 				exchange: exchange,
 				isin: appleIncIsin
 			});
@@ -133,7 +133,7 @@ describe("Request: GET", () => {
 
 			expect(updatedStock[0].symbol).toBe(appleIncSymbol);
 
-			expect(updatedStock[0].name).toBe(AppleIncName);
+			expect(updatedStock[0].name).toBe(appleIncName);
 
 			expect(updatedStock[0].isin).toBe(appleIncIsin);
 		});
@@ -159,7 +159,7 @@ describe("Request: GET", () => {
 				"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
 				[
 					appleIncSymbol,
-					AppleIncName,
+					appleIncName,
 					exchange,
 					appleIncIsin,
 				]
@@ -174,7 +174,7 @@ describe("Request: GET", () => {
 				stocks: [{
 					id: 1,
 					symbol: appleIncSymbol,
-					name: AppleIncName,
+					name: appleIncName,
 					exchange: exchange,
 					isin: appleIncIsin,
 				}],
@@ -187,7 +187,7 @@ describe("Request: GET", () => {
 			// Mock the external API response
 			(externalAPI.queryForStock as jest.Mock).mockResolvedValueOnce({
 				symbol: appleIncSymbol,
-				name: AppleIncName,
+				name: appleIncName,
 				exchange: exchange,
 				isin: appleIncIsin
 			});
@@ -203,7 +203,7 @@ describe("Request: GET", () => {
 				stocks: [{
 					id: 1,
 					symbol: appleIncSymbol,
-					name: AppleIncName,
+					name: appleIncName,
 					exchange: exchange,
 					isin: appleIncIsin
 				}],
@@ -214,7 +214,7 @@ describe("Request: GET", () => {
 			// Mock the external API response
 			(externalAPI.queryForStock as jest.Mock).mockResolvedValue({
 				symbol: appleIncSymbol,
-				name: AppleIncName,
+				name: appleIncName,
 				exchange: exchange,
 				isin: appleIncIsin
 			});
@@ -251,7 +251,7 @@ describe("Request: GET", () => {
 			// Mock the external API response
 			(externalAPI.queryForStock as jest.Mock).mockResolvedValue({
 				symbol: appleIncSymbol,
-				name: AppleIncName,
+				name: appleIncName,
 				exchange: exchange,
 				isin: appleIncIsin
 			});
@@ -267,7 +267,7 @@ describe("Request: GET", () => {
 
 			expect(stock[0].symbol).toBe(appleIncSymbol);
 
-			expect(stock[0].name).toBe(AppleIncName);
+			expect(stock[0].name).toBe(appleIncName);
 
 			expect(stock[0].exchange).toBe(exchange);
 
@@ -343,17 +343,19 @@ describe("Request: GET", () => {
 			* agreement to do this and now trade under what was the once the others name and symbol.
 			*/
 
-			const formallyBananaIncSymbol = appleIncSymbol;
-			const formallyBananaIncIsin = appleIncIsin;
-			const formallyAppleIncSymbol = bananaIncSymbol;
-			const formallyAppleIncIsin = bananaIncIsin;
+			const afterAgreementOfWhatWasFormallyBananaIncSymbol = appleIncSymbol;
+			const afterAgreementOfWhatWasFormallyBananaIncName = appleIncName;
+
+			const afterAgreementOfWhatWasFormallyAppleIncSymbol = bananaIncSymbol;
+			const afterAgreementOfWhatWasFormallyAppleIncName = bananaIncName;
+			const afterAgreementOfWhatWasFormallyAppleIncIsin = bananaIncIsin;
 
 
 			// Mock the external API response
 			(externalAPI.queryForStock as jest.Mock).mockResolvedValue({
 				isin: bananaIncIsin,
 				symbol: appleIncSymbol,
-				name: AppleIncName,
+				name: appleIncName,
 				exchange: exchange,
 			});
 
@@ -371,30 +373,38 @@ describe("Request: GET", () => {
 
 			expect(externalAPI.queryForStockByIsin).toHaveBeenCalledTimes(1);
 
-			const [formallyAppleStock] = await mySQLPool.promise().query<IStock>(
+			const [afterAgreementOfWhatWasFormallyAppleStock] = await mySQLPool.promise().query<IStock>(
 				"SELECT * FROM stock WHERE symbol = ?;",
-				[formallyBananaIncSymbol]
+				[afterAgreementOfWhatWasFormallyBananaIncSymbol]
 			);
 
-			expect(formallyAppleStock[0].isin).toBe(bananaIncIsin);
+			expect(afterAgreementOfWhatWasFormallyAppleStock[0].isin).toBe(
+				afterAgreementOfWhatWasFormallyAppleIncIsin
+			);
 
-			expect(formallyAppleStock[0].name).toBe(AppleIncName);
+			expect(afterAgreementOfWhatWasFormallyAppleStock[0].name).toBe(
+				afterAgreementOfWhatWasFormallyBananaIncName
+			);
 
-			const [formallyBananaStock] = await mySQLPool.promise().query<IStock>(
+			const [afterAgreementOfWhatWasFormallyBananaStock] = await mySQLPool.promise().query<IStock>(
 				"SELECT * FROM stock WHERE isin = ?;",
-				[formallyBananaIncIsin]
+				[appleIncIsin]
 			);
 
-			expect(formallyBananaStock[0].symbol).toBe(bananaIncSymbol);
+			expect(afterAgreementOfWhatWasFormallyBananaStock[0].symbol).toBe(
+				afterAgreementOfWhatWasFormallyAppleIncSymbol
+			);
 
-			expect(formallyBananaStock[0].name).toBe(bananaIncName);
+			expect(afterAgreementOfWhatWasFormallyBananaStock[0].name).toBe(
+				afterAgreementOfWhatWasFormallyAppleIncName
+			);
 		});
 
 		it("Should update the symbol and name of an existing stock with an isin of the externally received isin..", async () => {
 			// Mock the external API response
 			(externalAPI.queryForStock as jest.Mock).mockResolvedValue({
 				symbol: appleIncSymbol,
-				name: AppleIncName,
+				name: appleIncName,
 				exchange: exchange,
 				isin: appleIncIsin
 			});
@@ -410,7 +420,7 @@ describe("Request: GET", () => {
 
 			expect(stock[0].symbol).toBe(appleIncSymbol);
 
-			expect(stock[0].name).toBe(AppleIncName);
+			expect(stock[0].name).toBe(appleIncName);
 
 			expect(stock[0].exchange).toBe(exchange);
 
@@ -462,7 +472,7 @@ describe("Request: GET", () => {
 			// Mock the external API response
 			(externalAPI.queryForStock as jest.Mock).mockResolvedValue({
 				symbol: appleIncSymbol,
-				name: AppleIncName,
+				name: appleIncName,
 				exchange: exchange,
 				isin: bananaIncIsin,
 			});
@@ -495,7 +505,7 @@ describe("Request: GET", () => {
 
 			expect(stockOtherUpdated[0].symbol).toBe(appleIncSymbol);
 
-			expect(stockOtherUpdated[0].name).toBe(AppleIncName);
+			expect(stockOtherUpdated[0].name).toBe(appleIncName);
 		});
 	});
 });
