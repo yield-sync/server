@@ -29,8 +29,7 @@ jest.mock("../../../external-api/FinancialModelingPrep", () => ({
 }));
 
 
-beforeAll(async () =>
-{
+beforeAll(async () => {
 	mySQLPool = mysql.createPool({
 		host: config.app.database.host,
 		user: config.app.database.user,
@@ -52,8 +51,7 @@ beforeAll(async () =>
 	);
 });
 
-beforeEach(async () =>
-{
+beforeEach(async () => {
 	await dBDrop(DB_NAME, mySQLPool);
 
 	await DBBuilder(mySQLPool, DB_NAME, true);
@@ -234,7 +232,7 @@ describe("Request: GET", () => {
 					ON DUPLICATE KEY UPDATE
 						last_refresh_timestamp = ?
 					;
-					`,
+				`,
 				[ticker, oneYearAgo, oneYearAgo]
 			);
 
@@ -290,7 +288,7 @@ describe("Request: GET", () => {
 					ON DUPLICATE KEY UPDATE
 						last_refresh_timestamp = ?
 					;
-					`,
+				`,
 				[ticker, oneYearAgo, oneYearAgo]
 			);
 
@@ -335,23 +333,18 @@ describe("Request: GET", () => {
 			expect(updatedStock[0].name).toBe(originalStockNewName);
 		});
 
-		it("Should update the symbol and name of an existing stock with an isin of the externally received isin..", async () => {});
+		it("Should update the symbol and name of an existing stock with an isin of the externally received isin..", async () => { });
 	});
 });
 
-describe("Request: POST", () =>
-{
-	describe("Route: /api/stock/delete", () =>
-	{
-		describe("Expected Failure", () =>
-		{
-			it("[auth] Should require a user token..", async () =>
-			{
+describe("Request: POST", () => {
+	describe("Route: /api/stock/delete", () => {
+		describe("Expected Failure", () => {
+			it("[auth] Should require a user token..", async () => {
 				await request(app).post("/api/stock/delete").send().expect(401);
 			});
 
-			it("Should fail if stock_id is missing..", async () =>
-			{
+			it("Should fail if stock_id is missing..", async () => {
 				const res = await request(app).post("/api/stock/delete").set("authorization", `Bearer ${token}`).send({
 					load: {}
 				});
@@ -361,10 +354,8 @@ describe("Request: POST", () =>
 			});
 		});
 
-		describe("Expected Success", () =>
-		{
-			it("Should delete stock..", async () =>
-			{
+		describe("Expected Success", () => {
+			it("Should delete stock..", async () => {
 				await mySQLPool.promise().query(
 					"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
 					[
@@ -394,8 +385,7 @@ describe("Request: POST", () =>
 	});
 });
 
-afterAll(async () =>
-{
+afterAll(async () => {
 	await dBDrop(DB_NAME, mySQLPool);
 	await mySQLPool.end();
 });
