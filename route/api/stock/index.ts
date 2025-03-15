@@ -4,7 +4,7 @@ import mysql from "mysql2";
 import { loadRequired } from "../../../middleware/load";
 import { user, userAdmin } from "../../../middleware/token";
 import { hTTPStatus } from "../../../constants";
-import { getQueryStockByQuery, updateQueryStockTimestamp } from "../../../handler/query_stock";
+import { getQueryStockByQuery, updateQueryStockTimestamp } from "../../../db-handler/query_stock";
 import {
 	createStock,
 	deleteStock,
@@ -15,7 +15,7 @@ import {
 	makeStockSymbolUnknown,
 	updateStock,
 	updateStockSymbolAndName
-} from "../../../handler/stock"
+} from "../../../db-handler/stock"
 import { sanitizeSymbolQuery } from "../../../util/sanitizer";
 import externalSource from "../../../external-api/FinancialModelingPrep";
 
@@ -121,6 +121,11 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 					return;
 				}
+
+				/**
+				* @dev If this part of the route is reached then the stock is already in the database and may need
+				* refreshing
+				*/
 
 				const queryStock = await getQueryStockByQuery(mySQLPool, symbol);
 
