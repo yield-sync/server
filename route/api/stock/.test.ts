@@ -15,6 +15,15 @@ const DB_NAME = "mock_db_stock";
 const EMAIL = "testemail@example.com";
 const PASSWORD = "testpassword!";
 
+const appleIncSymbol = "AAPL";
+const AppleIncName = "Apple Inc.";
+const exchange = "nasdaq";
+const appleIncIsin = "US0378331005";
+
+const bananaIncIsin = "abcdef123456";
+const bananaIncSymbol = "BANANA";
+const bananaIncName = "Banana Inc.";
+
 let token: string;
 
 let app: express.Express;
@@ -81,12 +90,6 @@ beforeEach(async () => {
 
 describe("Request: GET", () => {
 	describe("/api/stock/search/:query", () => {
-		const ticker = "AAPL";
-		const companyName = "Apple Inc.";
-		const exchange = "nasdaq";
-		const isin = "US0378331005";
-
-
 		afterEach(() => {
 			jest.clearAllMocks();
 		});
@@ -105,16 +108,16 @@ describe("Request: GET", () => {
 				[
 					"FON",
 					"Fake Original Name",
-					isin
+					appleIncIsin
 				]
 			);
 
 			// Mock the external API response
 			(externalAPI.queryForStock as jest.Mock).mockResolvedValueOnce({
-				symbol: ticker,
-				name: companyName,
+				symbol: appleIncSymbol,
+				name: AppleIncName,
 				exchange: exchange,
-				isin: isin
+				isin: appleIncIsin
 			});
 
 			const res = await request(app).get("/api/stock/search/AAPL").set("authorization", `Bearer ${token}`);
@@ -125,14 +128,14 @@ describe("Request: GET", () => {
 
 			const [updatedStock] = await mySQLPool.promise().query<IStock>(
 				"SELECT * FROM stock WHERE isin = ?;",
-				[isin]
+				[appleIncIsin]
 			);
 
-			expect(updatedStock[0].symbol).toBe(ticker);
+			expect(updatedStock[0].symbol).toBe(appleIncSymbol);
 
-			expect(updatedStock[0].name).toBe(companyName);
+			expect(updatedStock[0].name).toBe(AppleIncName);
 
-			expect(updatedStock[0].isin).toBe(isin);
+			expect(updatedStock[0].isin).toBe(appleIncIsin);
 		});
 
 		it("Should return stock from DB if it exists and NOT make external request..", async () => {
@@ -149,20 +152,20 @@ describe("Request: GET", () => {
 						last_refresh_timestamp = ?
 					;
 				`,
-				[ticker, fiveDaysAfter, fiveDaysAfter]
+				[appleIncSymbol, fiveDaysAfter, fiveDaysAfter]
 			);
 
 			await mySQLPool.promise().query(
 				"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
 				[
-					ticker,
-					companyName,
+					appleIncSymbol,
+					AppleIncName,
 					exchange,
-					isin,
+					appleIncIsin,
 				]
 			);
 
-			const res = await request(app).get(`/api/stock/search/${ticker}`).set("authorization", `Bearer ${token}`);
+			const res = await request(app).get(`/api/stock/search/${appleIncSymbol}`).set("authorization", `Bearer ${token}`);
 
 			expect(res.statusCode).toBe(202);
 
@@ -170,10 +173,10 @@ describe("Request: GET", () => {
 				refreshRequired: false,
 				stocks: [{
 					id: 1,
-					symbol: ticker,
-					name: companyName,
+					symbol: appleIncSymbol,
+					name: AppleIncName,
 					exchange: exchange,
-					isin: isin,
+					isin: appleIncIsin,
 				}],
 			});
 
@@ -183,13 +186,13 @@ describe("Request: GET", () => {
 		it("Should fetch from external API if stock does not exist in DB..", async () => {
 			// Mock the external API response
 			(externalAPI.queryForStock as jest.Mock).mockResolvedValueOnce({
-				symbol: ticker,
-				name: companyName,
+				symbol: appleIncSymbol,
+				name: AppleIncName,
 				exchange: exchange,
-				isin: isin
+				isin: appleIncIsin
 			});
 
-			const res = await request(app).get(`/api/stock/search/${ticker}`).set("authorization", `Bearer ${token}`);
+			const res = await request(app).get(`/api/stock/search/${appleIncSymbol}`).set("authorization", `Bearer ${token}`);
 
 			expect(res.statusCode).toBe(202);
 
@@ -199,10 +202,10 @@ describe("Request: GET", () => {
 				refreshRequired: true,
 				stocks: [{
 					id: 1,
-					symbol: ticker,
-					name: companyName,
+					symbol: appleIncSymbol,
+					name: AppleIncName,
 					exchange: exchange,
-					isin: isin
+					isin: appleIncIsin
 				}],
 			});
 		});
@@ -210,13 +213,13 @@ describe("Request: GET", () => {
 		it("Should refresh the stock if required..", async () => {
 			// Mock the external API response
 			(externalAPI.queryForStock as jest.Mock).mockResolvedValue({
-				symbol: ticker,
-				name: companyName,
+				symbol: appleIncSymbol,
+				name: AppleIncName,
 				exchange: exchange,
-				isin: isin
+				isin: appleIncIsin
 			});
 
-			await request(app).get(`/api/stock/search/${ticker}`).set("authorization", `Bearer ${token}`);
+			await request(app).get(`/api/stock/search/${appleIncSymbol}`).set("authorization", `Bearer ${token}`);
 
 			expect(externalAPI.queryForStock).toHaveBeenCalledTimes(1);
 
@@ -233,10 +236,10 @@ describe("Request: GET", () => {
 						last_refresh_timestamp = ?
 					;
 				`,
-				[ticker, oneYearAgo, oneYearAgo]
+				[appleIncSymbol, oneYearAgo, oneYearAgo]
 			);
 
-			const res = await request(app).get(`/api/stock/search/${ticker}`).set("authorization", `Bearer ${token}`);
+			const res = await request(app).get(`/api/stock/search/${appleIncSymbol}`).set("authorization", `Bearer ${token}`);
 
 			expect(res.body.refreshRequired).toBeTruthy();
 
@@ -245,40 +248,34 @@ describe("Request: GET", () => {
 		});
 
 		it("Should create a new stock under the symbol that belonged to a previous stock..", async () => {
-			const oneYearAgo = new Date((new Date()).getTime() - 365 * 24 * 60 * 60 * 1000);
-
-			const newCompanyISIN = "123";
-
-			const stockNewSymbol = "BANANA";
-
-			const stockNewName = "Banana Inc.";
-
 			// Mock the external API response
 			(externalAPI.queryForStock as jest.Mock).mockResolvedValue({
-				symbol: ticker,
-				name: companyName,
+				symbol: appleIncSymbol,
+				name: AppleIncName,
 				exchange: exchange,
-				isin: isin
+				isin: appleIncIsin
 			});
 
-			await request(app).get(`/api/stock/search/${ticker}`).set("authorization", `Bearer ${token}`);
+			await request(app).get(`/api/stock/search/${appleIncSymbol}`).set("authorization", `Bearer ${token}`);
 
 			expect(externalAPI.queryForStock).toHaveBeenCalledTimes(1);
 
 			const [stock] = await mySQLPool.promise().query<IStock>(
 				"SELECT * FROM stock WHERE isin = ?;",
-				[isin]
+				[appleIncIsin]
 			);
 
-			expect(stock[0].symbol).toBe(ticker);
+			expect(stock[0].symbol).toBe(appleIncSymbol);
 
-			expect(stock[0].name).toBe(companyName);
+			expect(stock[0].name).toBe(AppleIncName);
 
 			expect(stock[0].exchange).toBe(exchange);
 
-			expect(stock[0].isin).toBe(isin);
+			expect(stock[0].isin).toBe(appleIncIsin);
 
-			// Add a last_refresh_timestamp so far in the future that the external request cannot trigger
+			const oneYearAgo = new Date((new Date()).getTime() - 365 * 24 * 60 * 60 * 1000);
+
+			// Add a last_refresh_timestamp so far in the future that the external request has to trigger
 			await mySQLPool.promise().query(
 				`
 					INSERT INTO
@@ -289,112 +286,216 @@ describe("Request: GET", () => {
 						last_refresh_timestamp = ?
 					;
 				`,
-				[ticker, oneYearAgo, oneYearAgo]
+				[appleIncSymbol, oneYearAgo, oneYearAgo]
 			);
 
-			// ONE YEAR LATER
+			/**
+			* -------===++*********************++++++++===========++++++++++++=------:::-----:------=========++++-::::::
+			* -----=====+********=:::=********+++++++++++======+++++++++++++++=-----::::::::::------------=*%%%%%%#=--+#
+			* ---======++*******::::::=******++++++++++++======+++++++++++++===--------------::----------=#%%#####%%##%%
+			* -=======++*******+::::::-+*****++++++*****+++==+++++****+*****+++=+++++++***+++=--:::------+%%#######%%%##
+			* =======++********=:::::-+++=+++++************+++********************************+=-:-------+#%########%###
+			* =====++*=::::-+++=::::=+-:::::++*#@@@@@@@@@@#***#@@@@@***#@@@@@%***@@@@@@@@@@@@%*+=--------=*%%%%%%%######
+			* ====++*=:::::::::::::::::::::::*%@@@@@@@@@@@@%**#@@@@@@***#@@@@#**#@@@@@@@@@@@@#*+=-------=*%%%%%%%#######
+			* ==+++**+::::::::::::::::::::::-#@@@@@***@@@@@%**#@@@@@@@**#@@@@*++#@@%***********+=------=+###############
+			* =++******+++++++-::::::=+++==++@@@@@*+++@@@@@%*++*@@@@@@@*#@@@@*++*@@@@@@@@#***+=--=======+########%%%###%
+			* ++********++=::::::--:::::-++++@@@@@****%@@@@%***#@@@%@@@@%@@@@*++*@@@@%####*++---=========*####%%%%######
+			* *********++:::::::=++=::::::-+*@@@@@****%@@@@%***%@@@**@@@@@@@@****@@@@#****++=====+=========+*#%%%#######
+			* ********++-::::::=+++=:::::::=*@@@@@****@@@@@%*+*%@@@**#@@@@@@@****@@@@#******+++++++++========*%%%#######
+			* ********+++:::::++++++::::::+++@@@@@%**#@@@@@%***@@@@***@@@@@@@***#@@@@@@@@@@@@**++++++========+%%%######%
+			* +++++++++++++++++**++++=-=++++*#@@@@@@@@@@@@@#**#@@@@****@@@@@@***%@@@@@@@@@@@%**++++++++=======*%%%%%%%%%
+			* ++++++++==+++*****+++++++++++****%@@@@@@@@@@****%@@@@*****@@@@%***@@@@@@@@@@@@%**++++++++=======++#%%%%%##
+			* +++++=======+***++++++++++++++****************************************************++++++++==========+*#***
+			* +=====+==+*%%%%%#**+++++++****************************+********************************++============*#***
+			* ========*%%%%%%%%%###***#@@@@@**#%%%##***###%%%%%%%%%#***#@@@@@@@@@@@****%@@@@@@@@@@@#**++========--=*%#**
+			* +=====+*%%%####%%%###%#*@@@@@%**#@@@@@#*#@@@@@@@@@@@@@***@@@@@@@@@@@@****%@@@@@##%@@@@%**+++++====--+#%%%#
+			* +++++++#%%#####%%###%%#*@@@@@#++*%@@@@#*#@@@#************##@@@@%*#@@@#***%@@@@%+++#@@@@**++=====---=*%#***
+			* ++++***%%%%%###########*@@@@%++***@@@@%*%@@@@@@@@%**+++****%@@@#**@@@%***%@@@@%++++%@@@#**+=====---=*#****
+			* +++++*%%%%#############*@@@@#+++**#@@@%*%@@@@@@@@@%++++***#@@@@***#@@%***%@@@@%++++#@@@***+=====-----+##%*
+			* ++++++###########%%%%***@@@@*++***%@@@#*%@@@@%*****++++***%@@@%****@@@***#@@@@%++++%@@%***+======----=#%#*
+			* ++++++*####%%%####%%*=+*@@@@@@@@@@@@@%**%@@@@@***********#@@@@%%%@@@@@***#@@@@@@@@@@@@****++=====---:-+#%#
+			* ++++++++***%%%####%%+=++**%@@@@@@@%#****%@@@@@#*****##***@@@@@@@@@@@@@****@@@@@@@@@@@@@***++====----:::=*#
+			* +++***+++===#%%##%%*===++***#@@@@#******%@@@@@@@@@@@@@**@@@@@%%%%@@@@@****@@@%***#@@@@@%***+==-------:::::
+			* +++***++===-==+**+======+***#@@@@#***+**%@@@@@@@@@@@@@*%@@@@@****%@@@@#***@@@%****@@@@@@@**++==--------:::
+			* ==++**++==-------==++++*****#@@@@#**++***%%%%%%%%%%%%%*%%%%%%****%@@@@%***@@@%****#@@@@@%#**++===---------
+			* ===+++++==------=+*****************************************************************##***********+==---=+++
+			* =+++++++++==----=+*#@@@@@***********%@@@@@@@@@@@#**@@@@@@@@@@@@@@@@%**@@@@@@@@@@@@@*#%@@@@@@@@%%#*++==+=--
+			* *+++********=--=+**#@@@@%***********%@@@@@@@@@@@%**@@@@@@@@@@@@@@@@%*#@@@@@@@@@@@@@*#@@@@@@@@@@@@%**++*+--
+			* *#####*******=-=+**%@@@@************@@@@@@@%%@@@%**@@@@@@@@@@@@@@@@%*#@@@***********#@@@@@%***%@@@%*+-----
+			* **#%##*******+-=+**%@@@%**************%@@@*++%@@%**@@@@@@@@@@%*******#@@@@@@@@%*****#@@@@@%***+%@@@#=-----
+			* ***%%%******#******%@@@#*************%@@@%+++#@@%*******%@@@@%*******#@@@@@@@@@#*****@@@@@@****#@@@******+
+			* ***#%%****#%%#*****@@@@*************#@@@@%+++#@@@*+++***%@@@@%*******#@@@@%**********%@@@@@#***#@@%***+**=
+			* *********#%%******#@@@%*************%@@@@*+++*@@@*+++***%@@@@%********@@@@%**********%@@@@@@%%%@@@#**+++**
+			* %#****************#@@@#********##**#@@@@@@@@@@@@@#++++**%@@@@%***+****@@@@%#*######**%@@@@@@@@@@@@%**++==+
+			* %%#***************%@@@%%%%@@@@@@@**%@@@@@@@@@@@@@%+++++*%@@@@%**++****@@@@@@@@@@@@@**#@@@@@%%@@@@@@%**+===
+			* *********#%%%#****@@@@@@@@@@@@@@@**@@@@%###%@@@@@@++++**#@@@@%**+++***@@@@@@@@@@@@@***@@@@#***@@@@@@%*+===
+			* ****%#****#%##***#@@@@@@@@@@@@@@%*#@@@@#****%@@@@@#**+**#@@@@%**+=++**%%%%%%%%%@@@@***@@@@#***#@@@@@@#+=--
+			* **#%%#*****#%##**%@@@@@@@@@@@@@@#*@@@@@#****%@@@@@@**++*#@%****+====++****************@@@@#****%@@@@@%+---
+			* *#%%%*******#%%**#########**************************++++++++++++===================++****+++++**#**++=----
+			* ######******#%##********************++++++++++=++++++++++==+++++======-------------======-----====--------
+			* ++++*##*****####********************+++++=======+++++++++=============------------------------------------
+			* +++++**#######***********************++++=======++++++++============--------------------------------------
+			* +++**********************************+++++=====++++++++++==========------------:--------------------------
+			*/
+
+			/**
+			* @dev For some reason the name and symbols have been swapped between the 2 companies. They had a weird
+			* agreement to do this and now trade under what was the once the others name and symbol.
+			*/
+
+			const formallyBananaIncSymbol = appleIncSymbol;
+			const formallyBananaIncIsin = appleIncIsin;
+			const formallyAppleIncSymbol = bananaIncSymbol;
+			const formallyAppleIncIsin = bananaIncIsin;
+
 
 			// Mock the external API response
 			(externalAPI.queryForStock as jest.Mock).mockResolvedValue({
-				symbol: ticker,
-				name: companyName,
+				isin: bananaIncIsin,
+				symbol: appleIncSymbol,
+				name: AppleIncName,
 				exchange: exchange,
-				isin: newCompanyISIN
 			});
 
 			// Mock external API response
 			(externalAPI.queryForStockByIsin as jest.Mock).mockResolvedValue({
-				symbol: stockNewSymbol,
-				name: stockNewName,
+				isin: appleIncIsin,
+				symbol: bananaIncSymbol,
+				name: bananaIncName,
 				exchange: exchange,
-				isin: isin,
 			});
 
-			await request(app).get(`/api/stock/search/${ticker}`).set("authorization", `Bearer ${token}`);
+			await request(app).get(`/api/stock/search/${appleIncSymbol}`).set("authorization", `Bearer ${token}`);
 
 			expect(externalAPI.queryForStock).toHaveBeenCalledTimes(2);
 
 			expect(externalAPI.queryForStockByIsin).toHaveBeenCalledTimes(1);
 
-			const [createdStock] = await mySQLPool.promise().query<IStock>(
+			const [formallyAppleStock] = await mySQLPool.promise().query<IStock>(
 				"SELECT * FROM stock WHERE symbol = ?;",
-				[ticker]
+				[formallyBananaIncSymbol]
 			);
 
-			expect(createdStock[0].isin).toBe(newCompanyISIN);
+			expect(formallyAppleStock[0].isin).toBe(bananaIncIsin);
 
-			const [updatedStock] = await mySQLPool.promise().query<IStock>(
+			expect(formallyAppleStock[0].name).toBe(AppleIncName);
+
+			const [formallyBananaStock] = await mySQLPool.promise().query<IStock>(
 				"SELECT * FROM stock WHERE isin = ?;",
-				[isin]
+				[formallyBananaIncIsin]
 			);
 
-			expect(updatedStock[0].symbol).toBe(stockNewSymbol);
+			expect(formallyBananaStock[0].symbol).toBe(bananaIncSymbol);
 
-			expect(updatedStock[0].name).toBe(stockNewName);
+			expect(formallyBananaStock[0].name).toBe(bananaIncName);
 		});
 
 		it("Should update the symbol and name of an existing stock with an isin of the externally received isin..", async () => {
-			const oneYearAgo = new Date((new Date()).getTime() - 365 * 24 * 60 * 60 * 1000);
-
-			const newCompanyISIN = "123";
-
-			const stockNewSymbol = "BANANA";
-
-			const stockNewName = "Banana Inc.";
-
 			// Mock the external API response
 			(externalAPI.queryForStock as jest.Mock).mockResolvedValue({
-				symbol: ticker,
-				name: companyName,
+				symbol: appleIncSymbol,
+				name: AppleIncName,
 				exchange: exchange,
-				isin: isin
+				isin: appleIncIsin
 			});
 
-			await request(app).get(`/api/stock/search/${ticker}`).set("authorization", `Bearer ${token}`);
+			await request(app).get(`/api/stock/search/${appleIncSymbol}`).set("authorization", `Bearer ${token}`);
 
 			expect(externalAPI.queryForStock).toHaveBeenCalledTimes(1);
 
 			const [stock] = await mySQLPool.promise().query<IStock>(
 				"SELECT * FROM stock WHERE isin = ?;",
-				[isin]
+				[appleIncIsin]
 			);
 
-			expect(stock[0].symbol).toBe(ticker);
+			expect(stock[0].symbol).toBe(appleIncSymbol);
 
-			expect(stock[0].name).toBe(companyName);
+			expect(stock[0].name).toBe(AppleIncName);
 
 			expect(stock[0].exchange).toBe(exchange);
 
-			expect(stock[0].isin).toBe(isin);
+			expect(stock[0].isin).toBe(appleIncIsin);
 
 			// Mock the external API response
 			(externalAPI.queryForStock as jest.Mock).mockResolvedValue({
-				symbol: "AAPLII",
-				name: "Apple II Inc.",
+				symbol: bananaIncSymbol,
+				name: bananaIncName,
 				exchange: exchange,
-				isin: "123"
+				isin: bananaIncIsin
 			});
 
-			await request(app).get(`/api/stock/search/${ticker}`).set("authorization", `Bearer ${token}`);
+			await request(app).get(`/api/stock/search/${bananaIncSymbol}`).set("authorization", `Bearer ${token}`);
 
-			expect(externalAPI.queryForStock).toHaveBeenCalledTimes(1);
+			expect(externalAPI.queryForStock).toHaveBeenCalledTimes(2);
 
-			const [stock2] = await mySQLPool.promise().query<IStock>(
-				"SELECT * FROM stock WHERE isin = ?;",
-				[isin]
+			const [stockOther] = await mySQLPool.promise().query<IStock>(
+				"SELECT * FROM stock WHERE symbol = ?;",
+				[bananaIncSymbol]
 			);
 
-			expect(stock2[0].symbol).toBe("AAPLII");
+			expect(stockOther[0].symbol).toBe(bananaIncSymbol);
 
-			expect(stock2[0].name).toBe("Apple II Inc.");
+			expect(stockOther[0].name).toBe(bananaIncName);
 
-			expect(stock2[0].exchange).toBe(exchange);
+			expect(stockOther[0].exchange).toBe(exchange);
 
-			expect(stock2[0].isin).toBe("123");
+			expect(stockOther[0].isin).toBe(bananaIncIsin);
 
-			// TODO complete the rest of this test
+			const oneYearAgo = new Date((new Date()).getTime() - 365 * 24 * 60 * 60 * 1000);
 
+			// Add a last_refresh_timestamp so far in the future that the external request has to trigger
+			await mySQLPool.promise().query(
+				`
+					INSERT INTO
+						query_stock (query, last_refresh_timestamp)
+					VALUES
+						(?, ?)
+					ON DUPLICATE KEY UPDATE
+						last_refresh_timestamp = ?
+					;
+				`,
+				[appleIncSymbol, oneYearAgo, oneYearAgo]
+			);
 
+			// One year later
+
+			// Mock the external API response
+			(externalAPI.queryForStock as jest.Mock).mockResolvedValue({
+				symbol: appleIncSymbol,
+				name: AppleIncName,
+				exchange: exchange,
+				isin: bananaIncIsin,
+			});
+
+			// Mock external API response
+			(externalAPI.queryForStockByIsin as jest.Mock).mockResolvedValue({
+				symbol: bananaIncSymbol,
+				name: bananaIncName,
+				exchange: exchange,
+				isin: appleIncIsin,
+			});
+
+			await request(app).get(`/api/stock/search/${appleIncSymbol}`).set("authorization", `Bearer ${token}`);
+
+			expect(externalAPI.queryForStock).toHaveBeenCalledTimes(3);
+
+			expect(externalAPI.queryForStockByIsin).toHaveBeenCalledTimes(1);
+
+			const [stockUpdated] = await mySQLPool.promise().query<IStock>(
+				"SELECT * FROM stock WHERE symbol = ?;",
+				[appleIncSymbol]
+			);
+
+			expect(stockUpdated[0].isin).toBe(bananaIncIsin);
+
+			const [stockOtherUpdated] = await mySQLPool.promise().query<IStock>(
+				"SELECT * FROM stock WHERE isin = ?;",
+				[bananaIncIsin]
+			);
+
+			expect(stockOtherUpdated[0].symbol).toBe(appleIncSymbol);
+
+			expect(stockOtherUpdated[0].name).toBe(AppleIncName);
 		});
 	});
 });
