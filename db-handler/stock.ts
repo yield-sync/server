@@ -1,7 +1,7 @@
 import mysql from "mysql2";
 
 
-export const createStock = async (mySQLPool: mysql.Pool, stock: StockCreate,) =>
+export const createStock = async (mySQLPool: mysql.Pool, stock: StockCreate) =>
 {
 	await mySQLPool.promise().query(
 		"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
@@ -12,7 +12,7 @@ export const createStock = async (mySQLPool: mysql.Pool, stock: StockCreate,) =>
 			stock.isin,
 		]
 	);
-}
+};
 
 export const deleteStock = async (
 	mySQLPool: mysql.Pool,
@@ -29,7 +29,7 @@ export const deleteStock = async (
 	);
 
 	return stocks;
-}
+};
 
 export const getStock = async (mySQLPool: mysql.Pool): Promise<IStock[]> =>
 {
@@ -38,7 +38,7 @@ export const getStock = async (mySQLPool: mysql.Pool): Promise<IStock[]> =>
 	] = await mySQLPool.promise().query<IStock[]>("SELECT * FROM stock;");
 
 	return stocks;
-}
+};
 
 export const getStockById = async (
 	mySQLPool: mysql.Pool,
@@ -55,7 +55,7 @@ export const getStockById = async (
 	);
 
 	return stocks;
-}
+};
 
 export const getStockByIsin = async (
 	mySQLPool: mysql.Pool,
@@ -72,7 +72,7 @@ export const getStockByIsin = async (
 	);
 
 	return stocks;
-}
+};
 
 export const getStockBySymbol = async (
 	mySQLPool: mysql.Pool,
@@ -84,19 +84,19 @@ export const getStockBySymbol = async (
 	] = await mySQLPool.promise().query<IStock[]>(
 		"SELECT * FROM stock WHERE symbol = ?;",
 		[
-			symbol
+			symbol,
 		]
 	);
 
 	return stocks;
-}
+};
 
 export const updateStock = async (
 	mySQLPool: mysql.Pool,
 	symbol: string,
 	name: string,
 	exchange: string,
-	id: number,
+	id: number
 ) =>
 {
 	await mySQLPool.promise().query(
@@ -108,13 +108,13 @@ export const updateStock = async (
 			id,
 		]
 	);
-}
+};
 
 export const updateStockSymbolAndName = async (
 	mySQLPool: mysql.Pool,
 	symbol: string,
 	name: string,
-	id: number,
+	id: number
 ) =>
 {
 	await mySQLPool.promise().query(
@@ -125,9 +125,9 @@ export const updateStockSymbolAndName = async (
 			id,
 		]
 	);
-}
+};
 
-export const makeStockSymbolUnknown = async (mySQLPool: mysql.Pool, id: number,) =>
+export const makeStockSymbolUnknown = async (mySQLPool: mysql.Pool, id: number) =>
 {
 	await mySQLPool.promise().query(
 		"UPDATE stock SET symbol = 0 WHERE id = ?;",
@@ -135,7 +135,7 @@ export const makeStockSymbolUnknown = async (mySQLPool: mysql.Pool, id: number,)
 			id,
 		]
 	);
-}
+};
 
 
 export default {

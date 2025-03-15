@@ -5,7 +5,7 @@ import { loadRequired } from "../../../middleware/load";
 import { user, userAdmin } from "../../../middleware/token";
 import { hTTPStatus } from "../../../constants";
 import DBHandlerQueryStock from "../../../db-handler/query_stock";
-import DBHandlerStock from "../../../db-handler/stock"
+import DBHandlerStock from "../../../db-handler/stock";
 import { sanitizeSymbolQuery } from "../../../util/sanitizer";
 import externalSource from "../../../external-api/FinancialModelingPrep";
 
@@ -103,7 +103,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 							stockQueryResult.name,
 							stockQueryResult.symbol,
 							stockQueryResult.exchange.toLowerCase(),
-							stocksWithExternalIsinId[0].id,
+							stocksWithExternalIsinId[0].id
 						);
 					}
 
@@ -116,8 +116,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				}
 
 				/**
-				* @dev If this part of the route is reached then the stock is already in the database and may need
-				* refreshing
+				* @dev If this part of the route is reached then the stock is already in the DB and may need refreshing
 				*/
 
 				const queryStock = await DBHandlerQueryStock.getQueryStockByQuery(mySQLPool, symbol);
@@ -157,9 +156,12 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 					await DBHandlerStock.makeStockSymbolUnknown(mySQLPool, response.stocks[0].id);
 
-					const stockWithExternalISIN = await DBHandlerStock.getStockByIsin(mySQLPool, stockQueryResult.isin)
+					const stockInDBWithExternalISIN = await DBHandlerStock.getStockByIsin(
+						mySQLPool,
+						stockQueryResult.isin
+					);
 
-					if (stockWithExternalISIN.length == 0)
+					if (stockInDBWithExternalISIN.length == 0)
 					{
 						await DBHandlerStock.createStock(mySQLPool, stockQueryResult);
 					}
@@ -169,7 +171,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 							mySQLPool,
 							stockQueryResult.symbol,
 							stockQueryResult.name,
-							stockWithExternalISIN[0].id,
+							stockInDBWithExternalISIN[0].id
 						);
 					}
 
@@ -181,7 +183,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 							mySQLPool,
 							stockQueryByIsinResult.symbol,
 							stockQueryByIsinResult.name,
-							response.stocks[0].id,
+							response.stocks[0].id
 						);
 					}
 					else
@@ -193,8 +195,6 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				response.stocks = await DBHandlerStock.getStockBySymbol(mySQLPool, symbol);
 
 				res.status(hTTPStatus.ACCEPTED).json(response);
-
-				return;
 			}
 			catch (error)
 			{

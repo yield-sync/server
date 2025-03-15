@@ -70,5 +70,5 @@ export default {
 		{
 			throw new ExternalRequestError("Error fetching external API: " + error);
 		}
-	}
-}
+	},
+};

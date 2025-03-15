@@ -29,7 +29,7 @@ export function sanitizeSymbolQuery(input: unknown): string
 
 	if (!trimmed)
 	{
-		return ""
+		return "";
 	};
 
 	// Remove all except letters and trim to 10 characters

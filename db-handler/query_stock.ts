@@ -17,9 +17,13 @@ export const updateQueryStockTimestamp = async (
 				last_refresh_timestamp = ?
 			;
 		`,
-		[query, last_refresh_timestamp, last_refresh_timestamp]
+		[
+			query,
+			last_refresh_timestamp,
+			last_refresh_timestamp,
+		]
 	);
-}
+};
 
 export const getQueryStockByQuery = async (
 	mySQLPool: mysql.Pool,
@@ -39,7 +43,7 @@ export const getQueryStockByQuery = async (
 	);
 
 	return queryStock;
-}
+};
 
 
 export default {
