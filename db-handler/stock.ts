@@ -65,7 +65,7 @@ export const getStockByIsin = async (
 	let [
 		stocks,
 	] = await mySQLPool.promise().query<IStock[]>(
-		"SELECT id FROM stock WHERE isin = ?;",
+		"SELECT * FROM stock WHERE isin = ?;",
 		[
 			isin,
 		]

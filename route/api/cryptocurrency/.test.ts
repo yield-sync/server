@@ -25,11 +25,6 @@ let mySQLPool: mysql.Pool;
 
 jest.mock("../../../external-api/coingecko", () => ({ queryForCryptocurrency: jest.fn(), }));
 
-afterAll(async () =>
-{
-	await dBDrop(DB_NAME, mySQLPool);
-	await mySQLPool.end();
-});
 
 beforeAll(async () =>
 {
@@ -330,4 +325,10 @@ describe("Request: DELETE", () =>
 			let id = cryptos[0].id;
 		});
 	});
+});
+
+afterAll(async () =>
+{
+	await dBDrop(DB_NAME, mySQLPool);
+	await mySQLPool.end();
 });

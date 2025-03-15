@@ -7,6 +7,7 @@ import routeAPIAsset from "./index";
 import routeApi from "../index";
 import routeApiUser from "../user/index";
 import config from "../../../config";
+import externalAPI from "../../../external-api/FinancialModelingPrep";
 import DBBuilder, { dBDrop } from "../../../sql/db-builder";
 
 const ASSET_NAME = "Asset";
@@ -22,6 +23,11 @@ let mySQLPool: mysql.Pool;
 
 
 jest.mock("axios");
+
+jest.mock("../../../external-api/FinancialModelingPrep", () => ({
+	queryForStock: jest.fn(),
+	queryForStockByIsin: jest.fn(),
+}));
 
 
 beforeAll(async () =>
@@ -107,18 +113,18 @@ describe("Request: GET", () => {
 			);
 
 			// Mock the external API response
-			(axios.get as jest.Mock).mockResolvedValueOnce({
-				data: [{
-					symbol: ticker,
-					companyName: companyName,
-					exchangeShortName: exchange,
-					isin: isin
-				}]
+			(externalAPI.queryForStock as jest.Mock).mockResolvedValueOnce({
+				symbol: ticker,
+				name: companyName,
+				exchange: exchange,
+				isin: isin
 			});
 
 			const res = await request(app).get("/api/stock/search/AAPL").set("authorization", `Bearer ${token}`);
 
 			expect(res.statusCode).toBe(202);
+
+			expect(externalAPI.queryForStock).toHaveBeenCalledTimes(1);
 
 			const [updatedStock] = await mySQLPool.promise().query<IStock>(
 				"SELECT * FROM stock WHERE isin = ?;",
@@ -174,23 +180,23 @@ describe("Request: GET", () => {
 				}],
 			});
 
-			expect(axios.get).not.toHaveBeenCalled();
+			expect(externalAPI.queryForStock).not.toHaveBeenCalled();
 		});
 
 		it("Should fetch from external API if stock does not exist in DB..", async () => {
 			// Mock the external API response
-			(axios.get as jest.Mock).mockResolvedValueOnce({
-				data: [{
-					symbol: ticker,
-					companyName: companyName,
-					exchangeShortName: exchange,
-					isin: isin
-				}]
+			(externalAPI.queryForStock as jest.Mock).mockResolvedValueOnce({
+				symbol: ticker,
+				name: companyName,
+				exchange: exchange,
+				isin: isin
 			});
 
 			const res = await request(app).get(`/api/stock/search/${ticker}`).set("authorization", `Bearer ${token}`);
 
 			expect(res.statusCode).toBe(202);
+
+			expect(externalAPI.queryForStock).toHaveBeenCalledTimes(1);
 
 			expect(res.body).toEqual({
 				refreshRequired: true,
@@ -202,17 +208,133 @@ describe("Request: GET", () => {
 					isin: isin
 				}],
 			});
-
-			const { uRL, key, } = config.api.financialModelingPrep;
-
-			expect(axios.get).toHaveBeenCalledWith(
-				expect.stringContaining(`${uRL}/api/v3/profile/${ticker}?apikey=${key}`)
-			);
 		});
 
-		it("Should refresh the stock if required..", async () => {});
+		it("Should refresh the stock if required..", async () => {
+			// Mock the external API response
+			(externalAPI.queryForStock as jest.Mock).mockResolvedValue({
+				symbol: ticker,
+				name: companyName,
+				exchange: exchange,
+				isin: isin
+			});
 
-		it("Should create a new stock under the symbol that belonged to a previous stock..", async () => {});
+			await request(app).get(`/api/stock/search/${ticker}`).set("authorization", `Bearer ${token}`);
+
+			expect(externalAPI.queryForStock).toHaveBeenCalledTimes(1);
+
+			const oneYearAgo = new Date((new Date()).getTime() - 365 * 24 * 60 * 60 * 1000);
+
+			// Add a last_refresh_timestamp so far in the future that the external request cannot trigger
+			await mySQLPool.promise().query(
+				`
+					INSERT INTO
+						query_stock (query, last_refresh_timestamp)
+					VALUES
+						(?, ?)
+					ON DUPLICATE KEY UPDATE
+						last_refresh_timestamp = ?
+					;
+					`,
+				[ticker, oneYearAgo, oneYearAgo]
+			);
+
+			const res = await request(app).get(`/api/stock/search/${ticker}`).set("authorization", `Bearer ${token}`);
+
+			expect(res.body.refreshRequired).toBeTruthy();
+
+			expect(externalAPI.queryForStock).toHaveBeenCalledTimes(2);
+
+		});
+
+		it("Should create a new stock under the symbol that belonged to a previous stock..", async () => {
+			const oneYearAgo = new Date((new Date()).getTime() - 365 * 24 * 60 * 60 * 1000);
+
+			const newCompanyISIN = "123";
+
+			const originalStockNewSymbol = "BANANA";
+
+			const originalStockNewName = "Banana Inc.";
+
+			// Mock the external API response
+			(externalAPI.queryForStock as jest.Mock).mockResolvedValue({
+				symbol: ticker,
+				name: companyName,
+				exchange: exchange,
+				isin: isin
+			});
+
+			await request(app).get(`/api/stock/search/${ticker}`).set("authorization", `Bearer ${token}`);
+
+			expect(externalAPI.queryForStock).toHaveBeenCalledTimes(1);
+
+			const [originalStock] = await mySQLPool.promise().query<IStock>(
+				"SELECT * FROM stock WHERE isin = ?;",
+				[isin]
+			);
+
+			expect(originalStock[0].symbol).toBe(ticker);
+
+			expect(originalStock[0].name).toBe(companyName);
+
+			expect(originalStock[0].exchange).toBe(exchange);
+
+			expect(originalStock[0].isin).toBe(isin);
+
+			// Add a last_refresh_timestamp so far in the future that the external request cannot trigger
+			await mySQLPool.promise().query(
+				`
+					INSERT INTO
+						query_stock (query, last_refresh_timestamp)
+					VALUES
+						(?, ?)
+					ON DUPLICATE KEY UPDATE
+						last_refresh_timestamp = ?
+					;
+					`,
+				[ticker, oneYearAgo, oneYearAgo]
+			);
+
+			// ONE YEAR LATER
+
+			// Mock the external API response
+			(externalAPI.queryForStock as jest.Mock).mockResolvedValue({
+				symbol: ticker,
+				name: companyName,
+				exchange: exchange,
+				isin: newCompanyISIN
+			});
+
+			// Mock external API response
+			(externalAPI.queryForStockByIsin as jest.Mock).mockResolvedValue({
+				symbol: originalStockNewSymbol,
+				name: originalStockNewName,
+				exchange: exchange,
+				isin: isin,
+			});
+
+			await request(app).get(`/api/stock/search/${ticker}`).set("authorization", `Bearer ${token}`);
+
+			expect(externalAPI.queryForStock).toHaveBeenCalledTimes(2);
+
+			expect(externalAPI.queryForStockByIsin).toHaveBeenCalledTimes(1);
+
+			const [createdStock] = await mySQLPool.promise().query<IStock>(
+				"SELECT * FROM stock WHERE symbol = ?;",
+				[ticker]
+			);
+
+			expect(createdStock[0].isin).toBe(newCompanyISIN);
+
+			const [updatedStock] = await mySQLPool.promise().query<IStock>(
+				"SELECT * FROM stock WHERE isin = ?;",
+				[isin]
+			);
+
+			expect(updatedStock[0].symbol).toBe(originalStockNewSymbol);
+
+			expect(updatedStock[0].name).toBe(originalStockNewName);
+		});
 
 		it("Should update the symbol and name of an existing stock with an isin of the externally received isin..", async () => {});
 	});
