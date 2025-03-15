@@ -1,4 +1,3 @@
-import axios from "axios";
 import express from "express";
 import mysql from "mysql2";
 import request from "supertest";
