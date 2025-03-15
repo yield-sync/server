@@ -114,11 +114,15 @@ beforeEach(async () =>
 
 	portfolioId = portfolios[0].id;
 
-	const resAssetCreate = await request(app).post("/api/stock/create").set("authorization", `Bearer ${token}`).send({
-		load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, exchange: "nasdaq", isin: "123" }
-	});
-
-	expect(resAssetCreate.statusCode).toBe(201);
+	await mySQLPool.promise().query(
+		"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
+		[
+			ASSET_SYMBOL,
+			ASSET_NAME,
+			"nasdaq",
+			"123",
+		]
+	);
 
 	const [assets]: MySQLQueryResult = await mySQLPool.promise().query(
 		"SELECT id FROM stock WHERE name = ?;", [ASSET_NAME]

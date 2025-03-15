@@ -41,7 +41,6 @@ declare global
 	};
 
 	type StockSearchQuery = {
-		timestamp: Date,
 		query: string,
 		refreshRequired: boolean,
 		stocks: IStock[]

@@ -127,7 +127,8 @@ describe("Request: GET", () => {
 			expect(res.statusCode).toBe(202);
 
 			expect(res.body).toEqual({
-				externalRequestRequired: false,
+				query: ticker,
+				refreshRequired: false,
 				stocks: [{
 					id: 1,
 					symbol: ticker,
@@ -135,8 +136,6 @@ describe("Request: GET", () => {
 					exchange: exchange,
 					isin: isin
 				}],
-				externalAPIResults: [
-				],
 			});
 
 			expect(axios.get).not.toHaveBeenCalled();
@@ -158,7 +157,8 @@ describe("Request: GET", () => {
 			expect(res.statusCode).toBe(202);
 
 			expect(res.body).toEqual({
-				externalRequestRequired: true,
+				refreshRequired: true,
+				query: ticker,
 				stocks: [{
 					id: 1,
 					symbol: ticker,
@@ -166,12 +166,6 @@ describe("Request: GET", () => {
 					exchange: exchange,
 					isin: isin
 				}],
-				externalAPIResults: [{
-					symbol: ticker,
-					companyName: companyName,
-					exchangeShortName: exchange,
-					isin: isin
-				}]
 			});
 
 			const { uRL, key, } = config.api.financialModelingPrep;
@@ -185,100 +179,6 @@ describe("Request: GET", () => {
 
 describe("Request: POST", () =>
 {
-	describe("Route: /api/stock/create", () =>
-	{
-		describe("Expected Failure", () =>
-		{
-			it("[auth] Should require a user token..", async () =>
-			{
-				await request(app).post("/api/stock/create").send().expect(401);
-
-				const [stocks]: any[] = await mySQLPool.promise().query("SELECT * FROM stock;");
-
-				expect(Array.isArray(stocks)).toBe(true);
-
-				expect(stocks.length).toBe(0);
-			});
-
-			it("Should fail if exchange is missing..", async () =>
-			{
-				const res = await request(app).post("/api/stock/create").set("authorization", `Bearer ${token}`).send({
-					load: { name: ASSET_NAME, symbol: ASSET_SYMBOL }
-				});
-
-				expect(res.statusCode).toBe(400);
-
-				expect(res.text).toBe("Invalid or missing exchange");
-			});
-
-
-			it("Should fail if ISIN is missing..", async () =>
-			{
-				const res = await request(app).post("/api/stock/create").set("authorization", `Bearer ${token}`).send({
-					load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, exchange: "nasdaq" }
-				});
-
-				expect(res.statusCode).toBe(400);
-
-				expect(res.text).toBe("ISIN is required for stock");
-			});
-		});
-
-		describe("Expected Success", () =>
-		{
-			it("Should create stock..", async () =>
-			{
-				const res = await request(app).post("/api/stock/create").set("authorization", `Bearer ${token}`).send({
-					load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, exchange: "nasdaq", isin: "US0378331005" }
-				});
-
-				expect(res.statusCode).toBe(201);
-
-				const [assets]: any[] = await mySQLPool.promise().query(
-					"SELECT * FROM stock WHERE isin = ?;",
-					["US0378331005"]
-				);
-
-				expect(Array.isArray(assets)).toBe(true);
-
-				expect(assets.length).toBe(1);
-
-				expect(assets[0].exchange).toBe("nasdaq");
-
-				expect(assets[0].isin).toBe("US0378331005");
-			});
-		});
-
-		describe("Expected Failure Part 2", () =>
-			{
-				it("Should not allow dulicate ISINs to exist..", async () =>
-				{
-					await request(app).post("/api/stock/create").set("authorization", `Bearer ${token}`).send({
-						load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, exchange: "nasdaq", isin: "US0378331005" }
-					});
-
-					const res = await request(app).post("/api/stock/create").set("authorization", `Bearer ${token}`).send({
-						load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, exchange: "nasdaq", isin: "US0378331005" }
-					});
-
-					expect(res.statusCode).toBe(409);
-
-					expect(res.text).toBe("ISIN already exists");
-				});
-			});
-	});
-
-	describe("Route: /api/stock/update", () =>
-	{
-		describe("Expected Failure", () =>
-		{
-			it("[auth] Should require a user token..", async () =>
-			{
-				await request(app).post("/api/stock/update").send().expect(401);
-			});
-		});
-	});
-
 	describe("Route: /api/stock/delete", () =>
 	{
 		describe("Expected Failure", () =>
@@ -287,60 +187,7 @@ describe("Request: POST", () =>
 			{
 				await request(app).post("/api/stock/delete").send().expect(401);
 			});
-		});
-	});
 
-	describe("Route: /api/stock/update", () =>
-	{
-		describe("Expected Failure", () =>
-		{
-			it("Should fail if stock_id is missing..", async () =>
-			{
-				const res = await request(app).post("/api/stock/update").set("authorization", `Bearer ${token}`).send({
-					load: { exchange: "nasdaq", isin: "US0378331005", name: ASSET_NAME, symbol: ASSET_SYMBOL }
-				});
-
-				expect(res.statusCode).toBe(400);
-				expect(res.text).toBe("stock_id is required");
-			});
-		});
-
-		describe("Expected Success", () =>
-		{
-			it("Should update stock..", async () =>
-			{
-				const createRes = await request(app).post("/api/stock/create").set("authorization", `Bearer ${token}`).send({
-					load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, exchange: "nasdaq", isin: "US0378331005" }
-				});
-
-				expect(createRes.statusCode).toBe(201);
-
-				const [assets]: any[] = await mySQLPool.promise().query(
-					"SELECT * FROM stock WHERE isin = ?;",
-					["US0378331005"]
-				);
-
-				expect(assets.length).toBe(1);
-
-				const updateRes = await request(app).post("/api/stock/update").set("authorization", `Bearer ${token}`).send({
-					load: { stock_id: assets[0].id, name: "New Name", symbol: "NEW", exchange: "nasdaq", isin: "US0378331005" }
-				});
-
-				expect(updateRes.statusCode).toBe(200);
-				expect(updateRes.text).toBe("Updated stock");
-
-				const [updated]: any[] = await mySQLPool.promise().query("SELECT * FROM stock WHERE id = ?;", [assets[0].id]);
-
-				expect(updated[0].name).toBe("New Name");
-				expect(updated[0].symbol).toBe("NEW");
-			});
-		});
-	});
-
-	describe("Route: /api/stock/delete", () =>
-	{
-		describe("Expected Failure", () =>
-		{
 			it("Should fail if stock_id is missing..", async () =>
 			{
 				const res = await request(app).post("/api/stock/delete").set("authorization", `Bearer ${token}`).send({
@@ -356,11 +203,15 @@ describe("Request: POST", () =>
 		{
 			it("Should delete stock..", async () =>
 			{
-				const createRes = await request(app).post("/api/stock/create").set("authorization", `Bearer ${token}`).send({
-					load: { name: ASSET_NAME, symbol: ASSET_SYMBOL, exchange: "nasdaq", isin: "US0378331005" }
-				});
-
-				expect(createRes.statusCode).toBe(201);
+				await mySQLPool.promise().query(
+					"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
+					[
+						ASSET_SYMBOL,
+						ASSET_NAME,
+						"nasdaq",
+						"US0378331005",
+					]
+				);
 
 				const [assets]: any[] = await mySQLPool.promise().query("SELECT * FROM stock;");
 

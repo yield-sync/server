@@ -55,8 +55,9 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		user(mySQLPool),
 		async (req: express.Request, res: express.Response) =>
 		{
+			const timestamp = new Date();
+
 			let response: StockSearchQuery = {
-				timestamp: new Date(),
 				query: null,
 				refreshRequired: false,
 				stocks: [
@@ -91,7 +92,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 						return;
 					}
 
-					await updateQueryStockTimestamp(mySQLPool, symbol, response.timestamp);
+					await updateQueryStockTimestamp(mySQLPool, symbol, timestamp);
 
 					/**
 					* @dev It could be possible that the symbol is new but the company is already in the DB under an old
@@ -131,7 +132,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				) : null;
 
 				response.refreshRequired = !lastRefreshTimestamp || (
-					response.timestamp.getTime() - lastRefreshTimestamp.getTime()
+					timestamp.getTime() - lastRefreshTimestamp.getTime()
 				) >= EXTERNAL_CALL_DELAY_MS;
 
 
