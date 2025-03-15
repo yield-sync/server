@@ -95,6 +95,12 @@ describe("Request: GET", () => {
 		});
 
 
+		it("should return 400 for an invalid query", async () => {
+			const res = await request(app).get("/api/stock/search/QUERY").set("authorization", `Bearer ${token}`);
+
+			expect(res.statusCode).toBe(400);
+		});
+
 		it("Should return stock from DB if it exists and NOT make external request..", async () => {
 			const fiveDaysAfter = new Date((new Date()).getTime() + 5 * 24 * 60 * 60 * 1000);
 
@@ -127,13 +133,13 @@ describe("Request: GET", () => {
 			expect(res.statusCode).toBe(202);
 
 			expect(res.body).toEqual({
-				query: ticker,
 				refreshRequired: false,
 				stocks: [{
 					id: 1,
+					symbol: ticker,
 					name: companyName,
 					exchange: exchange,
-					isin: isin
+					isin: isin,
 				}],
 			});
 
@@ -157,9 +163,9 @@ describe("Request: GET", () => {
 
 			expect(res.body).toEqual({
 				refreshRequired: true,
-				query: ticker,
 				stocks: [{
 					id: 1,
+					symbol: ticker,
 					name: companyName,
 					exchange: exchange,
 					isin: isin
