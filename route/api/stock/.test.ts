@@ -24,12 +24,6 @@ let mySQLPool: mysql.Pool;
 jest.mock("axios");
 
 
-afterAll(async () =>
-{
-	await dBDrop(DB_NAME, mySQLPool);
-	await mySQLPool.end();
-});
-
 beforeAll(async () =>
 {
 	mySQLPool = mysql.createPool({
@@ -269,4 +263,10 @@ describe("Request: POST", () =>
 			});
 		});
 	});
+});
+
+afterAll(async () =>
+{
+	await dBDrop(DB_NAME, mySQLPool);
+	await mySQLPool.end();
 });
