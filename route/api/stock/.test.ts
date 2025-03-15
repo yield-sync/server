@@ -119,7 +119,10 @@ describe("Request: GET", () => {
 
 			expect(res.statusCode).toBe(202);
 
-			const updatedStock = await mySQLPool.promise().query<IStock>("SELECT * FROM stock WHERE isin = ?;", [isin]);
+			const [updatedStock] = await mySQLPool.promise().query<IStock>(
+				"SELECT * FROM stock WHERE isin = ?;",
+				[isin]
+			);
 
 			expect(updatedStock[0].symbol).toBe(ticker);
 
