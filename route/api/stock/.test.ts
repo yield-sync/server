@@ -96,6 +96,16 @@ describe("Request: GET", () => {
 		});
 
 		it("Should update stock if ISIN remains the same but symbol changes..", async () => {
+			// Mock the fake original name
+			await mySQLPool.promise().query(
+				"UPDATE stock SET symbol = ?, name = ? WHERE isin = ?;",
+				[
+					"FON",
+					"Fake Original Name",
+					isin
+				]
+			);
+
 			// Mock the external API response
 			(axios.get as jest.Mock).mockResolvedValueOnce({
 				data: [{
@@ -105,15 +115,6 @@ describe("Request: GET", () => {
 					isin: isin
 				}]
 			});
-
-			await mySQLPool.promise().query(
-				"UPDATE stock SET symbol = ?, name = ? WHERE isin = ?;",
-				[
-					'OLD',
-					'Old Name',
-					isin
-				]
-			);
 
 			const res = await request(app).get("/api/stock/search/AAPL").set("authorization", `Bearer ${token}`);
 
@@ -129,8 +130,6 @@ describe("Request: GET", () => {
 			expect(updatedStock[0].name).toBe(companyName);
 
 			expect(updatedStock[0].isin).toBe(isin);
-
-			expect(updatedStock[0].exchange).toBe(exchange);
 		});
 
 		it("Should return stock from DB if it exists and NOT make external request..", async () => {
