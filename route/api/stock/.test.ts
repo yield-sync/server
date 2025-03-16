@@ -177,6 +177,48 @@ describe("Request: GET", () => {
 		});
 
 		describe("Existing Stock needs refresh", () => {
+			it("Should refresh the stock if required..", async () => {
+				await mySQLPool.promise().query(
+					"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
+					[
+						appleIncSymbol,
+						appleIncName,
+						exchange,
+						appleIncIsin,
+					]
+				);
+
+				const oneYearAgo = new Date((new Date()).getTime() - 365 * 24 * 60 * 60 * 1000);
+
+				// Add a last_refresh_timestamp so far in the future that the external request cannot trigger
+				await mySQLPool.promise().query(
+					`
+						INSERT INTO
+							query_stock (query, last_refresh_timestamp)
+						VALUES
+							(?, ?)
+						ON DUPLICATE KEY UPDATE
+							last_refresh_timestamp = ?
+						;
+					`,
+					[appleIncSymbol, oneYearAgo, oneYearAgo]
+				);
+
+				// Mock the external API response
+				(externalAPI.queryForStock as jest.Mock).mockResolvedValue({
+					symbol: appleIncSymbol,
+					name: appleIncName,
+					exchange: exchange,
+					isin: appleIncIsin
+				});
+
+				const res = await request(app).get(`/api/stock/search/${appleIncSymbol}`).set("authorization", `Bearer ${token}`);
+
+				expect(externalAPI.queryForStock).toHaveBeenCalledTimes(1);
+
+				expect(res.body.refreshRequired).toBeTruthy();
+			});
+
 			it("Should update stock if ISIN remains the same but symbol changes..", async () => {
 				await mySQLPool.promise().query(
 					"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
@@ -222,48 +264,6 @@ describe("Request: GET", () => {
 				expect(updatedStock[0].name).toBe(appleIncName);
 
 				expect(updatedStock[0].isin).toBe(appleIncIsin);
-			});
-
-			it("Should refresh the stock if required..", async () => {
-				await mySQLPool.promise().query(
-					"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
-					[
-						appleIncSymbol,
-						appleIncName,
-						exchange,
-						appleIncIsin,
-					]
-				);
-
-				const oneYearAgo = new Date((new Date()).getTime() - 365 * 24 * 60 * 60 * 1000);
-
-				// Add a last_refresh_timestamp so far in the future that the external request cannot trigger
-				await mySQLPool.promise().query(
-					`
-						INSERT INTO
-							query_stock (query, last_refresh_timestamp)
-						VALUES
-							(?, ?)
-						ON DUPLICATE KEY UPDATE
-							last_refresh_timestamp = ?
-						;
-					`,
-					[appleIncSymbol, oneYearAgo, oneYearAgo]
-				);
-
-				// Mock the external API response
-				(externalAPI.queryForStock as jest.Mock).mockResolvedValue({
-					symbol: appleIncSymbol,
-					name: appleIncName,
-					exchange: exchange,
-					isin: appleIncIsin
-				});
-
-				const res = await request(app).get(`/api/stock/search/${appleIncSymbol}`).set("authorization", `Bearer ${token}`);
-
-				expect(externalAPI.queryForStock).toHaveBeenCalledTimes(1);
-
-				expect(res.body.refreshRequired).toBeTruthy();
 			});
 
 			it("Should create a new stock under the symbol that belonged to a previous stock..", async () => {
