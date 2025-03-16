@@ -1,10 +1,10 @@
 import express from "express";
 import mysql from "mysql2";
 
-import { loadRequired } from "../../../middleware/load";
-import { user, userAdmin } from "../../../middleware/token";
 import { hTTPStatus } from "../../../constants";
 import externalAPI from "../../../external-api/coingecko";
+import { loadRequired } from "../../../middleware/load";
+import { user, userAdmin } from "../../../middleware/token";
 import { sanitizeQuery } from "../../../util/sanitizer";
 
 
