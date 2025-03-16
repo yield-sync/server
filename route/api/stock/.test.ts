@@ -219,24 +219,14 @@ describe("Request: GET", () => {
 				expect(res.body.refreshRequired).toBeTruthy();
 			});
 
-			it("Should update stock if ISIN remains the same but symbol changes..", async () => {
+			it("Should update stock name and symbol if ISIN found already in DB..", async () => {
 				await mySQLPool.promise().query(
 					"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
 					[
-						appleIncSymbol,
-						appleIncName,
+						"FB",
+						"Facebook Inc.",
 						exchange,
 						appleIncIsin,
-					]
-				);
-
-				// Mock the fake original name
-				await mySQLPool.promise().query(
-					"UPDATE stock SET symbol = ?, name = ? WHERE isin = ?;",
-					[
-						"FON",
-						"Fake Original Name",
-						appleIncIsin
 					]
 				);
 
