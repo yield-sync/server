@@ -14,7 +14,7 @@ const request = require('supertest');
 
 
 const ASSET_NAME: string = "Asset";
-const ASSET_SYMBOL: string = "ASS";
+const ASSET_SYMBOL: string = "A";
 const DB_NAME: string = "mock_db_portfolio_asset";
 const EMAIL: string = "testemail@example.com";
 const PASSWORD: string = "testpassword!";
@@ -22,17 +22,10 @@ const PORTFOLIO_NAME: string = "my-portfolio";
 
 let token: string;
 let stock_id: string;
-let portfolioId: string;
+let portfolio_id: string;
 let app: express.Express;
 let mySQLPool: mysql.Pool;
 
-
-afterAll(async () =>
-{
-	await dBDrop(DB_NAME, mySQLPool);
-
-	await mySQLPool.end();
-});
 
 beforeAll(async () =>
 {
@@ -112,7 +105,7 @@ beforeEach(async () =>
 		"SELECT id FROM portfolio WHERE name = ?;", [PORTFOLIO_NAME]
 	);
 
-	portfolioId = portfolios[0].id;
+	portfolio_id = portfolios[0].id;
 
 	await mySQLPool.promise().query(
 		"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
@@ -142,7 +135,7 @@ describe("Request: GET", () =>
 			{
 				await request(app).post("/api/portfolio-asset/create").send({
 					load: {
-						portfolioId,
+						portfolio_id,
 						stock_id,
 					} as PortfolioAssetCreate
 				}).expect(401);
@@ -157,14 +150,14 @@ describe("Request: GET", () =>
 				expect(results.length).toBe(0);
 			});
 
-			it("Should fail if no portfolioId passed..", async () =>
+			it("Should fail if no portfolio_id passed..", async () =>
 			{
 				const RES = await request(app).post("/api/portfolio-asset/create").set(
 					'authorization',
 					`Bearer ${token}`
 				).send({ load: { stock_id, } }).expect(400);
 
-				expect(RES.text).toBe("No portfolioId received");
+				expect(RES.text).toBe("No portfolio_id received");
 
 				const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio_asset;");
 
@@ -183,11 +176,35 @@ describe("Request: GET", () =>
 					`Bearer ${token}`
 				).send({
 					load: {
-						portfolioId: portfolioId,
+						portfolio_id: portfolio_id,
 					}
 				}).expect(400);
 
 				expect(RES.text).toBe("No stock_id received");
+
+				const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio_asset;");
+
+				if (!Array.isArray(results))
+				{
+					throw new Error("Expected result is not Array");
+				}
+
+				expect(results.length).toBe(0);
+			});
+
+			it("Should fail if no percent_allocation passed..", async () =>
+			{
+				const RES = await request(app).post("/api/portfolio-asset/create").set(
+					'authorization',
+					`Bearer ${token}`
+				).send({
+					load: {
+						portfolio_id,
+						stock_id,
+					}
+				}).expect(400);
+
+				expect(RES.text).toBe("No percent_allocation received");
 
 				const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio_asset;");
 
@@ -209,8 +226,9 @@ describe("Request: GET", () =>
 					`Bearer ${token}`
 				).send({
 					load: {
-						portfolioId: portfolioId,
-						stock_id: stock_id,
+						portfolio_id,
+						stock_id,
+						percent_allocation: 10_000,
 					} as PortfolioAssetCreate
 				});
 
@@ -237,8 +255,15 @@ describe("Request: GET", () =>
 					throw new Error("Key 'portfolio_id' not in portfolioAssets");
 				}
 
-				expect(portfolioAssests[0].portfolio_id).toBe(portfolioId);
+				expect(portfolioAssests[0].portfolio_id).toBe(portfolio_id);
 			});
 		});
 	});
+});
+
+afterAll(async () =>
+{
+	await dBDrop(DB_NAME, mySQLPool);
+
+	await mySQLPool.end();
 });

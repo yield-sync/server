@@ -62,7 +62,6 @@ const queries: string[] = [
 		);
 	`,
 	// query_stock
-	// TODO: Add tests for checking length of query and compliance to contstraint
 	`
 		CREATE TABLE query_stock (
 			id INT AUTO_INCREMENT PRIMARY KEY,
@@ -80,7 +79,7 @@ const queries: string[] = [
 			industry VARCHAR(255),
 			PRIMARY KEY (id),
 			FOREIGN KEY (stock_id) REFERENCES stock(id) ON DELETE CASCADE
-		)
+		);
 	`,
 	// stock_sector
 	`
@@ -90,7 +89,7 @@ const queries: string[] = [
 			sector VARCHAR(255),
 			PRIMARY KEY (id),
 			FOREIGN KEY (stock_id) REFERENCES stock(id) ON DELETE CASCADE
-		)
+		);
 	`,
 	// portfolio
 	`
@@ -101,7 +100,7 @@ const queries: string[] = [
 			created DATETIME DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
 			FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
-		)
+		);
 	`,
 	// portfolio_asset
 	`
@@ -110,12 +109,13 @@ const queries: string[] = [
 			portfolio_id INT NOT NULL,
 			cryptocurrency_id INT,
 			stock_id INT,
+			percent_allocation INT NOT NULL DEFAULT 0 CHECK (percent_allocation BETWEEN 0 AND 10000),
 			created DATETIME DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
 			FOREIGN KEY (portfolio_id) REFERENCES portfolio(id) ON DELETE CASCADE,
 			FOREIGN KEY (cryptocurrency_id) REFERENCES cryptocurrency(id) ON DELETE CASCADE,
 			FOREIGN KEY (stock_id) REFERENCES stock(id) ON DELETE CASCADE
-		)
+		);
 	`,
 	// verification
 	`
@@ -126,7 +126,7 @@ const queries: string[] = [
 			created DATETIME DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
 			FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
-		)
+		);
 	`,
 ];
 

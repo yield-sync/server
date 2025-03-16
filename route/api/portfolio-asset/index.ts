@@ -19,7 +19,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const { portfolioId, stock_id, }: PortfolioAssetCreate = req.body.load;
+			const { portfolio_id, stock_id, percent_allocation, }: PortfolioAssetCreate = req.body.load;
 
 			try
 			{
@@ -30,9 +30,16 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				if (!portfolioId)
+				if (!portfolio_id)
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("No portfolioId received");
+					res.status(hTTPStatus.BAD_REQUEST).send("No portfolio_id received");
+
+					return;
+				}
+
+				if (!percent_allocation)
+				{
+					res.status(hTTPStatus.BAD_REQUEST).send("No percent_allocation received");
 
 					return;
 				}
@@ -45,7 +52,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				] = await mySQLPool.promise().query(
 					"SELECT * FROM portfolio WHERE id = ? AND user_id = ?;",
 					[
-						portfolioId,
+						portfolio_id,
 						req.body.userDecoded.id,
 					]
 				);
@@ -59,27 +66,29 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				if (portfolios.length == 0)
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("Invalid portfolioId");
+					res.status(hTTPStatus.BAD_REQUEST).send("Invalid portfolio_id");
 
 					return;
 				}
 
 				// Insert into portfolio_asset
 				await mySQLPool.promise().query(
-					"INSERT INTO portfolio_asset (portfolio_id, stock_id) VALUES (?, ?);",
+					"INSERT INTO portfolio_asset (portfolio_id, stock_id, percent_allocation) VALUES (?, ?, ?);",
 					[
-						portfolioId,
+						portfolio_id,
 						stock_id,
+						percent_allocation
 					]
 				);
 
-				res.status(hTTPStatus.CREATED).send("Portfolio asset created.");
+				res.status(hTTPStatus.CREATED).send("Portfolio asset created");
 
 				return;
 
 			}
 			catch (error)
 			{
+				console.error(error);
 				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({ message: "Internal Server Error", error });
 
 				return;

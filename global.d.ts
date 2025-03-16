@@ -50,12 +50,13 @@ declare global
 	};
 
 	type PortfolioAssetCreate = Load & {
-		portfolioId: string,
+		portfolio_id: string,
 		stock_id: string,
+		percent_allocation: number,
 	};
 
 	type PortfolioAssetCreateByQuery = Load & {
-		portfolioId: string,
+		portfolio_id: string,
 		query: string,
 		crypto?: boolean;
 	};
@@ -127,7 +128,7 @@ declare global
 		OkPacket
 	{
 		id: number;
-		portfolioId: number;
+		portfolio_id: number;
 		stock_id: number;
 		created: number;
 	}

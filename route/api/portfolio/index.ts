@@ -144,10 +144,10 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const { portfolioId, }: any = req.body.load;
+			const { portfolio_id, }: any = req.body.load;
 			try
 			{
-				if (!portfolioId)
+				if (!portfolio_id)
 				{
 					res.status(hTTPStatus.BAD_REQUEST).send("No portfolio id provided");
 
@@ -158,7 +158,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					"DELETE FROM portfolio WHERE user_id = ? AND id = ?;",
 					[
 						req.body.userDecoded.id,
-						portfolioId,
+						portfolio_id,
 					]
 				);
 

@@ -210,3 +210,5 @@ describe("Cryptocurrency", () =>
 		});
 	});
 });
+
+// TODO: Add tests for checking length of query and compliance to constraints
