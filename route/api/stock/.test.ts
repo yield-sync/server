@@ -397,15 +397,18 @@ describe("Request: GET", () => {
 		});
 
 		describe("Success Cases", () => {
-			it("deletes stock successfully", async () => {
+			beforeEach(async () => {
 				await insertStock(
 					CONSTANTS.STOCKS.APPLE.SYMBOL,
 					CONSTANTS.STOCKS.APPLE.NAME,
 					CONSTANTS.STOCKS.APPLE.EXCHANGE,
-					CONSTANTS.STOCKS.APPLE.ISIN,
+					CONSTANTS.STOCKS.APPLE.ISIN
 				);
+			});
 
+			it("deletes stock successfully", async () => {
 				const [assets]: any[] = await mySQLPool.promise().query("SELECT * FROM stock;");
+
 				expect(assets.length).toBe(1);
 
 				const deleteRes = await request(app).post("/api/stock/delete").set(
@@ -418,6 +421,7 @@ describe("Request: GET", () => {
 				});
 
 				expect(deleteRes.statusCode).toBe(200);
+
 				expect(deleteRes.text).toBe("Deleted stock");
 
 				const [deleted]: any[] = await mySQLPool.promise().query("SELECT * FROM stock;");
