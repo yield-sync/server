@@ -27,11 +27,13 @@ beforeEach(async () =>
 	await testMySQLPool.promise().query("DELETE FROM stock;");
 	await testMySQLPool.promise().query("DELETE FROM cryptocurrency_platform;");
 	await testMySQLPool.promise().query("DELETE FROM cryptocurrency;");
+	await testMySQLPool.promise().query("DELETE FROM portfolio_asset;");
+	await testMySQLPool.promise().query("DELETE FROM user;");
 });
 
 afterAll(async () =>
 {
-	//await dBDrop(TEST_DB_NAME, testMySQLPool);
+	await dBDrop(TEST_DB_NAME, testMySQLPool);
 	testMySQLPool.end();
 });
 
@@ -211,4 +213,121 @@ describe("Table: cryptocurrency", () =>
 	});
 });
 
-// TODO: Add tests for checking length of query and compliance to constraints
+describe("Table: query_stock", () => {
+	// TODO: Add tests for checking length of query and compliance to constraints
+});
+
+describe("Table: portfolio_asset", () => {
+	let stockId;
+	let userId;
+	let portfolioId;
+
+
+	beforeEach(async () => {
+		// Create a user
+		await testMySQLPool.promise().query(
+			"INSERT INTO user (email, password) VALUES ('email', 'password');"
+		);
+
+		const [userRows]: any = await testMySQLPool.promise().query(
+			"SELECT id FROM user WHERE email = ?;",
+			["email"]
+		);
+
+		userId = userRows[0].id;
+
+		// Create a stock
+		await testMySQLPool.promise().query(
+			"INSERT INTO stock (isin, symbol, name, exchange) VALUES (1, 'AAPL', 'Apple Inc.', 'nasdaq');"
+		);
+
+		const [stockRows]: any = await testMySQLPool.promise().query(
+			"SELECT id FROM stock WHERE symbol = ?;",
+			["AAPL"]
+		);
+
+		stockId = stockRows[0].id;
+
+		// Create a portfolio
+		await testMySQLPool.promise().query(
+			"INSERT INTO portfolio (user_id, name) VALUES (?, ?);",
+			[userId, "My Portfolio"]
+		);
+
+		const [portfolioRows]: any = await testMySQLPool.promise().query(
+			"SELECT id FROM portfolio WHERE name = ?;",
+			["My Portfolio"]
+		);
+
+		portfolioId = portfolioRows[0].id;
+	});
+
+
+	describe("Expected Success", () => {
+		it("Should allow inserting portfolio assets within allocation limits..", async () => {
+
+
+			// Insert portfolio assets within 100% allocation (10,000 basis points)
+			await expect(
+				testMySQLPool.promise().query(
+					`
+						INSERT INTO portfolio_asset
+							(portfolio_id, stock_id, percent_allocation)
+						VALUES
+							(?, ?, 5000)
+						;
+					`,
+					[portfolioId, stockId]
+				)
+			).resolves.not.toThrow();
+
+			await expect(
+				testMySQLPool.promise().query(
+					`
+						INSERT INTO portfolio_asset
+							(portfolio_id, stock_id, percent_allocation)
+						VALUES
+							(?, ?, 5000)
+						;
+					`,
+					[portfolioId, stockId]
+				)
+			).resolves.not.toThrow();
+		});
+	});
+
+	describe("Expected Failure", () => {
+		it("Should fail when inserting portfolio asset exceeding allocation limit..", async () => {
+			// Insert portfolio assets up to 90%
+			await expect(
+				testMySQLPool.promise().query(
+					`
+						INSERT INTO portfolio_asset
+							(portfolio_id, stock_id, percent_allocation)
+						VALUES
+							(?, ?, ?)
+						;
+					`,
+					[portfolioId, stockId, 9000]
+				)
+			).resolves.not.toThrow();
+
+
+			// Try to insert another asset that exceeds 100%
+			await expect(
+				testMySQLPool.promise().query(
+					`
+						INSERT INTO portfolio_asset
+							(portfolio_id, stock_id, percent_allocation)
+						VALUES
+							(?, ?, )
+						;
+					`,
+					[portfolioId, stockId, 2000] // 20% more (total 110%)
+				)
+			).rejects.toThrow(/Total percent allocation for the portfolio exceeds 10000/);
+		});
+
+		// Add tests for checking if updating verifies allocations
+	});
+});

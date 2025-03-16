@@ -157,6 +157,28 @@ export const dBBuilder = async (mySQLPool: mysql.Pool, dBName: string, reset: bo
 	{
 		await mySQLPool.promise().query(query);
 	}
+
+	// Add the trigger after all tables are created
+	const triggerQuery: string = `
+		CREATE TRIGGER before_portfolio_asset_insert
+		BEFORE INSERT ON portfolio_asset
+		FOR EACH ROW
+		BEGIN
+			DECLARE total_allocation INT;
+
+			SELECT COALESCE(SUM(percent_allocation), 0)
+			INTO total_allocation
+			FROM portfolio_asset
+			WHERE portfolio_id = NEW.portfolio_id;
+
+			IF total_allocation + NEW.percent_allocation > 10000 THEN
+				SIGNAL SQLSTATE '45000'
+				SET MESSAGE_TEXT = 'Total percent allocation for the portfolio exceeds 10000';
+			END IF;
+		END;
+	`;
+
+	await mySQLPool.promise().query(triggerQuery);
 };
 
 /**
