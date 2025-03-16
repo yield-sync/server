@@ -380,6 +380,15 @@ describe("Request: GET", () => {
 	});
 
 	describe("POST /api/stock/delete", () => {
+		beforeEach(async () => {
+			await insertStock(
+				CONSTANTS.STOCKS.APPLE.SYMBOL,
+				CONSTANTS.STOCKS.APPLE.NAME,
+				CONSTANTS.STOCKS.APPLE.EXCHANGE,
+				CONSTANTS.STOCKS.APPLE.ISIN
+			);
+		});
+
 		describe("Failure Cases", () => {
 			it("requires authentication", async () => {
 				await request(app).post("/api/stock/delete").send().expect(401);
@@ -397,15 +406,6 @@ describe("Request: GET", () => {
 		});
 
 		describe("Success Cases", () => {
-			beforeEach(async () => {
-				await insertStock(
-					CONSTANTS.STOCKS.APPLE.SYMBOL,
-					CONSTANTS.STOCKS.APPLE.NAME,
-					CONSTANTS.STOCKS.APPLE.EXCHANGE,
-					CONSTANTS.STOCKS.APPLE.ISIN
-				);
-			});
-
 			it("deletes stock successfully", async () => {
 				const [assets]: any[] = await mySQLPool.promise().query("SELECT * FROM stock;");
 
