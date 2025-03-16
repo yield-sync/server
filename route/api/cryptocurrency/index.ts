@@ -91,10 +91,10 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			let cryptocurrencies: ICryptocurrency[] = [
 			];
 
-			const query: string = sanitizeQuery(req.params.query);
-
 			try
 			{
+				const query: string = sanitizeQuery(req.params.query);
+
 				[
 					cryptocurrencies,
 				] = await mySQLPool.promise().query<ICryptocurrency[]>(
