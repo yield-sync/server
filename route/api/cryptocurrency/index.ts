@@ -8,8 +8,8 @@ import { user, userAdmin } from "../../../middleware/token";
 import { sanitizeQuery } from "../../../util/sanitizer";
 
 
-const ONE_HUNDRED_DAYS_IN_MINUTES: number = 1440;
-const ONE_HUNDRED_DAYS_IN_MS: number = ONE_HUNDRED_DAYS_IN_MINUTES * 60 * 1000;
+const ONE_DAY_IN_MINUTES: number = 1440;
+const ONE_DAY_IN_MS: number = ONE_DAY_IN_MINUTES * 60 * 1000;
 
 
 export default (mySQLPool: mysql.Pool): express.Router =>
@@ -123,7 +123,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				resJSON.externalRequestRequired = !lastExternalReqTimestamp || (
 					now.getTime() - lastExternalReqTimestamp.getTime()
-				) >= ONE_HUNDRED_DAYS_IN_MS;
+				) >= ONE_DAY_IN_MS;
 
 				if (resJSON.externalRequestRequired)
 				{
@@ -144,9 +144,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 						]
 					);
 
-					const externalAPIResults: CoingeckoCoin[] = await externalAPI.queryForCryptocurrency(query);
-
-					resJSON.externalAPIResults = externalAPIResults;
+					resJSON.externalAPIResults = await externalAPI.queryForCryptocurrency(query);
 
 					const [
 						cryptocurrencyCoingeckoIds,
@@ -161,9 +159,9 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 						]
 					);
 
-					for (let i = 0; i < externalAPIResults.length; i++)
+					for (let i = 0; i < resJSON.externalAPIResults.length; i++)
 					{
-						const coingeckoCoin = externalAPIResults[i];
+						const coingeckoCoin = resJSON.externalAPIResults[i];
 
 						let missingInDatabase = true;
 

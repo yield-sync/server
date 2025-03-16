@@ -1,9 +1,9 @@
 /**
- * Sanitizes a string for CoinGecko API queries.
- * @param input - The input to sanitize
- * @returns A trimmed, uppercase string with only alphanumeric characters and periods
- * @throws {TypeError} If input is not a string
- */
+* Sanitizes a string for CoinGecko API queries.
+* @param input {unknown} The input to sanitize
+* @returns A trimmed, uppercase string with only alphanumeric characters and periods
+* @throws {TypeError} If input is not a string
+*/
 export function sanitizeQuery(input: unknown): string
 {
 	if (typeof input !== "string")
@@ -12,12 +12,21 @@ export function sanitizeQuery(input: unknown): string
 	}
 
 	const trimmed = input.trim();
-	if (!trimmed) return "";
+	if (!trimmed)
+	{
+		return "";
+	}
 
 	// Remove all except alphanumeric and periods
 	return trimmed.replace(/[^a-zA-Z0-9.]/g, "");
 }
 
+/**
+* Sanitize symbol query for stocks
+* @param input {unknown} the input to santize
+* @returns A trimmed, uppercase string with only alphanumeric characters and periods
+* @throws {TypeError} If input is not a string
+*/
 export function sanitizeSymbolQuery(input: unknown): string
 {
 	if (typeof input !== "string")
@@ -34,4 +43,9 @@ export function sanitizeSymbolQuery(input: unknown): string
 
 	// Remove all except letters and trim to 10 characters
 	return trimmed.replace(/[^a-zA-Z]/g, "").substring(0, 10).toUpperCase();
+}
+
+export default {
+	sanitizeQuery,
+	sanitizeSymbolQuery,
 }
