@@ -10,8 +10,8 @@ import { sanitizeSymbolQuery } from "../../../util/sanitizer";
 import externalSource from "../../../external-api/FinancialModelingPrep";
 
 
-const ONE_HUNDRED_DAYS_IN_MINUTES: number = 144000;
-const ONE_HUNDRED_DAYS_IN_MS: number = ONE_HUNDRED_DAYS_IN_MINUTES * 60 * 1000;
+const ONE_WEEK_IN_MINUTES: number = 10080;
+const ONE_WEEK_IN_MS: number = ONE_WEEK_IN_MINUTES * 60 * 1000;
 
 
 export default (mySQLPool: mysql.Pool): express.Router =>
@@ -130,7 +130,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 					response.refreshRequired = !lastRefresh || (
 						timestamp.getTime() - lastRefresh.getTime()
-					) >= ONE_HUNDRED_DAYS_IN_MS;
+					) >= ONE_WEEK_IN_MS;
 
 
 					if (!response.refreshRequired)
