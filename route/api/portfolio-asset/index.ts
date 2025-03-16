@@ -80,7 +80,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			}
 			catch (error)
 			{
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(error);
+				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({ message: "Internal Server Error", error });
 
 				return;
 			}

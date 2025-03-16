@@ -10,8 +10,8 @@ import { sanitizeSymbolQuery } from "../../../util/sanitizer";
 import externalSource from "../../../external-api/FinancialModelingPrep";
 
 
-const EXTERNAL_CALL_DELAY_MINUTES: number = 144000;
-const EXTERNAL_CALL_DELAY_MS: number = EXTERNAL_CALL_DELAY_MINUTES * 60 * 1000;
+const ONE_HUNDRED_DAYS_IN_MINUTES: number = 144000;
+const ONE_HUNDRED_DAYS_IN_MS: number = ONE_HUNDRED_DAYS_IN_MINUTES * 60 * 1000;
 
 
 export default (mySQLPool: mysql.Pool): express.Router =>
@@ -31,7 +31,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			}
 			catch (error)
 			{
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(error);
+				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({ message: "Internal Server Error", error });
 			}
 		}
 	).get(
@@ -55,7 +55,9 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 			try
 			{
-				const symbol: string = sanitizeSymbolQuery(req.params.query);
+				const { query } = req.params;
+
+				const symbol = sanitizeSymbolQuery(query);
 
 				if (symbol == "QUERY")
 				{
@@ -128,7 +130,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 					response.refreshRequired = !lastRefresh || (
 						timestamp.getTime() - lastRefresh.getTime()
-					) >= EXTERNAL_CALL_DELAY_MS;
+					) >= ONE_HUNDRED_DAYS_IN_MS;
 
 
 					if (!response.refreshRequired)
@@ -205,7 +207,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			catch (error)
 			{
 				console.error(error);
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(error);
+				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({ message: "Internal Server Error", error });
 			}
 		}
 	).post(
@@ -245,7 +247,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			catch (error)
 			{
 				console.error(error);
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(error);
+				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({ message: "Internal Server Error", error });
 			}
 		}
 	);

@@ -36,7 +36,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			}
 			catch (error)
 			{
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(error);
+				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({ message: "Internal Server Error", error });
 
 				return;
 			}
@@ -63,7 +63,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			}
 			catch (error)
 			{
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(error);
+				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({ message: "Internal Server Error", error });
 			}
 		}
 	).get(
@@ -208,7 +208,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			catch (error)
 			{
 				console.error(error);
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(error);
+				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({ message: "Internal Server Error", error });
 			}
 		}
 	).put(
@@ -258,7 +258,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			}
 			catch (error)
 			{
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).send(error);
+				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({ message: "Internal Server Error", error });
 			}
 		}
 	);
