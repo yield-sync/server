@@ -248,30 +248,15 @@ describe("Request: GET", () => {
 		});
 
 		it("Should create a new stock under the symbol that belonged to a previous stock..", async () => {
-			// Mock the external API response
-			(externalAPI.queryForStock as jest.Mock).mockResolvedValue({
-				symbol: appleIncSymbol,
-				name: appleIncName,
-				exchange: exchange,
-				isin: appleIncIsin
-			});
-
-			await request(app).get(`/api/stock/search/${appleIncSymbol}`).set("authorization", `Bearer ${token}`);
-
-			expect(externalAPI.queryForStock).toHaveBeenCalledTimes(1);
-
-			const [stock] = await mySQLPool.promise().query<IStock>(
-				"SELECT * FROM stock WHERE isin = ?;",
-				[appleIncIsin]
+			await mySQLPool.promise().query(
+				"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
+				[
+					appleIncSymbol,
+					appleIncName,
+					exchange,
+					appleIncIsin,
+				]
 			);
-
-			expect(stock[0].symbol).toBe(appleIncSymbol);
-
-			expect(stock[0].name).toBe(appleIncName);
-
-			expect(stock[0].exchange).toBe(exchange);
-
-			expect(stock[0].isin).toBe(appleIncIsin);
 
 			const oneYearAgo = new Date((new Date()).getTime() - 365 * 24 * 60 * 60 * 1000);
 
@@ -290,52 +275,45 @@ describe("Request: GET", () => {
 			);
 
 			/**
-			* -------===++*********************++++++++===========++++++++++++=------:::-----:------=========++++-::::::
-			* -----=====+********=:::=********+++++++++++======+++++++++++++++=-----::::::::::------------=*%%%%%%#=--+#
-			* ---======++*******::::::=******++++++++++++======+++++++++++++===--------------::----------=#%%#####%%##%%
-			* -=======++*******+::::::-+*****++++++*****+++==+++++****+*****+++=+++++++***+++=--:::------+%%#######%%%##
-			* =======++********=:::::-+++=+++++************+++********************************+=-:-------+#%########%###
-			* =====++*=::::-+++=::::=+-:::::++*#@@@@@@@@@@#***#@@@@@***#@@@@@%***@@@@@@@@@@@@%*+=--------=*%%%%%%%######
-			* ====++*=:::::::::::::::::::::::*%@@@@@@@@@@@@%**#@@@@@@***#@@@@#**#@@@@@@@@@@@@#*+=-------=*%%%%%%%#######
-			* ==+++**+::::::::::::::::::::::-#@@@@@***@@@@@%**#@@@@@@@**#@@@@*++#@@%***********+=------=+###############
-			* =++******+++++++-::::::=+++==++@@@@@*+++@@@@@%*++*@@@@@@@*#@@@@*++*@@@@@@@@#***+=--=======+########%%%###%
-			* ++********++=::::::--:::::-++++@@@@@****%@@@@%***#@@@%@@@@%@@@@*++*@@@@%####*++---=========*####%%%%######
-			* *********++:::::::=++=::::::-+*@@@@@****%@@@@%***%@@@**@@@@@@@@****@@@@#****++=====+=========+*#%%%#######
-			* ********++-::::::=+++=:::::::=*@@@@@****@@@@@%*+*%@@@**#@@@@@@@****@@@@#******+++++++++========*%%%#######
-			* ********+++:::::++++++::::::+++@@@@@%**#@@@@@%***@@@@***@@@@@@@***#@@@@@@@@@@@@**++++++========+%%%######%
-			* +++++++++++++++++**++++=-=++++*#@@@@@@@@@@@@@#**#@@@@****@@@@@@***%@@@@@@@@@@@%**++++++++=======*%%%%%%%%%
-			* ++++++++==+++*****+++++++++++****%@@@@@@@@@@****%@@@@*****@@@@%***@@@@@@@@@@@@%**++++++++=======++#%%%%%##
-			* +++++=======+***++++++++++++++****************************************************++++++++==========+*#***
-			* +=====+==+*%%%%%#**+++++++****************************+********************************++============*#***
-			* ========*%%%%%%%%%###***#@@@@@**#%%%##***###%%%%%%%%%#***#@@@@@@@@@@@****%@@@@@@@@@@@#**++========--=*%#**
-			* +=====+*%%%####%%%###%#*@@@@@%**#@@@@@#*#@@@@@@@@@@@@@***@@@@@@@@@@@@****%@@@@@##%@@@@%**+++++====--+#%%%#
-			* +++++++#%%#####%%###%%#*@@@@@#++*%@@@@#*#@@@#************##@@@@%*#@@@#***%@@@@%+++#@@@@**++=====---=*%#***
-			* ++++***%%%%%###########*@@@@%++***@@@@%*%@@@@@@@@%**+++****%@@@#**@@@%***%@@@@%++++%@@@#**+=====---=*#****
-			* +++++*%%%%#############*@@@@#+++**#@@@%*%@@@@@@@@@%++++***#@@@@***#@@%***%@@@@%++++#@@@***+=====-----+##%*
-			* ++++++###########%%%%***@@@@*++***%@@@#*%@@@@%*****++++***%@@@%****@@@***#@@@@%++++%@@%***+======----=#%#*
-			* ++++++*####%%%####%%*=+*@@@@@@@@@@@@@%**%@@@@@***********#@@@@%%%@@@@@***#@@@@@@@@@@@@****++=====---:-+#%#
-			* ++++++++***%%%####%%+=++**%@@@@@@@%#****%@@@@@#*****##***@@@@@@@@@@@@@****@@@@@@@@@@@@@***++====----:::=*#
-			* +++***+++===#%%##%%*===++***#@@@@#******%@@@@@@@@@@@@@**@@@@@%%%%@@@@@****@@@%***#@@@@@%***+==-------:::::
-			* +++***++===-==+**+======+***#@@@@#***+**%@@@@@@@@@@@@@*%@@@@@****%@@@@#***@@@%****@@@@@@@**++==--------:::
-			* ==++**++==-------==++++*****#@@@@#**++***%%%%%%%%%%%%%*%%%%%%****%@@@@%***@@@%****#@@@@@%#**++===---------
-			* ===+++++==------=+*****************************************************************##***********+==---=+++
-			* =+++++++++==----=+*#@@@@@***********%@@@@@@@@@@@#**@@@@@@@@@@@@@@@@%**@@@@@@@@@@@@@*#%@@@@@@@@%%#*++==+=--
-			* *+++********=--=+**#@@@@%***********%@@@@@@@@@@@%**@@@@@@@@@@@@@@@@%*#@@@@@@@@@@@@@*#@@@@@@@@@@@@%**++*+--
-			* *#####*******=-=+**%@@@@************@@@@@@@%%@@@%**@@@@@@@@@@@@@@@@%*#@@@***********#@@@@@%***%@@@%*+-----
-			* **#%##*******+-=+**%@@@%**************%@@@*++%@@%**@@@@@@@@@@%*******#@@@@@@@@%*****#@@@@@%***+%@@@#=-----
-			* ***%%%******#******%@@@#*************%@@@%+++#@@%*******%@@@@%*******#@@@@@@@@@#*****@@@@@@****#@@@******+
-			* ***#%%****#%%#*****@@@@*************#@@@@%+++#@@@*+++***%@@@@%*******#@@@@%**********%@@@@@#***#@@%***+**=
-			* *********#%%******#@@@%*************%@@@@*+++*@@@*+++***%@@@@%********@@@@%**********%@@@@@@%%%@@@#**+++**
-			* %#****************#@@@#********##**#@@@@@@@@@@@@@#++++**%@@@@%***+****@@@@%#*######**%@@@@@@@@@@@@%**++==+
-			* %%#***************%@@@%%%%@@@@@@@**%@@@@@@@@@@@@@%+++++*%@@@@%**++****@@@@@@@@@@@@@**#@@@@@%%@@@@@@%**+===
-			* *********#%%%#****@@@@@@@@@@@@@@@**@@@@%###%@@@@@@++++**#@@@@%**+++***@@@@@@@@@@@@@***@@@@#***@@@@@@%*+===
-			* ****%#****#%##***#@@@@@@@@@@@@@@%*#@@@@#****%@@@@@#**+**#@@@@%**+=++**%%%%%%%%%@@@@***@@@@#***#@@@@@@#+=--
-			* **#%%#*****#%##**%@@@@@@@@@@@@@@#*@@@@@#****%@@@@@@**++*#@%****+====++****************@@@@#****%@@@@@%+---
-			* *#%%%*******#%%**#########**************************++++++++++++===================++****+++++**#**++=----
-			* ######******#%##********************++++++++++=++++++++++==+++++======-------------======-----====--------
-			* ++++*##*****####********************+++++=======+++++++++=============------------------------------------
-			* +++++**#######***********************++++=======++++++++============--------------------------------------
-			* +++**********************************+++++=====++++++++++==========------------:--------------------------
+			* ******=:::::-+++=+++++************+++********************************+=-:-------+#%########%###
+			* ::-+++=::::=+-:::::++*#@@@@@@@@@@#***#@@@@@***#@@@@@%***@@@@@@@@@@@@%*+=--------=*%%%%%%%######
+			* ::::::::::::::::::::*%@@@@@@@@@@@@%**#@@@@@@***#@@@@#**#@@@@@@@@@@@@#*+=-------=*%%%%%%%#######
+			* :::::::::::::::::::-#@@@@@***@@@@@%**#@@@@@@@**#@@@@*++#@@%***********+=------=+###############
+			* +++++-::::::=+++==++@@@@@*+++@@@@@%*++*@@@@@@@*#@@@@*++*@@@@@@@@#***+=--=======+########%%%###%
+			* +=::::::--:::::-++++@@@@@****%@@@@%***#@@@%@@@@%@@@@*++*@@@@%####*++---=========*####%%%%######
+			* :::::::=++=::::::-+*@@@@@****%@@@@%***%@@@**@@@@@@@@****@@@@#****++=====+=========+*#%%%#######
+			* ::::::=+++=:::::::=*@@@@@****@@@@@%*+*%@@@**#@@@@@@@****@@@@#******+++++++++========*%%%#######
+			* :::::++++++::::::+++@@@@@%**#@@@@@%***@@@@***@@@@@@@***#@@@@@@@@@@@@**++++++========+%%%######%
+			* ++++++**++++=-=++++*#@@@@@@@@@@@@@#**#@@@@****@@@@@@***%@@@@@@@@@@@%**++++++++=======*%%%%%%%%%
+			* ++*****+++++++++++****%@@@@@@@@@@****%@@@@*****@@@@%***@@@@@@@@@@@@%**++++++++=======++#%%%%%##
+			* =+***++++++++++++++****************************************************++++++++==========+*#***
+			* %%%%%#**+++++++****************************+********************************++============*#***
+			* %%%%%%%###***#@@@@@**#%%%##***###%%%%%%%%%#***#@@@@@@@@@@@****%@@@@@@@@@@@#**++========--=*%#**
+			* ####%%%###%#*@@@@@%**#@@@@@#*#@@@@@@@@@@@@@***@@@@@@@@@@@@****%@@@@@##%@@@@%**+++++====--+#%%%#
+			* ####%%###%%#*@@@@@#++*%@@@@#*#@@@#************##@@@@%*#@@@#***%@@@@%+++#@@@@**++=====---=*%#***
+			* %###########*@@@@%++***@@@@%*%@@@@@@@@%**+++****%@@@#**@@@%***%@@@@%++++%@@@#**+=====---=*#****
+			* ############*@@@@#+++**#@@@%*%@@@@@@@@@%++++***#@@@@***#@@%***%@@@@%++++#@@@***+=====-----+##%*
+			* ######%%%%***@@@@*++***%@@@#*%@@@@%*****++++***%@@@%****@@@***#@@@@%++++%@@%***+======----=#%#*
+			* %%%####%%*=+*@@@@@@@@@@@@@%**%@@@@@***********#@@@@%%%@@@@@***#@@@@@@@@@@@@****++=====---:-+#%#
+			* %%%####%%+=++**%@@@@@@@%#****%@@@@@#*****##***@@@@@@@@@@@@@****@@@@@@@@@@@@@***++====----:::=*#
+			* =#%%##%%*===++***#@@@@#******%@@@@@@@@@@@@@**@@@@@%%%%@@@@@****@@@%***#@@@@@%***+==-------:::::
+			* -==+**+======+***#@@@@#***+**%@@@@@@@@@@@@@*%@@@@@****%@@@@#***@@@%****@@@@@@@**++==--------:::
+			* ------==++++*****#@@@@#**++***%%%%%%%%%%%%%*%%%%%%****%@@@@%***@@@%****#@@@@@%#**++===---------
+			* -----=+*****************************************************************##***********+==---=+++
+			* =----=+*#@@@@@***********%@@@@@@@@@@@#**@@@@@@@@@@@@@@@@%**@@@@@@@@@@@@@*#%@@@@@@@@%%#*++==+=--
+			* *=--=+**#@@@@%***********%@@@@@@@@@@@%**@@@@@@@@@@@@@@@@%*#@@@@@@@@@@@@@*#@@@@@@@@@@@@%**++*+--
+			* **=-=+**%@@@@************@@@@@@@%%@@@%**@@@@@@@@@@@@@@@@%*#@@@***********#@@@@@%***%@@@%*+-----
+			* **+-=+**%@@@%**************%@@@*++%@@%**@@@@@@@@@@%*******#@@@@@@@@%*****#@@@@@%***+%@@@#=-----
+			* *#******%@@@#*************%@@@%+++#@@%*******%@@@@%*******#@@@@@@@@@#*****@@@@@@****#@@@******+
+			* %%#*****@@@@*************#@@@@%+++#@@@*+++***%@@@@%*******#@@@@%**********%@@@@@#***#@@%***+**=
+			* %******#@@@%*************%@@@@*+++*@@@*+++***%@@@@%********@@@@%**********%@@@@@@%%%@@@#**+++**
+			* *******#@@@#********##**#@@@@@@@@@@@@@#++++**%@@@@%***+****@@@@%#*######**%@@@@@@@@@@@@%**++==+
+			* *******%@@@%%%%@@@@@@@**%@@@@@@@@@@@@@%+++++*%@@@@%**++****@@@@@@@@@@@@@**#@@@@@%%@@@@@@%**+===
+			* %%#****@@@@@@@@@@@@@@@**@@@@%###%@@@@@@++++**#@@@@%**+++***@@@@@@@@@@@@@***@@@@#***@@@@@@%*+===
+			* %##***#@@@@@@@@@@@@@@%*#@@@@#****%@@@@@#**+**#@@@@%**+=++**%%%%%%%%%@@@@***@@@@#***#@@@@@@#+=--
+			* #%##**%@@@@@@@@@@@@@@#*@@@@@#****%@@@@@@**++*#@%****+====++****************@@@@#****%@@@@@%+---
+			* *#%%**#########**************************++++++++++++===================++****+++++**#**++=----
+			* *#%##********************++++++++++=++++++++++==+++++======-------------======-----====--------
 			*/
 
 			/**
@@ -343,13 +321,6 @@ describe("Request: GET", () => {
 			* agreement to do this and now trade under what was the once the others name and symbol.
 			*/
 
-			const afterAgreementBananaIncName = appleIncName;
-
-			const afterAgreementAppleIncSymbol = bananaIncSymbol;
-			const afterAgreementAppleIncName = bananaIncName;
-			const afterAgreementAppleIncIsin = bananaIncIsin;
-
-
 			// Mock the external API response
 			(externalAPI.queryForStock as jest.Mock).mockResolvedValue({
 				isin: bananaIncIsin,
@@ -364,147 +335,35 @@ describe("Request: GET", () => {
 				symbol: bananaIncSymbol,
 				name: bananaIncName,
 				exchange: exchange,
-			});
-
-			await request(app).get(`/api/stock/search/${appleIncSymbol}`).set("authorization", `Bearer ${token}`);
-
-			expect(externalAPI.queryForStock).toHaveBeenCalledTimes(2);
-
-			expect(externalAPI.queryForStockByIsin).toHaveBeenCalledTimes(1);
-
-			const [afterAgreementAppleStock] = await mySQLPool.promise().query<IStock>(
-				"SELECT * FROM stock WHERE symbol = ?;",
-				[appleIncSymbol]
-			);
-
-			expect(afterAgreementAppleStock[0].isin).toBe(
-				afterAgreementAppleIncIsin
-			);
-
-			expect(afterAgreementAppleStock[0].name).toBe(
-				afterAgreementBananaIncName
-			);
-
-			const [afterAgreementBananaStock] = await mySQLPool.promise().query<IStock>(
-				"SELECT * FROM stock WHERE isin = ?;",
-				[appleIncIsin]
-			);
-
-			expect(afterAgreementBananaStock[0].symbol).toBe(
-				afterAgreementAppleIncSymbol
-			);
-
-			expect(afterAgreementBananaStock[0].name).toBe(
-				afterAgreementAppleIncName
-			);
-		});
-
-		it("Should update the symbol and name of an existing stock with an isin of the externally received isin..", async () => {
-			// Mock the external API response
-			(externalAPI.queryForStock as jest.Mock).mockResolvedValue({
-				symbol: appleIncSymbol,
-				name: appleIncName,
-				exchange: exchange,
-				isin: appleIncIsin
 			});
 
 			await request(app).get(`/api/stock/search/${appleIncSymbol}`).set("authorization", `Bearer ${token}`);
 
 			expect(externalAPI.queryForStock).toHaveBeenCalledTimes(1);
 
-			const [stock] = await mySQLPool.promise().query<IStock>(
-				"SELECT * FROM stock WHERE isin = ?;",
-				[appleIncIsin]
-			);
-
-			expect(stock[0].symbol).toBe(appleIncSymbol);
-
-			expect(stock[0].name).toBe(appleIncName);
-
-			expect(stock[0].exchange).toBe(exchange);
-
-			expect(stock[0].isin).toBe(appleIncIsin);
-
-			// Mock the external API response
-			(externalAPI.queryForStock as jest.Mock).mockResolvedValue({
-				symbol: bananaIncSymbol,
-				name: bananaIncName,
-				exchange: exchange,
-				isin: bananaIncIsin
-			});
-
-			await request(app).get(`/api/stock/search/${bananaIncSymbol}`).set("authorization", `Bearer ${token}`);
-
-			expect(externalAPI.queryForStock).toHaveBeenCalledTimes(2);
-
-			const [stockOther] = await mySQLPool.promise().query<IStock>(
-				"SELECT * FROM stock WHERE symbol = ?;",
-				[bananaIncSymbol]
-			);
-
-			expect(stockOther[0].symbol).toBe(bananaIncSymbol);
-
-			expect(stockOther[0].name).toBe(bananaIncName);
-
-			expect(stockOther[0].exchange).toBe(exchange);
-
-			expect(stockOther[0].isin).toBe(bananaIncIsin);
-
-			const oneYearAgo = new Date((new Date()).getTime() - 365 * 24 * 60 * 60 * 1000);
-
-			// Add a last_refresh_timestamp so far in the future that the external request has to trigger
-			await mySQLPool.promise().query(
-				`
-					INSERT INTO
-						query_stock (query, last_refresh_timestamp)
-					VALUES
-						(?, ?)
-					ON DUPLICATE KEY UPDATE
-						last_refresh_timestamp = ?
-					;
-				`,
-				[appleIncSymbol, oneYearAgo, oneYearAgo]
-			);
-
-			// One year later
-
-			// Mock the external API response
-			(externalAPI.queryForStock as jest.Mock).mockResolvedValue({
-				symbol: appleIncSymbol,
-				name: appleIncName,
-				exchange: exchange,
-				isin: bananaIncIsin,
-			});
-
-			// Mock external API response
-			(externalAPI.queryForStockByIsin as jest.Mock).mockResolvedValue({
-				symbol: bananaIncSymbol,
-				name: bananaIncName,
-				exchange: exchange,
-				isin: appleIncIsin,
-			});
-
-			await request(app).get(`/api/stock/search/${appleIncSymbol}`).set("authorization", `Bearer ${token}`);
-
-			expect(externalAPI.queryForStock).toHaveBeenCalledTimes(3);
-
 			expect(externalAPI.queryForStockByIsin).toHaveBeenCalledTimes(1);
 
-			const [stockUpdated] = await mySQLPool.promise().query<IStock>(
+			const [formallyBananaIncStock] = await mySQLPool.promise().query<IStock>(
 				"SELECT * FROM stock WHERE symbol = ?;",
 				[appleIncSymbol]
 			);
 
-			expect(stockUpdated[0].isin).toBe(bananaIncIsin);
+			expect(formallyBananaIncStock[0].isin).toBe(bananaIncIsin);
 
-			const [stockOtherUpdated] = await mySQLPool.promise().query<IStock>(
+			expect(formallyBananaIncStock[0].symbol).toBe(appleIncSymbol);
+
+			expect(formallyBananaIncStock[0].name).toBe(appleIncName);
+
+			const [formallyAppleIncStock] = await mySQLPool.promise().query<IStock>(
 				"SELECT * FROM stock WHERE isin = ?;",
-				[bananaIncIsin]
+				[appleIncIsin]
 			);
 
-			expect(stockOtherUpdated[0].symbol).toBe(appleIncSymbol);
+			expect(formallyAppleIncStock[0].isin).toBe(appleIncIsin);
 
-			expect(stockOtherUpdated[0].name).toBe(appleIncName);
+			expect(formallyAppleIncStock[0].symbol).toBe(bananaIncSymbol);
+
+			expect(formallyAppleIncStock[0].name).toBe(bananaIncName);
 		});
 	});
 });
