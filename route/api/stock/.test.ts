@@ -315,18 +315,19 @@ describe("Request: GET", () => {
 			});
 
 			it("Should update the symbol and name of an EXISTING stock with an isin equal to the externally received isin..", async () => {
+				/**
+				* @dev Criteria for This Edgecase to Occur
+				* 1) Banana Inc. decides to change their name to Orange Inc.
+				* 2) Apple Inc. decides to change their name to Banana Inc.
+				*/
+
+				// Mock an existing stock existing in the DB
 				await insertStock(
 					CONSTANTS.STOCKS.BANANA.SYMBOL,
 					CONSTANTS.STOCKS.BANANA.NAME,
 					CONSTANTS.STOCKS.BANANA.EXCHANGE,
 					CONSTANTS.STOCKS.BANANA.ISIN,
 				);
-
-				/**
-				* @dev Criteria for This Edgecase to Occur
-				* 1) Banana Inc. decides to change their name to Orange Inc.
-				* 2) Apple Inc. decides to change their name to Banana Inc.
-				*/
 
 				// Mock the external API response
 				(externalAPI.queryForStock as jest.Mock).mockResolvedValue({
