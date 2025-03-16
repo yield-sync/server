@@ -176,8 +176,8 @@ describe("Request: GET", () => {
 			});
 		});
 
-		describe("Existing Stock needs refresh", () => {
-			it("Should refresh the stock if required..", async () => {
+		describe("Existing stock needs refresh", () => {
+			beforeEach(async () => {
 				await mySQLPool.promise().query(
 					"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
 					[
@@ -187,7 +187,9 @@ describe("Request: GET", () => {
 						appleIncIsin,
 					]
 				);
+			});
 
+			it("Should refresh the stock if required..", async () => {
 				const oneYearAgo = new Date((new Date()).getTime() - 365 * 24 * 60 * 60 * 1000);
 
 				// Add a last_refresh_timestamp so far in the future that the external request cannot trigger
@@ -221,11 +223,10 @@ describe("Request: GET", () => {
 
 			it("Should update stock name and symbol if ISIN found already in DB..", async () => {
 				await mySQLPool.promise().query(
-					"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
+					"UPDATE stock SET symbol = ?, name = ? WHERE isin = ?;",
 					[
 						"FB",
 						"Facebook Inc.",
-						exchange,
 						appleIncIsin,
 					]
 				);
@@ -257,20 +258,9 @@ describe("Request: GET", () => {
 			});
 
 			it("Should create a new stock under the symbol that belonged to a previous stock..", async () => {
-				await mySQLPool.promise().query(
-					"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
-					[
-						appleIncSymbol,
-						appleIncName,
-						exchange,
-						appleIncIsin,
-					]
-				);
-
 				/**
-				* @dev For some reason the name and symbols have been swapped between the 2 companies possibly because
-				* they had a weird agreement to do this and now they trade under what was the once each others name and
-				* symbol.
+				* @dev For the edgecase to occur 2 companies decide to swap their names and symbols. Now they trade
+				* under what was the once the others name and symbol.
 				*/
 
 				// Mock the external API response
@@ -322,16 +312,6 @@ describe("Request: GET", () => {
 				await mySQLPool.promise().query(
 					"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
 					[
-						appleIncSymbol,
-						appleIncName,
-						exchange,
-						appleIncIsin,
-					]
-				);
-
-				await mySQLPool.promise().query(
-					"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
-					[
 						bananaIncSymbol,
 						bananaIncName,
 						exchange,
@@ -340,8 +320,9 @@ describe("Request: GET", () => {
 				);
 
 				/**
-				* @dev Apple decided to change their name to Banana Inc. And what was formally Banana Inc. decided to
-				* change their name to Orance Inc.
+				* @dev Events that happen for this edgecase to occur
+				* 1) Banana Inc. decides to change their name to Orange Inc.
+				* 2) Apple Inc. decides to change their name to Banana Inc.
 				*/
 
 				// Mock the external API response
