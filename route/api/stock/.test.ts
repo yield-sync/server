@@ -178,6 +178,7 @@ describe("Request: GET", () => {
 
 		describe("Existing stock needs refresh", () => {
 			beforeEach(async () => {
+				// Insert the Apple Inc. stock
 				await mySQLPool.promise().query(
 					"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
 					[
@@ -259,8 +260,9 @@ describe("Request: GET", () => {
 
 			it("Should create a new stock under the symbol that belonged to a previous stock..", async () => {
 				/**
-				* @dev For the edgecase to occur 2 companies decide to swap their names and symbols. Now they trade
-				* under what was the once the others name and symbol.
+				* @dev Criteria for This Edgecase to Occur
+				* 2 companies decide to swap their names and symbols. Now they trade under what was the once the others
+				* name and symbol.
 				*/
 
 				// Mock the external API response
@@ -308,7 +310,7 @@ describe("Request: GET", () => {
 				expect(formallyAppleIncStock[0].name).toBe(bananaIncName);
 			});
 
-			it("Should update the symbol and name of an existing stock with an isin of the externally received isin..", async () => {
+			it("Should update the symbol and name of an EXISTING stock with an isin equal to the externally received isin..", async () => {
 				await mySQLPool.promise().query(
 					"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
 					[
@@ -320,7 +322,7 @@ describe("Request: GET", () => {
 				);
 
 				/**
-				* @dev Events that happen for this edgecase to occur
+				* @dev Criteria for This Edgecase to Occur
 				* 1) Banana Inc. decides to change their name to Orange Inc.
 				* 2) Apple Inc. decides to change their name to Banana Inc.
 				*/
