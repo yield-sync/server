@@ -8,8 +8,8 @@ import externalAPI from "../../../external-api/coingecko";
 import { sanitizeQuery } from "../../../util/sanitizer";
 
 
-const EXTERNAL_CALL_DELAY_MINUTES: number = 1440;
-const EXTERNAL_CALL_DELAY_MS: number = EXTERNAL_CALL_DELAY_MINUTES * 60 * 1000;
+const ONE_HUNDRED_DAYS_IN_MINUTES: number = 1440;
+const ONE_HUNDRED_DAYS_IN_MS: number = ONE_HUNDRED_DAYS_IN_MINUTES * 60 * 1000;
 
 
 export default (mySQLPool: mysql.Pool): express.Router =>
@@ -123,7 +123,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				resJSON.externalRequestRequired = !lastExternalReqTimestamp || (
 					now.getTime() - lastExternalReqTimestamp.getTime()
-				) >= EXTERNAL_CALL_DELAY_MS;
+				) >= ONE_HUNDRED_DAYS_IN_MS;
 
 				if (resJSON.externalRequestRequired)
 				{
