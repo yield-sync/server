@@ -100,8 +100,8 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					{
 						await DBHandlerStock.updateStock(
 							mySQLPool,
-							stockQueryResult.name,
 							stockQueryResult.symbol,
+							stockQueryResult.name,
 							stockQueryResult.exchange.toLowerCase(),
 							stocksWithExternalIsinId[0].id
 						);
