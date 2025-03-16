@@ -268,6 +268,23 @@ describe("Request: GET", () => {
 
 				expect(response.text).toBe("Invalid percent_allocation");
 			});
+
+			it("Should fail if to insert percent_allocation < 0..", async () => {
+				const response = await request(app).post("/api/portfolio-asset/create").set(
+					'authorization',
+					`Bearer ${token}`
+				).send({
+					load: {
+						portfolio_id,
+						stock_id,
+						percent_allocation: -1,
+					} as PortfolioAssetCreate
+				});
+
+				expect(response.statusCode).toBe(400);
+
+				expect(response.text).toBe("Invalid percent_allocation");
+			});
 		});
 	});
 });

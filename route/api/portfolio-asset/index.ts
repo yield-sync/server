@@ -44,7 +44,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				if (percent_allocation > 10_000)
+				if (percent_allocation < 0 || percent_allocation > 10_000)
 				{
 					res.status(hTTPStatus.BAD_REQUEST).send("Invalid percent_allocation");
 
