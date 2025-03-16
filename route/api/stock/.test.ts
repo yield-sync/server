@@ -268,8 +268,9 @@ describe("Request: GET", () => {
 				);
 
 				/**
-				* @dev For some reason the name and symbols have been swapped between the 2 companies. They had a weird
-				* agreement to do this and now trade under what was the once the others name and symbol.
+				* @dev For some reason the name and symbols have been swapped between the 2 companies possibly because
+				* they had a weird agreement to do this and now they trade under what was the once each others name and
+				* symbol.
 				*/
 
 				// Mock the external API response
@@ -339,8 +340,8 @@ describe("Request: GET", () => {
 				);
 
 				/**
-				* @dev Apple decided to change their name to Banana Inc. And Banana Inc. decided to change their name to
-				* Orance Inc.
+				* @dev Apple decided to change their name to Banana Inc. And what was formally Banana Inc. decided to
+				* change their name to Orance Inc.
 				*/
 
 				// Mock the external API response
