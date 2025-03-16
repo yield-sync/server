@@ -103,7 +103,7 @@ describe("Request: GET", () =>
 		});
 
 		describe("Expected Success", () => {
-			const QUERY: string = "USD";
+			const cryptoSymbol: string = "USD";
 
 			describe("No external request made", () => {
 				beforeEach(async () => {
@@ -112,7 +112,7 @@ describe("Request: GET", () =>
 					{
 						await mySQLPool.promise().query(
 							"INSERT INTO cryptocurrency (symbol, name, coingecko_id) VALUES (?, ?, ?);",
-							[QUERY, `US Dollar ${i}`, `usdc-${i}`]
+							[cryptoSymbol, `US Dollar ${i}`, `usdc-${i}`]
 						);
 					}
 
@@ -129,12 +129,12 @@ describe("Request: GET", () =>
 								last_refresh_timestamp = ?
 							;
 						`,
-						[QUERY, fiveDaysAfter, fiveDaysAfter]
+						[cryptoSymbol, fiveDaysAfter, fiveDaysAfter]
 					);
 				});
 
 				it("Should return up to 10 database results without external call..", async () => {
-					const res = await request(app).get(`/api/cryptocurrency/search/${QUERY}`).set(
+					const res = await request(app).get(`/api/cryptocurrency/search/${cryptoSymbol}`).set(
 						"authorization",
 						`Bearer ${token}`
 					).expect(200);
@@ -149,7 +149,7 @@ describe("Request: GET", () =>
 					expect(res.body.externalAPIResults).toHaveLength(0);
 
 					// Verify that the cryptocurrencies are correct
-					expect(res.body.cryptocurrencies.every((c: ICryptocurrency) => c.symbol.includes(QUERY))).toBe(true);
+					expect(res.body.cryptocurrencies.every((c: ICryptocurrency) => c.symbol.includes(cryptoSymbol))).toBe(true);
 				});
 			});
 
@@ -158,8 +158,8 @@ describe("Request: GET", () =>
 					beforeEach(async () => {
 						// Mock external API response
 						(externalAPI.queryForCryptocurrency as jest.Mock).mockResolvedValueOnce([
-							{ id: "usdc-1", symbol: QUERY, name: "US Dollar 1" },
-							{ id: "usdc-2", symbol: QUERY, name: "US Dollar 2" },
+							{ id: "usdc-1", symbol: cryptoSymbol, name: "US Dollar 1" },
+							{ id: "usdc-2", symbol: cryptoSymbol, name: "US Dollar 2" },
 						]);
 					});
 
@@ -173,7 +173,7 @@ describe("Request: GET", () =>
 							["USD", "US Dollar 0", "usdc-0"]
 						);
 
-						const res = await request(app).get(`/api/cryptocurrency/search/${QUERY}`).set(
+						const res = await request(app).get(`/api/cryptocurrency/search/${cryptoSymbol}`).set(
 							"authorization",
 							`Bearer ${token}`
 						).expect(200);
@@ -186,7 +186,7 @@ describe("Request: GET", () =>
 						// Full external response
 						expect(res.body.externalAPIResults).toHaveLength(2);
 
-						expect(externalAPI.queryForCryptocurrency).toHaveBeenCalledWith(QUERY);
+						expect(externalAPI.queryForCryptocurrency).toHaveBeenCalledWith(cryptoSymbol);
 
 						// Check database sync
 						const [dbCryptos] = await mySQLPool.promise().query<ICryptocurrency[]>(
@@ -205,7 +205,7 @@ describe("Request: GET", () =>
 						expect(externalAPI.queryForCryptocurrency).toHaveBeenCalledTimes(0);
 
 						// First call: triggers external API
-						const res = await request(app).get(`/api/cryptocurrency/search/${QUERY}`).set(
+						const res = await request(app).get(`/api/cryptocurrency/search/${cryptoSymbol}`).set(
 							"authorization",
 							`Bearer ${token}`
 						).expect(200);
@@ -215,7 +215,7 @@ describe("Request: GET", () =>
 						expect(externalAPI.queryForCryptocurrency).toHaveBeenCalledTimes(1);
 
 						// Second call: within 1440 minutes, should not call external API again
-						const res2 = await request(app).get(`/api/cryptocurrency/search/${QUERY}`).set(
+						const res2 = await request(app).get(`/api/cryptocurrency/search/${cryptoSymbol}`).set(
 							"authorization",
 							`Bearer ${token}`
 						).expect(200);
@@ -238,7 +238,7 @@ describe("Request: GET", () =>
 						// Mock external API to return empty array
 						(externalAPI.queryForCryptocurrency as jest.Mock).mockResolvedValueOnce([]);
 
-						const res = await request(app).get(`/api/cryptocurrency/search/${QUERY}`).set(
+						const res = await request(app).get(`/api/cryptocurrency/search/${cryptoSymbol}`).set(
 							"authorization",
 							`Bearer ${token}`
 						).expect(200);
