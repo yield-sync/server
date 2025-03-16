@@ -125,14 +125,11 @@ beforeEach(async () =>
 });
 
 
-describe("Request: GET", () =>
-{
+describe("Request: GET", () => {
 	describe("Route: /api/portfolio-asset/", () =>
 	{
-		describe("Expected Failure", () =>
-		{
-			it("[auth] Should require a user token to insert portfolio asset into DB..", async () =>
-			{
+		describe("Expected Failure", () => {
+			it("[auth] Should require a user token to insert portfolio asset into DB..", async () => {
 				await request(app).post("/api/portfolio-asset/create").send({
 					load: {
 						portfolio_id,
@@ -150,8 +147,7 @@ describe("Request: GET", () =>
 				expect(results.length).toBe(0);
 			});
 
-			it("Should fail if no portfolio_id passed..", async () =>
-			{
+			it("Should fail if no portfolio_id passed..", async () => {
 				const RES = await request(app).post("/api/portfolio-asset/create").set(
 					'authorization',
 					`Bearer ${token}`
@@ -169,8 +165,7 @@ describe("Request: GET", () =>
 				expect(results.length).toBe(0);
 			});
 
-			it("Should fail if no portfolio asset_id passed..", async () =>
-			{
+			it("Should fail if no portfolio asset_id passed..", async () => {
 				const RES = await request(app).post("/api/portfolio-asset/create").set(
 					'authorization',
 					`Bearer ${token}`
@@ -192,8 +187,7 @@ describe("Request: GET", () =>
 				expect(results.length).toBe(0);
 			});
 
-			it("Should fail if no percent_allocation passed..", async () =>
-			{
+			it("Should fail if no percent_allocation passed..", async () => {
 				const RES = await request(app).post("/api/portfolio-asset/create").set(
 					'authorization',
 					`Bearer ${token}`
@@ -217,10 +211,8 @@ describe("Request: GET", () =>
 			});
 		});
 
-		describe("Expected Success", () =>
-		{
-			it("Should insert portfolio asset into database..", async () =>
-			{
+		describe("Expected Success", () => {
+			it("Should insert portfolio asset into database..", async () => {
 				const RES_PORTFOLIO_ASSET = await request(app).post("/api/portfolio-asset/create").set(
 					'authorization',
 					`Bearer ${token}`
@@ -258,11 +250,29 @@ describe("Request: GET", () =>
 				expect(portfolioAssests[0].portfolio_id).toBe(portfolio_id);
 			});
 		});
+
+		describe("Expected Failure (2)", () => {
+			it("Should fail if to insert percent_allocation > 10_000..", async () => {
+				const response = await request(app).post("/api/portfolio-asset/create").set(
+					'authorization',
+					`Bearer ${token}`
+				).send({
+					load: {
+						portfolio_id,
+						stock_id,
+						percent_allocation: 10_001,
+					} as PortfolioAssetCreate
+				});
+
+				expect(response.statusCode).toBe(400);
+
+				expect(response.text).toBe("Invalid percent_allocation");
+			});
+		});
 	});
 });
 
-afterAll(async () =>
-{
+afterAll(async () => {
 	await dBDrop(DB_NAME, mySQLPool);
 
 	await mySQLPool.end();

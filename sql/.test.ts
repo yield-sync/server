@@ -67,7 +67,7 @@ describe("Database Initialization", () =>
 	});
 });
 
-describe("Stock", () =>
+describe("table: stock", () =>
 {
 	describe("Expected Failure", () =>
 	{
@@ -135,7 +135,7 @@ describe("Stock", () =>
 	});
 });
 
-describe("Cryptocurrency", () =>
+describe("Table: cryptocurrency", () =>
 {
 	describe("Expected Failure", () =>
 	{
