@@ -94,81 +94,85 @@ describe("Request: GET", () => {
 			jest.clearAllMocks();
 		});
 
-		it("Should return 400 for an invalid query..", async () => {
-			const res = await request(app).get("/api/stock/search/QUERY").set("authorization", `Bearer ${token}`);
+		describe("Expected Failure", () => {
+			it("Should return 400 for an invalid query..", async () => {
+				const res = await request(app).get("/api/stock/search/QUERY").set("authorization", `Bearer ${token}`);
 
-			expect(res.statusCode).toBe(400);
+				expect(res.statusCode).toBe(400);
+			});
 		});
 
-		it("Should return stock from DB if it exists and NOT make external request..", async () => {
-			const fiveDaysAfter = new Date((new Date()).getTime() + 5 * 24 * 60 * 60 * 1000);
+		describe("Expected Success", () => {
+			it("Should return stock from DB if it exists and NOT make external request..", async () => {
+				const fiveDaysAfter = new Date((new Date()).getTime() + 5 * 24 * 60 * 60 * 1000);
 
-			// Add a last_refresh_timestamp so far in the future that the external request cannot trigger
-			await mySQLPool.promise().query(
-				`
-					INSERT INTO
-						query_stock (query, last_refresh_timestamp)
-					VALUES
-						(?, ?)
-					ON DUPLICATE KEY UPDATE
-						last_refresh_timestamp = ?
-					;
-				`,
-				[appleIncSymbol, fiveDaysAfter, fiveDaysAfter]
-			);
+				// Add a last_refresh_timestamp so far in the future that the external request cannot trigger
+				await mySQLPool.promise().query(
+					`
+						INSERT INTO
+							query_stock (query, last_refresh_timestamp)
+						VALUES
+							(?, ?)
+						ON DUPLICATE KEY UPDATE
+							last_refresh_timestamp = ?
+						;
+					`,
+					[appleIncSymbol, fiveDaysAfter, fiveDaysAfter]
+				);
 
-			await mySQLPool.promise().query(
-				"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
-				[
-					appleIncSymbol,
-					appleIncName,
-					exchange,
-					appleIncIsin,
-				]
-			);
+				await mySQLPool.promise().query(
+					"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
+					[
+						appleIncSymbol,
+						appleIncName,
+						exchange,
+						appleIncIsin,
+					]
+				);
 
-			const res = await request(app).get(`/api/stock/search/${appleIncSymbol}`).set("authorization", `Bearer ${token}`);
+				const res = await request(app).get(`/api/stock/search/${appleIncSymbol}`).set("authorization", `Bearer ${token}`);
 
-			expect(res.statusCode).toBe(202);
+				expect(res.statusCode).toBe(202);
 
-			expect(res.body).toEqual({
-				refreshRequired: false,
-				stocks: [{
-					id: 1,
-					symbol: appleIncSymbol,
-					name: appleIncName,
-					exchange: exchange,
-					isin: appleIncIsin,
-				}],
+				expect(res.body).toEqual({
+					refreshRequired: false,
+					stocks: [{
+						id: 1,
+						symbol: appleIncSymbol,
+						name: appleIncName,
+						exchange: exchange,
+						isin: appleIncIsin,
+					}],
+				});
+
+				expect(externalAPI.queryForStock).not.toHaveBeenCalled();
 			});
 
-			expect(externalAPI.queryForStock).not.toHaveBeenCalled();
-		});
-
-		it("Should fetch from external API if stock does not exist in DB..", async () => {
-			// Mock the external API response
-			(externalAPI.queryForStock as jest.Mock).mockResolvedValueOnce({
-				symbol: appleIncSymbol,
-				name: appleIncName,
-				exchange: exchange,
-				isin: appleIncIsin
-			});
-
-			const res = await request(app).get(`/api/stock/search/${appleIncSymbol}`).set("authorization", `Bearer ${token}`);
-
-			expect(res.statusCode).toBe(202);
-
-			expect(externalAPI.queryForStock).toHaveBeenCalledTimes(1);
-
-			expect(res.body).toEqual({
-				refreshRequired: true,
-				stocks: [{
-					id: 1,
+			it("Should fetch from external API if stock does not exist in DB..", async () => {
+				// Mock the external API response
+				(externalAPI.queryForStock as jest.Mock).mockResolvedValueOnce({
 					symbol: appleIncSymbol,
 					name: appleIncName,
 					exchange: exchange,
 					isin: appleIncIsin
-				}],
+				});
+
+				const res = await request(app).get(`/api/stock/search/${appleIncSymbol}`).set("authorization", `Bearer ${token}`);
+
+				expect(res.statusCode).toBe(202);
+
+				expect(externalAPI.queryForStock).toHaveBeenCalledTimes(1);
+
+				expect(res.body).toEqual({
+					refreshRequired: true,
+					stocks: [{
+						id: 1,
+						symbol: appleIncSymbol,
+						name: appleIncName,
+						exchange: exchange,
+						isin: appleIncIsin
+					}],
+				});
 			});
 		});
 
