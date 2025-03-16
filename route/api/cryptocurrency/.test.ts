@@ -106,7 +106,16 @@ describe("Request: GET", () =>
 			const QUERY: string = "USD";
 
 			describe("No external request made", () => {
-				it("Should return up to 10 database results without external call..", async () => {
+				beforeEach(async () => {
+					// Insert 15 cryptocurrencies that have sumbol of USD into the DB
+					for (let i = 0; i < 15; i++)
+					{
+						await mySQLPool.promise().query(
+							"INSERT INTO cryptocurrency (symbol, name, coingecko_id) VALUES (?, ?, ?);",
+							[QUERY, `US Dollar ${i}`, `usdc-${i}`]
+						);
+					}
+
 					const fiveDaysAfter = new Date((new Date()).getTime() + 5 * 24 * 60 * 60 * 1000);
 
 					// Add a last_refresh_timestamp so far in the future that the external request cannot trigger
@@ -122,16 +131,9 @@ describe("Request: GET", () =>
 						`,
 						[QUERY, fiveDaysAfter, fiveDaysAfter]
 					);
+				});
 
-					// Insert 15 cryptocurrencies that have sumbol of USD into the DB
-					for (let i = 0; i < 15; i++)
-					{
-						await mySQLPool.promise().query(
-							"INSERT INTO cryptocurrency (symbol, name, coingecko_id) VALUES (?, ?, ?);",
-							[QUERY, `US Dollar ${i}`, `usdc-${i}`]
-						);
-					}
-
+				it("Should return up to 10 database results without external call..", async () => {
 					const res = await request(app).get(`/api/cryptocurrency/search/${QUERY}`).set(
 						"authorization",
 						`Bearer ${token}`
