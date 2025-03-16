@@ -98,6 +98,12 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					}
 					else
 					{
+						/**
+						* @dev
+						* Normally this process would require you to make sure no symbol exists already but since
+						* nothing was returned before we can safely assume that an update wont have constraint errors.
+						*/
+
 						await DBHandlerStock.updateStock(
 							mySQLPool,
 							externalStockQueryResult.symbol,
@@ -110,7 +116,8 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				else
 				{
 					/**
-					* @dev If this part of the route is reached then the stock is already in the DB and may need refreshing
+					* @dev If this part of the route is reached then the stock is already in the DB but may need
+					* refreshing
 					*/
 
 					const queryStock = await DBHandlerQueryStock.getQueryStockByQuery(mySQLPool, symbol);
