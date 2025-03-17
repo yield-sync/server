@@ -128,6 +128,44 @@ const queries: string[] = [
 			FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
 		);
 	`,
+	// Before Insert - portfolio_asset
+	`
+		CREATE TRIGGER before_insert_portfolio_asset
+		BEFORE INSERT ON portfolio_asset
+		FOR EACH ROW
+		BEGIN
+			DECLARE total_allocation INT;
+
+			SELECT COALESCE(SUM(percent_allocation), 0)
+			INTO total_allocation
+			FROM portfolio_asset
+			WHERE portfolio_id = NEW.portfolio_id;
+
+			IF total_allocation + NEW.percent_allocation > 10000 THEN
+				SIGNAL SQLSTATE '45000'
+				SET MESSAGE_TEXT = '[before insert] Total percent allocation for the portfolio exceeds 10000';
+			END IF;
+		END;
+	`,
+	// Before Update - portfolio_asset
+	`
+		CREATE TRIGGER before_update_portfolio_asset
+		BEFORE UPDATE ON portfolio_asset
+		FOR EACH ROW
+		BEGIN
+			DECLARE total_allocation INT;
+
+			SELECT COALESCE(SUM(percent_allocation), 0)
+			INTO total_allocation
+			FROM portfolio_asset
+			WHERE portfolio_id = NEW.portfolio_id AND id != OLD.id;
+
+			IF total_allocation + NEW.percent_allocation > 10000 THEN
+				SIGNAL SQLSTATE '45000'
+				SET MESSAGE_TEXT = '[before update] Total percent allocation for the portfolio exceeds 10000';
+			END IF;
+		END;
+	`
 ];
 
 
@@ -157,28 +195,6 @@ export const dBBuilder = async (mySQLPool: mysql.Pool, dBName: string, reset: bo
 	{
 		await mySQLPool.promise().query(query);
 	}
-
-	// Add the trigger after all tables are created
-	const triggerQuery: string = `
-		CREATE TRIGGER before_portfolio_asset_insert
-		BEFORE INSERT ON portfolio_asset
-		FOR EACH ROW
-		BEGIN
-			DECLARE total_allocation INT;
-
-			SELECT COALESCE(SUM(percent_allocation), 0)
-			INTO total_allocation
-			FROM portfolio_asset
-			WHERE portfolio_id = NEW.portfolio_id;
-
-			IF total_allocation + NEW.percent_allocation > 10000 THEN
-				SIGNAL SQLSTATE '45000'
-				SET MESSAGE_TEXT = 'Total percent allocation for the portfolio exceeds 10000';
-			END IF;
-		END;
-	`;
-
-	await mySQLPool.promise().query(triggerQuery);
 };
 
 /**

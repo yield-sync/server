@@ -320,14 +320,34 @@ describe("Table: portfolio_asset", () => {
 						INSERT INTO portfolio_asset
 							(portfolio_id, stock_id, percent_allocation)
 						VALUES
-							(?, ?, )
+							(?, ?, ?)
 						;
 					`,
 					[portfolioId, stockId, 2000] // 20% more (total 110%)
 				)
-			).rejects.toThrow(/Total percent allocation for the portfolio exceeds 10000/);
+			).rejects.toThrow("[before insert] Total percent allocation for the portfolio exceeds 10000");
 		});
 
-		// Add tests for checking if updating verifies allocations
+		it("Should fail when updating a portfolio asset to exceed allocation limit..", async () => {
+			// Insert portfolio assets up to 50%
+			await expect(
+				testMySQLPool.promise().query(
+					"INSERT INTO portfolio_asset (portfolio_id, stock_id, percent_allocation) VALUES (?, ?, ?);",
+					[portfolioId, stockId, 10000]
+				)
+			).resolves.not.toThrow();
+
+			const [portfolioAssetRows]: any = await testMySQLPool.promise().query(
+				"SELECT * FROM portfolio_asset WHERE portfolio_id = ? AND percent_allocation = 10000;",
+				[portfolioId]
+			);
+
+			await expect(
+				testMySQLPool.promise().query(
+					"UPDATE portfolio_asset SET percent_allocation = ? WHERE id = ?;",
+					[10001, portfolioAssetRows[0].id]
+				)
+			).rejects.toThrow("[before update] Total percent allocation for the portfolio exceeds 10000");
+		});
 	});
 });
