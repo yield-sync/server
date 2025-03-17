@@ -17,23 +17,18 @@ const testMySQLPool: mysql.Pool = mysql.createPool({
 });
 
 
-beforeAll(async () =>
+beforeEach(async () =>
 {
 	await dBBuilder(testMySQLPool, TEST_DB_NAME, true);
 });
 
-beforeEach(async () =>
+afterEach(async () =>
 {
-	await testMySQLPool.promise().query("DELETE FROM stock;");
-	await testMySQLPool.promise().query("DELETE FROM cryptocurrency_platform;");
-	await testMySQLPool.promise().query("DELETE FROM cryptocurrency;");
-	await testMySQLPool.promise().query("DELETE FROM portfolio_asset;");
-	await testMySQLPool.promise().query("DELETE FROM user;");
+	await dBDrop(TEST_DB_NAME, testMySQLPool);
 });
 
 afterAll(async () =>
 {
-	await dBDrop(TEST_DB_NAME, testMySQLPool);
 	testMySQLPool.end();
 });
 
