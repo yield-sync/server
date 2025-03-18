@@ -211,14 +211,14 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		}
 	).put(
 		/**
-		* @route PUT /api/cryptocurrency/update/:cryptoid
+		* @route PUT /api/cryptocurrency/update/:id
 		*/
-		"/update/:cryptoid",
+		"/update/:id",
 		userAdmin(mySQLPool),
 		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const { cryptoid, } = req.params;
+			const { id, } = req.params;
 
 			const { coingecko_id, name, symbol, }: CryptocurrencyUpdate = req.body.load;
 
@@ -232,7 +232,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				] = await mySQLPool.promise().query(
 					"SELECT * FROM cryptocurrency WHERE id = ?;",
 					[
-						cryptoid,
+						id,
 					]
 				);
 
@@ -248,7 +248,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 						coingecko_id ?? existingAsset[0].coingecko_id,
 						name ?? existingAsset[0].name,
 						symbol ?? existingAsset[0].symbol,
-						cryptoid,
+						id,
 					]
 				);
 
