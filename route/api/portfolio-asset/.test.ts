@@ -317,6 +317,51 @@ describe("Request: GET", () => {
 
 					expect(results.length).toBe(0);
 				});
+
+				it("Should fail if no portfolio asset_id passed..", async () => {
+					const RES = await request(app).put("/api/portfolio-asset/update/invalid-id").set(
+						'authorization',
+						`Bearer ${token}`
+					).send({
+						load: {
+							portfolio_id: portfolio_id,
+						}
+					}).expect(400);
+
+					expect(RES.text).toBe("No stock_id received");
+
+					const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio_asset;");
+
+					if (!Array.isArray(results))
+					{
+						throw new Error("Expected result is not Array");
+					}
+
+					expect(results.length).toBe(0);
+				});
+
+				it("Should fail if no percent_allocation passed..", async () => {
+					const RES = await request(app).put("/api/portfolio-asset/update/invalid-id").set(
+						'authorization',
+						`Bearer ${token}`
+					).send({
+						load: {
+							portfolio_id,
+							stock_id,
+						}
+					}).expect(400);
+
+					expect(RES.text).toBe("No percent_allocation received");
+
+					const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio_asset;");
+
+					if (!Array.isArray(results))
+					{
+						throw new Error("Expected result is not Array");
+					}
+
+					expect(results.length).toBe(0);
+				});
 			});
 
 			describe("Expected Success", () => {
