@@ -61,6 +61,13 @@ declare global
 		crypto?: boolean;
 	};
 
+	type PortfolioAssetUpdate = Load & {
+		id: string;
+		stock_id: string;
+		portfolio_id: string;
+		percent_allocation: number;
+	};
+
 	type PortfolioCreate = Load & {
 		name: string,
 	};

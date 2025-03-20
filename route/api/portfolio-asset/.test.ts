@@ -126,8 +126,7 @@ beforeEach(async () =>
 
 
 describe("Request: GET", () => {
-	describe("Route: /api/portfolio-asset/", () =>
-	{
+	describe("Route: /api/portfolio-asset/create", () => {
 		describe("Expected Failure", () => {
 			it("[auth] Should require a user token to insert portfolio asset into DB..", async () => {
 				await request(app).post("/api/portfolio-asset/create").send({
@@ -284,6 +283,43 @@ describe("Request: GET", () => {
 				expect(response.statusCode).toBe(400);
 
 				expect(response.text).toBe("Invalid percent_allocation");
+			});
+		});
+		describe("Route: /api/portfolio-asset/update", () => {
+			describe("Expected Failure", () => {
+				it("[auth] Should require a user token to insert portfolio asset into DB..", async () => {
+					await request(app).put("/api/portfolio-asset/update/invalid-id").send().expect(401);
+
+					const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio_asset;");
+
+					if (!Array.isArray(results))
+					{
+						throw new Error("Expected result is not Array");
+					}
+
+					expect(results.length).toBe(0);
+				});
+
+				it("Should fail if no portfolio_id passed..", async () => {
+					const RES = await request(app).put("/api/portfolio-asset/update/invalid-id").set(
+						'authorization',
+						`Bearer ${token}`
+					).send({ load: { stock_id, } }).expect(400);
+
+					expect(RES.text).toBe("No portfolio_id received");
+
+					const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio_asset;");
+
+					if (!Array.isArray(results))
+					{
+						throw new Error("Expected result is not Array");
+					}
+
+					expect(results.length).toBe(0);
+				});
+			});
+
+			describe("Expected Success", () => {
 			});
 		});
 	});
