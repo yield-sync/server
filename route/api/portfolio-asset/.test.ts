@@ -365,6 +365,56 @@ describe("Request: GET", () => {
 			});
 
 			describe("Expected Success", () => {
+				it("Should update portfolio asset in the database..", async () => {
+					await request(app).post("/api/portfolio-asset/create").set(
+						'authorization',
+						`Bearer ${token}`
+					).send({
+						load: {
+							portfolio_id,
+							stock_id,
+							percent_allocation: 10_000,
+						} as PortfolioAssetCreate
+					});
+
+					const RES_PORTFOLIO_ASSET = await request(app).put("/api/portfolio-asset/update/1").set(
+						'authorization',
+						`Bearer ${token}`
+					).send({
+						load: {
+							portfolio_id,
+							stock_id,
+							percent_allocation: 10_000,
+						} as PortfolioAssetCreate
+					});
+
+					expect(RES_PORTFOLIO_ASSET.statusCode).toBe(201);
+
+					const [portfolioAssests]: MySQLQueryResult = await mySQLPool.promise().query(
+						"SELECT * FROM portfolio_asset;"
+					);
+
+					if (!Array.isArray(portfolioAssests))
+					{
+						throw new Error("Expected result is not Array");
+					}
+
+					expect(portfolioAssests.length).toBeGreaterThan(0);
+
+					if (!("stock_id" in portfolioAssests[0]))
+					{
+						throw new Error("Key 'stock_id' not in portfolioAssets");
+					}
+
+					expect(portfolioAssests[0].stock_id).toBe(stock_id);
+
+					if (!("portfolio_id" in portfolioAssests[0]))
+					{
+						throw new Error("Key 'portfolio_id' not in portfolioAssets");
+					}
+
+					expect(portfolioAssests[0].portfolio_id).toBe(portfolio_id);
+				});
 			});
 		});
 	});

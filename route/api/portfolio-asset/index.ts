@@ -184,7 +184,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					]
 				);
 
-				res.status(hTTPStatus.CREATED).send("Portfolio asset created");
+				res.status(hTTPStatus.CREATED).send("Portfolio asset updated");
 
 				return;
 
