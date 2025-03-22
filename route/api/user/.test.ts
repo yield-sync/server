@@ -108,7 +108,57 @@ describe("Request: GET", () =>
 
 				expect(recievedJSON.verified).toBe(false);
 			});
-		})
+		});
+
+		describe("Expected Failure Part 2", () => {
+			it("Should state that verification is required if over 5 days from creation and not verified..", async () =>
+			{
+				const EMAIL: string = "testemail@example.com";
+				const PASSWORD: string = "testpassword!";
+
+				// Create a user
+				await request(app).post("/api/user/create").send({
+					load: {
+						email: EMAIL,
+						password: PASSWORD
+					}
+				}).expect(201);
+
+
+				const resLogin = await request(app).post("/api/user/login").send({
+					load: {
+						email: EMAIL,
+						password: PASSWORD
+					}
+				}).expect(200);
+
+				const token = (JSON.parse(resLogin.text)).token;
+
+				const [users]: MySQLQueryResult = await mySQLPool.promise().query(
+					"SELECT id FROM user WHERE email = ?;",
+					[EMAIL]
+				);
+
+				await mySQLPool.promise().query(
+					"UPDATE user SET created = ? WHERE id = ?;",
+					[
+						new Date(new Date().setDate(new Date().getDate() - 6)),
+						users[0].id
+					]
+				);
+
+				const response = await request(app).get("/api/user/").set(
+					'authorization',
+					`Bearer ${token}`
+				).send();
+
+				expect(response.statusCode).toBe(401);
+
+				expect(response.body.message).toBe(
+					"Access denied: 5 days have passed since account creation. Please verify account."
+				);
+			});
+		});
 	});
 });
 

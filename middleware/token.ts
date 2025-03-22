@@ -31,8 +31,21 @@ function verifyJWT(token: string): any | null
 	}
 }
 
+function creationOverFiveDays(created: Date): boolean
+{
+	const now = new Date();
 
-export const userMiddleware = (mySQLPool: mysql.Pool, requireAdmin: boolean = false) =>
+	const fiveDaysAgo = new Date(now.setDate(now.getDate() - 5));
+
+	return created <= fiveDaysAgo;
+}
+
+
+export const userMiddleware = (
+	mySQLPool: mysql.Pool,
+	requireAdmin: boolean = false,
+	requireVerification: boolean = true
+) =>
 {
 	return async (req: express.Request, res: express.Response, next: express.NextFunction) =>
 	{
@@ -58,17 +71,26 @@ export const userMiddleware = (mySQLPool: mysql.Pool, requireAdmin: boolean = fa
 			return;
 		}
 
-		let users;
+		let users: IUser[];
 
 		[
 			users,
-		] = await mySQLPool.promise().query<IStock[]>("SELECT id FROM user WHERE id = ?;", [
+		] = await mySQLPool.promise().query<IUser[]>("SELECT id, created FROM user WHERE id = ?;", [
 			decoded.id,
 		]);
 
-		if ((users as any[]).length === 0)
+		if (users.length != 1)
 		{
-			res.status(hTTPStatus.UNAUTHORIZED).send("User not found from decoded token");
+			res.status(hTTPStatus.UNAUTHORIZED).send("User not found from decoded token (or multiple users returned)");
+			return;
+		}
+
+		if (requireVerification != false && creationOverFiveDays(users[0].created))
+		{
+			res.status(hTTPStatus.UNAUTHORIZED).json({
+				message: "Access denied: 5 days have passed since account creation. Please verify account.",
+			});
+
 			return;
 		}
 
