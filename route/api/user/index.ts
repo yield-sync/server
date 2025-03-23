@@ -4,7 +4,7 @@ import mysql from "mysql2";
 
 import config from "../../../config";
 import { user } from "../../../middleware/token";
-import { setVerificationEmail } from "../../../util/mailUtil";
+import mailUtil from "../../../util/mailUtil";
 import { validateEmail, validatePassword } from "../../../util/validation";
 import { hTTPStatus } from "../../../constants";
 
@@ -18,7 +18,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 {
 	return express.Router().get(
 		/**
-		* @route POST /api/user/
+		* @route get /api/user/
 		* @desc User profile
 		* @access User
 		*/
@@ -55,6 +55,51 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					admin: normalizedUsers[0].admin,
 					verified: normalizedUsers[0].verified,
 				});
+			}
+			catch (error)
+			{
+				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({ message: "Internal Server Error", error });
+
+				return;
+			}
+		}
+	).get(
+		/**
+		* @route get /api/user/send-recovery-email
+		* @access Public
+		*/
+		"/send-recovery-email",
+		async (req: express.Request, res: express.Response) =>
+		{
+			const { email, }: UserSendRecoveryEmail = req.body.load;
+
+			try
+			{
+				await mailUtil.sendRecoveryEmail(email);
+
+				res.status(hTTPStatus.OK).send();
+			}
+			catch (error)
+			{
+				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({ message: "Internal Server Error", error });
+
+				return;
+			}
+		}
+	).get(
+		/**
+		* @route GET /api/user/send-verification-email
+		* @access User
+		*/
+		"/send-verification-email",
+		user(mySQLPool, false),
+		async (req: express.Request, res: express.Response) =>
+		{
+			try
+			{
+				mailUtil.setVerificationEmail(req.body.userDecoded.email);
+
+				res.status(hTTPStatus.OK).send();
 			}
 			catch (error)
 			{
@@ -118,7 +163,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				);
 
 				// Send Email
-				await setVerificationEmail(email);
+				await mailUtil.setVerificationEmail(email);
 
 				res.status(hTTPStatus.CREATED).send("Created user");
 
@@ -247,10 +292,15 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			}
 		}
 	).post(
+		/**
+		* @route POST /api/user/verify
+		* @access Public
+		*/
 		"/verify",
+		user(mySQLPool, false),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const {}: UserVerify = req.body.load;
+			const { pin }: UserVerify = req.body.load;
 
 			try
 			{

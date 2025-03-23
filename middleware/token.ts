@@ -101,12 +101,12 @@ export const userMiddleware = (
 	};
 };
 
-export const user = (mySQLPool: mysql.Pool) =>
+export const user = (mySQLPool: mysql.Pool, requireVerification: boolean = true) =>
 {
-	return userMiddleware(mySQLPool, false);
+	return userMiddleware(mySQLPool, false, requireVerification);
 };
 
-export const userAdmin = (mySQLPool: mysql.Pool) =>
+export const userAdmin = (mySQLPool: mysql.Pool, requireVerification: boolean = true) =>
 {
-	return userMiddleware(mySQLPool, true);
+	return userMiddleware(mySQLPool, true, requireVerification);
 };

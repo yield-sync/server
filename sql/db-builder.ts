@@ -121,7 +121,7 @@ const queries: string[] = [
 	`
 		CREATE TABLE verification (
 			id INT NOT NULL AUTO_INCREMENT,
-			user_id INT NOT NULL,
+			user_id INT NOT NULL UNIQUE,
 			pin INT UNSIGNED NOT NULL,
 			created DATETIME DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),

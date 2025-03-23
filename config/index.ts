@@ -8,6 +8,9 @@ export default
 	port: process.env.PORT || 5000,
 
 	api: {
+		brevo: {
+			key: process.env.API__BREVO__KEY || ""
+		},
 		coingecko: {
 			uRL: "https://api.coingecko.com/",
 			key: process.env.API__COINGECKO__KEY || "",

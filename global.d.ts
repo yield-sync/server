@@ -93,8 +93,11 @@ declare global
 		passwordNew: string,
 	};
 
-	type UserVerify = Load & {
+	type UserSendRecoveryEmail = Load & {
 		email: string,
+	};
+
+	type UserVerify = Load & {
 		pin: string,
 	};
 
