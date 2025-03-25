@@ -68,16 +68,27 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		* @route get /api/user/send-recovery-email
 		* @access Public
 		*/
-		"/send-recovery-email",
+		"/send-recovery-email/:email",
 		async (req: express.Request, res: express.Response) =>
 		{
-			const { email, }: UserSendRecoveryEmail = req.body.load;
-
 			try
 			{
-				await mailUtil.sendRecoveryEmail(email);
+				const status = await mailUtil.sendRecoveryEmail(req.params.email);
 
-				res.status(hTTPStatus.OK).send();
+				console.log(status);
+
+				if (status[0].status != "sent")
+				{
+					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+						sendStatus: status
+					});
+
+					return;
+				}
+
+				res.status(hTTPStatus.OK).json({
+					message: "Email sent"
+				});
 			}
 			catch (error)
 			{

@@ -8,8 +8,8 @@ export default
 	port: process.env.PORT || 5000,
 
 	api: {
-		brevo: {
-			key: process.env.API__BREVO__KEY || ""
+		mailchimp: {
+			key: process.env.API__MAILCHIMP__KEY || ""
 		},
 		coingecko: {
 			uRL: "https://api.coingecko.com/",
@@ -23,6 +23,8 @@ export default
 	},
 
 	app: {
+		domain: "yieldsync.xyz",
+
 		baseURL: {
 			client: process.env.APP__BASE_URL || "http://localhost:8080",
 			server: process.env.APP__BASE_URL || "http://localhost:5000",

@@ -28,7 +28,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@getbrevo/brevo": "^2.1.0",
+    "@mailchimp/mailchimp_transactional": "^1.0.59",
     "@types/mysql": "^2.15.26",
     "@typescript-eslint/eslint-plugin": "^6.7.4",
     "@typescript-eslint/parser": "^6.7.4",
