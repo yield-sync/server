@@ -2,6 +2,11 @@ import config from "../config";
 import { validateEmail } from "./validation";
 
 
+class HttpRequestError extends
+	Error
+{}
+
+
 function getRecoveryEmail(recoveryPassword: string)
 {
 	return {
@@ -62,7 +67,7 @@ export default {
 
 		if (!response.ok)
 		{
-			throw new Error(`HTTP error! Status: ${response.status}`);
+			throw new HttpRequestError(`${response.status}`);
 		}
 
 		return await response.json();
