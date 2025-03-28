@@ -1,10 +1,8 @@
 import config from "../config";
 import { validateEmail } from "./validation";
 
-const brevo = require("@getbrevo/brevo");
 
-
-function getRecoveryEmail(recoveryPassword: string = "")
+function getRecoveryEmail(recoveryPassword: string)
 {
 	return {
 		subject: "Recover Your Account",
@@ -33,47 +31,42 @@ export const sendRecoveryEmail = async (to: string) =>
 		throw new Error("Invalid to email");
 	}
 
-	const email = getRecoveryEmail()
+	const recoveryPassword: string = "";
 
-	let defaultClient = brevo.ApiClient.instance;
+	const email = getRecoveryEmail(recoveryPassword);
 
-	let apiKey = defaultClient.authentications['apiKey'];
-
-	apiKey.apiKey = config.api.mailchimp.key;
-
-	let apiInstance = new brevo.TransactionalEmailsApi();
-	let sendSmtpEmail = new brevo.SendSmtpEmail();
-
-	sendSmtpEmail.subject = email.subject;
-	
-	sendSmtpEmail.htmlContent = email.body;
-
-	sendSmtpEmail.sender = {
-		"name": "Auto",
-		"email": `no-reply@${config.app.domain}`
-	};
-	
-	sendSmtpEmail.to = [
+	const response = await fetch(
+		"https://api.brevo.com/v3/smtp/email",
 		{
-			"email": to,
-			"name": "Name Here"
-		}
-	];
-	
-	sendSmtpEmail.replyTo = { "email": "example@brevo.com", "name": "sample-name" };
-	
-	sendSmtpEmail.headers = { "Some-Custom-Name": "unique-id-1234" };
-	
-	sendSmtpEmail.params = { "parameter": "My param value", "subject": "common subject" };
-
-	apiInstance.sendTransacEmail(sendSmtpEmail).then(
-		function (data) {
-			console.log('API called successfully. Returned data: ' + JSON.stringify(data));
-		},
-		function (error) {
-			console.error(error);
+			method: "POST",
+			headers: {
+				"Accept": "application/json",
+				"Content-Type": "application/json",
+				"api-key": config.api.brevo.key
+			},
+			body: JSON.stringify({
+				sender: {
+					name: "Yield Sync",
+					email: `no-reply@${config.app.domain}`
+				},
+				to: [
+					{
+						email: to,
+						name: "Valued User"
+					}
+				],
+				subject: email.subject,
+				htmlContent: email.body
+			}),
 		}
 	);
+
+	if (!response.ok)
+	{
+		throw new Error(`HTTP error! Status: ${response.status}`);
+	}
+
+	return await response.json();
 };
 
 export const setVerificationEmail = (to: string) =>

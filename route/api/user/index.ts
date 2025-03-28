@@ -73,18 +73,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		{
 			try
 			{
-				const status = await mailUtil.sendRecoveryEmail(req.params.email);
-
-				console.log(status);
-
-				if (status[0].status != "sent")
-				{
-					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
-						sendStatus: status
-					});
-
-					return;
-				}
+				await mailUtil.sendRecoveryEmail(req.params.email);
 
 				res.status(hTTPStatus.OK).json({
 					message: "Email sent"
