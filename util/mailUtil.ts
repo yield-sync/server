@@ -29,13 +29,11 @@ function getRecoveryEmail(recoveryPassword: string)
 };
 
 export default {
-	sendRecoveryEmail: async (toEmail: string) => {
+	sendRecoveryEmail: async (toEmail: string, recoveryPassword: string) => {
 		if (!validateEmail(toEmail))
 		{
 			throw new Error("Invalid toEmail");
 		}
-
-		let recoveryPassword: string = "";
 
 		const email = getRecoveryEmail(recoveryPassword);
 
@@ -72,7 +70,7 @@ export default {
 
 		return await response.json();
 	},
-	setVerificationEmail: (to: string) => {
+	setVerificationEmail: async (toEmail: string, recoveryPassword: string) => {
 		return;
 	},
 }

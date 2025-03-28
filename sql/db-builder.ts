@@ -128,7 +128,8 @@ const queries: string[] = [
 		CREATE TABLE verification (
 			id INT NOT NULL AUTO_INCREMENT,
 			user_id INT NOT NULL UNIQUE,
-			pin INT UNSIGNED NOT NULL,
+			pin CHAR(6) NOT NULL CHECK (CHAR_LENGTH(pin) = 6),
+			attempts TINYINT UNSIGNED NOT NULL DEFAULT 0 CHECK (attempts <= 3),
 			created DATETIME DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
 			FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
@@ -139,7 +140,8 @@ const queries: string[] = [
 		CREATE TABLE recovery (
 			id INT NOT NULL AUTO_INCREMENT,
 			user_id INT NOT NULL UNIQUE,
-			pin INT UNSIGNED NOT NULL,
+			pin CHAR(6) NOT NULL CHECK (CHAR_LENGTH(pin) = 6),
+			attempts TINYINT UNSIGNED NOT NULL DEFAULT 0 CHECK (attempts <= 3),
 			created DATETIME DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
 			FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE

@@ -73,7 +73,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		{
 			try
 			{
-				await mailUtil.sendRecoveryEmail(req.params.email);
+				await mailUtil.sendRecoveryEmail(req.params.email, "");
 
 				res.status(hTTPStatus.OK).json({
 					message: "Email sent"
@@ -97,9 +97,22 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		{
 			try
 			{
-				mailUtil.setVerificationEmail(req.body.userDecoded.email);
+				const pin = Math.random().toString(36).slice(2, 8).padEnd(6, '0');
 
-				res.status(hTTPStatus.OK).send();
+				// Create an instance of verifcation in the DB
+				await mySQLPool.promise().query(
+					"INSERT INTO verification (user_id, pin) VALUES (?, ?);",
+					[
+						req.body.userDecoded.id,
+						pin,
+					]
+				);
+
+				// TODO limit how many times you can send this within a timeframe
+
+				await mailUtil.setVerificationEmail(req.body.userDecoded.email, pin);
+
+				res.status(hTTPStatus.OK).send({ message: "Created verification" });
 			}
 			catch (error)
 			{
@@ -149,7 +162,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				if (users.length > 0)
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("This email is already being used.");
+					res.status(hTTPStatus.BAD_REQUEST).json({ message: "This email is already being used." });
 
 					return;
 				}
@@ -162,10 +175,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					]
 				);
 
-				// Send Email
-				await mailUtil.setVerificationEmail(email);
-
-				res.status(hTTPStatus.CREATED).send("Created user");
+				res.status(hTTPStatus.CREATED).json({ message: "Created user" });
 
 				return;
 			}
