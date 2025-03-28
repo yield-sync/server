@@ -73,6 +73,8 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		{
 			try
 			{
+				// TODO limit how many times you can send this within a timeframe
+
 				await mailUtil.sendRecoveryEmail(req.params.email, "");
 
 				res.status(hTTPStatus.OK).json({
@@ -97,20 +99,25 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		{
 			try
 			{
-				const pin = Math.random().toString(36).slice(2, 8).padEnd(6, '0');
+				// Check if there is already a verification in the database
+
+				// If not enough time since last request has passed..
+					// Respond 400
+
+				// If verification already exists -> delete it
+
+				const verificationPin = Math.random().toString(36).slice(2, 8).padEnd(6, '0');
 
 				// Create an instance of verifcation in the DB
 				await mySQLPool.promise().query(
 					"INSERT INTO verification (user_id, pin) VALUES (?, ?);",
 					[
 						req.body.userDecoded.id,
-						pin,
+						verificationPin,
 					]
 				);
 
-				// TODO limit how many times you can send this within a timeframe
-
-				await mailUtil.setVerificationEmail(req.body.userDecoded.email, pin);
+				await mailUtil.sendVerificationEmail(req.body.userDecoded.email, verificationPin);
 
 				res.status(hTTPStatus.OK).send({ message: "Created verification" });
 			}

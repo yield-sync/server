@@ -70,7 +70,7 @@ export default {
 
 		return await response.json();
 	},
-	setVerificationEmail: async (toEmail: string, recoveryPassword: string) => {
+	sendVerificationEmail: async (toEmail: string, recoveryPassword: string) => {
 		return;
 	},
 }
