@@ -10,6 +10,12 @@ const sQLStockExchanges: string = stockExchanges.map((n) =>
 }).join(", ");
 
 const queries: string[] = [
+	/*
+	* **********
+	* * TABLES *
+	* **********
+	*/
+
 	// user
 	`
 		CREATE TABLE user (
@@ -128,6 +134,24 @@ const queries: string[] = [
 			FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
 		);
 	`,
+	// recovery
+	`
+		CREATE TABLE recovery (
+			id INT NOT NULL AUTO_INCREMENT,
+			user_id INT NOT NULL UNIQUE,
+			pin INT UNSIGNED NOT NULL,
+			created DATETIME DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
+		);
+	`,
+
+	/*
+	* ************
+	* * TRIGGERS *
+	* ************
+	*/
+
 	// Before Insert - portfolio_asset
 	`
 		CREATE TRIGGER before_insert_portfolio_asset
@@ -165,7 +189,7 @@ const queries: string[] = [
 				SET MESSAGE_TEXT = '[before update] Total percent allocation for the portfolio exceeds 10000';
 			END IF;
 		END;
-	`
+	`,
 ];
 
 
