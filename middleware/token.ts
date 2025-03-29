@@ -85,7 +85,7 @@ export const userMiddleware = (
 			return;
 		}
 
-		if (requireVerification != false && creationOverFiveDays(users[0].created))
+		if (requireVerification && creationOverFiveDays(users[0].created))
 		{
 			res.status(hTTPStatus.UNAUTHORIZED).json({
 				message: "Access denied: 5 days have passed since account creation. Please verify account.",
