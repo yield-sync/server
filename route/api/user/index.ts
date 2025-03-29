@@ -73,11 +73,49 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		"/send-recovery-email/:email",
 		async (req: express.Request, res: express.Response) =>
 		{
+			const timestamp = new Date();
+
 			try
 			{
-				// TODO limit how many times you can send this within a timeframe
+				// Check if there is already a recovery in the database
+				let recovery: IRecovery[];
 
-				await mailUtil.sendRecoveryEmail(req.params.email, "");
+				[
+					recovery,
+				] = await mySQLPool.promise().query<IRecovery[]>(
+					"SELECT * FROM recovery WHERE user_id = ?;",
+					[
+						req.body.userDecoded.id,
+					]
+				);
+
+				if (recovery.length > 0)
+				{
+					const created = new Date(recovery[0].created);
+
+					// If not enough time since last request has passed..
+					if (timestamp.getTime() - created.getTime() < THREE_MINUTES_IN_MS)
+					{
+						res.status(hTTPStatus.BAD_REQUEST).json({
+							message: "3 minutes must pass before last request for recovery email"
+						});
+
+						return;
+					}
+				}
+
+				const verificationPin = Math.random().toString(36).slice(2, 8).padEnd(6, '0');
+
+				// Create an instance of recovery in the DB
+				await mySQLPool.promise().query(
+					"INSERT INTO recovery (user_id, pin) VALUES (?, ?);",
+					[
+						req.body.userDecoded.id,
+						verificationPin,
+					]
+				);
+
+				await mailUtil.sendRecoveryEmail(req.params.email, verificationPin);
 
 				res.status(hTTPStatus.OK).json({
 					message: "Email sent"
@@ -100,9 +138,31 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		async (req: express.Request, res: express.Response) =>
 		{
 			const timestamp = new Date();
-		
+
 			try
 			{
+				// Check if user isnt verified already
+				const [
+					users,
+				]: [
+					IUser[],
+					FieldPacket[]
+				] = await mySQLPool.promise().query<IUser[]>(
+					"SELECT * FROM user WHERE id = ? AND verified = 1;",
+					[
+						req.body.userDecoded.id,
+					]
+				);
+
+				if (users.length > 0)
+				{
+					res.status(hTTPStatus.BAD_REQUEST).json({
+						message: "Already verified"
+					});
+
+					return;
+				}
+
 				// Check if there is already a verification in the database
 				let verification: IVerification[];
 
@@ -117,8 +177,8 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				if (verification.length > 0)
 				{
-					const created = new Date(verification[0].created); 
-					
+					const created = new Date(verification[0].created);
+
 					// If not enough time since last request has passed..
 					if (timestamp.getTime() - created.getTime() < THREE_MINUTES_IN_MS)
 					{

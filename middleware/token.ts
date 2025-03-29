@@ -110,3 +110,9 @@ export const userAdmin = (mySQLPool: mysql.Pool, requireVerification: boolean = 
 {
 	return userMiddleware(mySQLPool, true, requireVerification);
 };
+
+
+export default {
+	user,
+	userAdmin,
+};
