@@ -11,6 +11,8 @@ import { hTTPStatus } from "../../../constants";
 
 const jsonWebToken = require("jsonwebtoken");
 
+const THREE_MINUTES_IN_MS: number = 5 * 60 * 1000;
+
 const ERROR_INVALID_PASSWORD: string = "Password Must be ASCII, longer than 8 characters, and contain a special character";
 
 
@@ -97,14 +99,44 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		user(mySQLPool, false),
 		async (req: express.Request, res: express.Response) =>
 		{
+			const timestamp = new Date();
+		
 			try
 			{
 				// Check if there is already a verification in the database
+				let verification: IVerification[];
 
-				// If not enough time since last request has passed..
-					// Respond 400
+				[
+					verification,
+				] = await mySQLPool.promise().query<IVerification[]>(
+					"SELECT * FROM verification WHERE user_id = ?;",
+					[
+						req.body.userDecoded.id,
+					]
+				);
+
+				if (verification.length > 0)
+				{
+					const created = new Date(verification[0].created); 
+					
+					// If not enough time since last request has passed..
+					if (timestamp.getTime() - created.getTime() < THREE_MINUTES_IN_MS)
+					{
+						res.status(hTTPStatus.BAD_REQUEST).json({
+							message: "3 minutes must pass before last request for verification email"
+						});
+
+						return;
+					}
+				}
 
 				// If verification already exists -> delete it
+				await mySQLPool.promise().query<IUser[]>(
+					"DELETE FROM verification WHERE user_id = ?;",
+					[
+						req.body.userDecoded.id,
+					]
+				);
 
 				const verificationPin = Math.random().toString(36).slice(2, 8).padEnd(6, '0');
 
