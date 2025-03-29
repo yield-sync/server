@@ -130,7 +130,9 @@ declare global
 		OkPacket
 	{
 		id: number;
+		user_id: number;
 		name: string;
+		create: number;
 	}
 
 	interface IPortfolioAsset extends
@@ -139,7 +141,9 @@ declare global
 	{
 		id: number;
 		portfolio_id: number;
+		cryptocurrency_id: number;
 		stock_id: number;
+		percent_allocation: number;
 		created: number;
 	}
 
@@ -163,6 +167,28 @@ declare global
 		password: string;
 		admin: number;
 		verified: number;
+		created: Date;
+	}
+
+	interface IVerification extends
+		RowDataPacket,
+		OkPacket
+	{
+		id: number;
+		user_id: number;
+		name: string;
+		pin: string;
+		created: Date;
+	}
+
+	interface IRecovery extends
+		RowDataPacket,
+		OkPacket
+	{
+		id: number;
+		user_id: number;
+		name: string;
+		pin: string;
 		created: Date;
 	}
 }
