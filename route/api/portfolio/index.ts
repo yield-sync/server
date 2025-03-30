@@ -2,7 +2,7 @@ import express from "express";
 import mysql from "mysql2";
 
 import { loadRequired } from "../../../middleware/load";
-import { user } from "../../../middleware/user-token";
+import userToken from "../../../middleware/user-token";
 import { hTTPStatus } from "../../../constants";
 
 
@@ -15,7 +15,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		* @access User
 		*/
 		"/",
-		user(mySQLPool),
+		userToken.userTokenDecode(mySQLPool),
 		async (req: express.Request, res: express.Response) =>
 		{
 			try
@@ -50,7 +50,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		* @access User
 		*/
 		"/create",
-		user(mySQLPool),
+		userToken.userTokenDecode(mySQLPool),
 		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{
@@ -91,7 +91,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		* @access User
 		*/
 		"/update",
-		user(mySQLPool),
+		userToken.userTokenDecode(mySQLPool),
 		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{
@@ -140,7 +140,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		* @access User
 		*/
 		"/delete",
-		user(mySQLPool),
+		userToken.userTokenDecode(mySQLPool),
 		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{

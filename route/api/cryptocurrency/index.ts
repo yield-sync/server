@@ -4,7 +4,7 @@ import mysql from "mysql2";
 import { hTTPStatus } from "../../../constants";
 import externalAPI from "../../../external-api/coingecko";
 import { loadRequired } from "../../../middleware/load";
-import { user, userAdmin } from "../../../middleware/user-token";
+import userToken from "../../../middleware/user-token";
 import { sanitizeQuery } from "../../../util/sanitizer";
 
 
@@ -46,7 +46,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		* @route DELETE /api/cryptocurrency/delete/:cryptoid
 		*/
 		"/delete/:cryptoid",
-		userAdmin(mySQLPool),
+		userToken.userTokenDecodeAdmin(mySQLPool),
 		async (req: express.Request, res: express.Response) =>
 		{
 			const { cryptoid, } = req.params;
@@ -71,7 +71,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		* @route POST /api/cryptocurrency/search/:query
 		*/
 		"/search/:query",
-		user(mySQLPool),
+		userToken.userTokenDecode(mySQLPool),
 		async (req: express.Request, res: express.Response) =>
 		{
 			const now = new Date();
@@ -214,7 +214,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		* @route PUT /api/cryptocurrency/update/:id
 		*/
 		"/update/:id",
-		userAdmin(mySQLPool),
+		userToken.userTokenDecodeAdmin(mySQLPool),
 		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{

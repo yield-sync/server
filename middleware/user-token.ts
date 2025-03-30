@@ -11,7 +11,7 @@ const jwt = require("jsonwebtoken");
 const { secretKey, } = config.app;
 
 
-function verifyJWT(token: string): any | null
+function _verifyJWT(token: string): any | null
 {
 	try
 	{
@@ -31,7 +31,7 @@ function verifyJWT(token: string): any | null
 	}
 }
 
-function creationOverFiveDays(created: Date): boolean
+function _creationOverFiveDays(created: Date): boolean
 {
 	const now = new Date();
 
@@ -41,7 +41,7 @@ function creationOverFiveDays(created: Date): boolean
 }
 
 
-const verifyUserToken = (
+const _userTokenDecode = (
 	mySQLPool: mysql.Pool,
 	requireAdmin: boolean = false,
 	requireVerification: boolean = true
@@ -51,7 +51,7 @@ const verifyUserToken = (
 	{
 		const authHeader = req.headers.authorization;
 
-		const decoded = verifyJWT(authHeader || null);
+		const decoded = _verifyJWT(authHeader || null);
 
 		if (!decoded)
 		{
@@ -85,7 +85,7 @@ const verifyUserToken = (
 			return;
 		}
 
-		if (requireVerification && creationOverFiveDays(users[0].created))
+		if (requireVerification && _creationOverFiveDays(users[0].created))
 		{
 			res.status(hTTPStatus.UNAUTHORIZED).json({
 				message: "Access denied: 5 days have passed since account creation. Please verify account.",
@@ -101,18 +101,50 @@ const verifyUserToken = (
 	};
 };
 
-export const user = (mySQLPool: mysql.Pool, requireVerification: boolean = true) =>
-{
-	return verifyUserToken(mySQLPool, false, requireVerification);
-};
-
-export const userAdmin = (mySQLPool: mysql.Pool, requireVerification: boolean = true) =>
-{
-	return verifyUserToken(mySQLPool, true, requireVerification);
-};
-
 
 export default {
-	user,
-	userAdmin,
+	userTokenDecode: (mySQLPool: mysql.Pool, requireVerification: boolean = true) =>
+	{
+		return _userTokenDecode(mySQLPool, false, requireVerification);
+	},
+	userTokenDecodeAdmin: (mySQLPool: mysql.Pool, requireVerification: boolean = true) =>
+	{
+		return _userTokenDecode(mySQLPool, true, requireVerification);
+	},
+	userTokenDecodeRequireVerificationStatus: (mySQLPool: mysql.Pool, expectedVerificationStatus: boolean) => {
+		return async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+			try
+			{
+				const [
+					users,
+				]: [
+					IUser[],
+					FieldPacket[]
+				] = await mySQLPool.promise().query<IUser[]>(
+					"SELECT * FROM user WHERE id = ? AND verified = ?;",
+					[
+						req.body.userDecoded.id,
+						expectedVerificationStatus ? "1" : "0"
+					]
+				);
+
+				if (users.length > 0)
+				{
+					res.status(hTTPStatus.BAD_REQUEST).json({
+						message: "Already verified"
+					});
+
+					return;
+				}
+			}
+			catch (error)
+			{
+				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({ message: "Internal Server Error", error });
+
+				return;
+			}
+
+			next()
+		}
+	},
 };

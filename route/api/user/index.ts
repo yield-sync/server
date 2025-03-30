@@ -3,7 +3,7 @@ import express from "express";
 import mysql from "mysql2";
 
 import config from "../../../config";
-import { user } from "../../../middleware/user-token";
+import userToken from "../../../middleware/user-token";
 import mailUtil from "../../../util/mailUtil";
 import { validateEmail, validatePassword } from "../../../util/validation";
 import { hTTPStatus } from "../../../constants";
@@ -25,7 +25,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		* @access User
 		*/
 		"/",
-		user(mySQLPool),
+		userToken.userTokenDecode(mySQLPool),
 		async (req: express.Request, res: express.Response) =>
 		{
 			try
@@ -134,44 +134,8 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		* @access User
 		*/
 		"/send-verification-email",
-		user(mySQLPool, false),
-		async (req: express.Request, res: express.Response, next: express.NextFunction) =>
-		{
-			/**
-			* @dev Prevent unnecessary verification by checking if user isnt verified already
-			*/
-			try
-			{
-				const [
-					users,
-				]: [
-					IUser[],
-					FieldPacket[]
-				] = await mySQLPool.promise().query<IUser[]>(
-					"SELECT * FROM user WHERE id = ? AND verified = 1;",
-					[
-						req.body.userDecoded.id,
-					]
-				);
-
-				if (users.length > 0)
-				{
-					res.status(hTTPStatus.BAD_REQUEST).json({
-						message: "Already verified"
-					});
-
-					return;
-				}
-			}
-			catch (error)
-			{
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({ message: "Internal Server Error", error });
-
-				return;
-			}
-
-			next()
-		},
+		userToken.userTokenDecode(mySQLPool, false),
+		userToken.userTokenDecodeRequireVerificationStatus(mySQLPool, false),
 		async (req: express.Request, res: express.Response) =>
 		{
 			const timestamp = new Date();
@@ -307,7 +271,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		* @access User
 		*/
 		"/password-update",
-		user(mySQLPool),
+		userToken.userTokenDecode(mySQLPool),
 		async (req: express.Request, res: express.Response) =>
 		{
 			const { password, passwordNew, }: UserPasswordUpdate = req.body.load;
@@ -421,7 +385,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		* @access Public
 		*/
 		"/verify",
-		user(mySQLPool, false),
+		userToken.userTokenDecode(mySQLPool, false),
 		async (req: express.Request, res: express.Response) =>
 		{
 			const { pin }: UserVerify = req.body.load;

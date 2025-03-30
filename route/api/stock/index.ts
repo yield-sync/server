@@ -2,7 +2,7 @@ import express from "express";
 import mysql from "mysql2";
 
 import { loadRequired } from "../../../middleware/load";
-import { user, userAdmin } from "../../../middleware/user-token";
+import userToken from "../../../middleware/user-token";
 import { hTTPStatus } from "../../../constants";
 import DBHandlerQueryStock from "../../../db-handler/query_stock";
 import DBHandlerStock from "../../../db-handler/stock";
@@ -42,7 +42,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		* @access authorized:user
 		*/
 		"/search/:query",
-		user(mySQLPool),
+		userToken.userTokenDecode(mySQLPool),
 		async (req: express.Request, res: express.Response) =>
 		{
 			const timestamp = new Date();
@@ -217,7 +217,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		* @access authorized:admin
 		*/
 		"/delete",
-		userAdmin(mySQLPool),
+		userToken.userTokenDecodeAdmin(mySQLPool),
 		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{
