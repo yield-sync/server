@@ -41,7 +41,7 @@ function creationOverFiveDays(created: Date): boolean
 }
 
 
-export const userMiddleware = (
+const verifyUserToken = (
 	mySQLPool: mysql.Pool,
 	requireAdmin: boolean = false,
 	requireVerification: boolean = true
@@ -103,12 +103,12 @@ export const userMiddleware = (
 
 export const user = (mySQLPool: mysql.Pool, requireVerification: boolean = true) =>
 {
-	return userMiddleware(mySQLPool, false, requireVerification);
+	return verifyUserToken(mySQLPool, false, requireVerification);
 };
 
 export const userAdmin = (mySQLPool: mysql.Pool, requireVerification: boolean = true) =>
 {
-	return userMiddleware(mySQLPool, true, requireVerification);
+	return verifyUserToken(mySQLPool, true, requireVerification);
 };
 
 

@@ -313,7 +313,7 @@ describe("Request: POST", () =>
 
 				expect(response.statusCode).toBe(400);
 
-				expect(response.text).toBe("This email is already being used.");
+				expect(JSON.parse(response.text).message).toBe("This email is already being used.");
 
 				const [results]: MySQLQueryResult = await mySQLPool.promise().query(
 					"SELECT * FROM user;"

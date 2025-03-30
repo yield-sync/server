@@ -4,7 +4,7 @@ import mysql from "mysql2";
 import { hTTPStatus } from "../../../constants";
 import externalAPI from "../../../external-api/coingecko";
 import { loadRequired } from "../../../middleware/load";
-import { user, userAdmin } from "../../../middleware/token";
+import { user, userAdmin } from "../../../middleware/user-token";
 import { sanitizeQuery } from "../../../util/sanitizer";
 
 

@@ -2,7 +2,7 @@ import express from "express";
 import mysql from "mysql2";
 
 import { loadRequired } from "../../../middleware/load";
-import { user, userAdmin } from "../../../middleware/token";
+import { user, userAdmin } from "../../../middleware/user-token";
 import { hTTPStatus } from "../../../constants";
 import DBHandlerQueryStock from "../../../db-handler/query_stock";
 import DBHandlerStock from "../../../db-handler/stock";

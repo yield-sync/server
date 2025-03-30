@@ -2,7 +2,7 @@ import express from "express";
 import mysql from "mysql2";
 
 import { loadRequired } from "../../../middleware/load";
-import { user } from "../../../middleware/token";
+import { user } from "../../../middleware/user-token";
 import { hTTPStatus } from "../../../constants";
 
 

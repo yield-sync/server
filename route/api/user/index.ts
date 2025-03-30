@@ -3,7 +3,7 @@ import express from "express";
 import mysql from "mysql2";
 
 import config from "../../../config";
-import { user } from "../../../middleware/token";
+import { user } from "../../../middleware/user-token";
 import mailUtil from "../../../util/mailUtil";
 import { validateEmail, validatePassword } from "../../../util/validation";
 import { hTTPStatus } from "../../../constants";
@@ -135,13 +135,13 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		*/
 		"/send-verification-email",
 		user(mySQLPool, false),
-		async (req: express.Request, res: express.Response) =>
+		async (req: express.Request, res: express.Response, next: express.NextFunction) =>
 		{
-			const timestamp = new Date();
-
+			/**
+			* @dev Prevent unnecessary verification by checking if user isnt verified already
+			*/
 			try
 			{
-				// Check if user isnt verified already
 				const [
 					users,
 				]: [
@@ -162,10 +162,25 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 					return;
 				}
+			}
+			catch (error)
+			{
+				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({ message: "Internal Server Error", error });
 
-				// Check if there is already a verification in the database
-				let verification: IVerification[];
+				return;
+			}
 
+			next()
+		},
+		async (req: express.Request, res: express.Response) =>
+		{
+			const timestamp = new Date();
+
+			// Check if there is already a verification in the database
+			let verification: IVerification[];
+
+			try
+			{
 				[
 					verification,
 				] = await mySQLPool.promise().query<IVerification[]>(
