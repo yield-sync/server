@@ -128,10 +128,12 @@ export default {
 					]
 				);
 
-				if (users.length > 0)
+				if (users.length == 0)
 				{
+					const message = expectedVerificationStatus ? "Expected user to be verified" : "Expected user to NOT be verified"
+
 					res.status(hTTPStatus.BAD_REQUEST).json({
-						message: "Already verified"
+						message,
 					});
 
 					return;
