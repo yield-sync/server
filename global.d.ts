@@ -93,6 +93,11 @@ declare global
 		passwordNew: string,
 	};
 
+	type UserRecoverPassword = Load & {
+		pin: string,
+		passwordNew: string,
+	};
+
 	type UserSendRecoveryEmail = Load & {
 		email: string,
 	};

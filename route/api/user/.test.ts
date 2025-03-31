@@ -13,7 +13,7 @@ const jwt = require("jsonwebtoken");
 
 
 const DB_NAME: string = "mock_db_user";
-const ERROR_PASSWORD: string = "Password Must be ASCII, longer than 8 characters, and contain a special character";
+const ERROR_PASSWORD: string = "❌ Password Must be ASCII, longer than 8 characters, and contain a special character";
 
 let app: Express;
 let mySQLPool: mysql.Pool;
@@ -313,7 +313,7 @@ describe("Request: POST", () =>
 
 				expect(response.statusCode).toBe(400);
 
-				expect(JSON.parse(response.text).message).toBe("This email is already being used.");
+				expect(JSON.parse(response.text).message).toBe("❌ This email is already being used.");
 
 				const [results]: MySQLQueryResult = await mySQLPool.promise().query(
 					"SELECT * FROM user;"

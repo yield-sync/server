@@ -14,7 +14,7 @@ const jsonWebToken = require("jsonwebtoken");
 
 const THREE_MINUTES_IN_MS: number = 5 * 60 * 1000;
 
-const ERROR_INVALID_PASSWORD: string = "Password Must be ASCII, longer than 8 characters, and contain a special character";
+const ERROR_INVALID_PASSWORD: string = "❌ Password Must be ASCII, longer than 8 characters, and contain a special character";
 
 
 export default (mySQLPool: mysql.Pool): express.Router =>
@@ -109,7 +109,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					if (timestamp.getTime() - created.getTime() < THREE_MINUTES_IN_MS)
 					{
 						res.status(hTTPStatus.BAD_REQUEST).json({
-							message: "3 minutes must pass before last request for recovery email"
+							message: "⏳ 3 minutes must pass before last request for recovery email"
 						});
 
 						return;
@@ -185,7 +185,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					if (timestamp.getTime() - created.getTime() < THREE_MINUTES_IN_MS)
 					{
 						res.status(hTTPStatus.BAD_REQUEST).json({
-							message: "3 minutes must pass before last request for verification email"
+							message: "⏳ 3 minutes must pass before last request for verification email"
 						});
 
 						return;
@@ -276,7 +276,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				if (users.length > 0)
 				{
-					res.status(hTTPStatus.BAD_REQUEST).json({ message: "This email is already being used." });
+					res.status(hTTPStatus.BAD_REQUEST).json({ message: "❌ This email is already being used." });
 
 					return;
 				}
@@ -510,6 +510,80 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				});
 			}
 		}
-	);
+	).post(
+		/**
+		* @route POST /api/user/verify
+		* @access Public
+		*/
+		"/recover-password",
+		userToken.userTokenDecode(mySQLPool, false),
+		userToken.userTokenDecodeRequireVerificationStatus(mySQLPool, false),
+		async (req: express.Request, res: express.Response) =>
+		{
+			const { pin, passwordNew }: UserRecoverPassword = req.body.load;
+
+			try
+			{
+				const sanitizedPin = sanitizer.sanitizePin(pin);
+
+				if (!validatePassword(passwordNew))
+				{
+					res.status(hTTPStatus.BAD_REQUEST).send(ERROR_INVALID_PASSWORD);
+
+					return;
+				}
+
+				let recovery: IRecovery[];
+
+				[
+					recovery,
+				] = await mySQLPool.promise().query<IRecovery[]>(
+					"SELECT * FROM recovery WHERE user_id = ? AND pin = ?;",
+					[
+						req.body.userDecoded.id,
+						sanitizedPin,
+					]
+				);
+
+				if (recovery.length == 0)
+				{
+					res.status(hTTPStatus.BAD_REQUEST).json({
+						message: "❌ Invalid pin",
+					});
+
+					return;
+				}
+
+				await mySQLPool.promise().query(
+					"UPDATE user SET password = ? WHERE id = ?;",
+					[
+						req.body.userDecoded.id,
+						await bcrypt.hash(passwordNew, 10),
+					]
+				);
+
+				res.status(hTTPStatus.OK).json({
+					message: "✅ User password updated",
+				});
+			}
+			catch (error: Error | any)
+			{
+				if (error instanceof Error)
+				{
+					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+						message: INTERNAL_SERVER_ERROR,
+						error: error.message
+					});
+
+					return
+				}
+
+				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+					message: INTERNAL_SERVER_ERROR,
+					error: "Unknown Error"
+				});
+			}
+		}
+	);;
 };
 
