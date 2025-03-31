@@ -3,10 +3,11 @@ import express from "express";
 import mysql from "mysql2";
 
 import config from "../../../config";
+import { hTTPStatus } from "../../../constants";
 import userToken from "../../../middleware/user-token";
 import mailUtil from "../../../util/mailUtil";
 import { validateEmail, validatePassword } from "../../../util/validation";
-import { hTTPStatus } from "../../../constants";
+import sanitizer from "../../../util/sanitizer";
 
 
 const jsonWebToken = require("jsonwebtoken");
@@ -192,9 +193,22 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				res.status(hTTPStatus.OK).send({ message: "Created verification" });
 			}
-			catch (error)
+			catch (error: Error | any)
 			{
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({ message: "Internal Server Error", error });
+				if (error instanceof Error)
+				{
+					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+						message: "Internal Server Error",
+						error: error.message
+					});
+				}
+				else
+				{
+					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+						message: "Internal Server Error",
+						error: "Unknown Error"
+					});
+				}
 
 				return;
 			}
@@ -253,7 +267,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					]
 				);
 
-				res.status(hTTPStatus.CREATED).json({ message: "Created user" });
+				res.status(hTTPStatus.CREATED).json({ message: "✅ Created user!" });
 
 				return;
 			}
@@ -306,14 +320,10 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				);
 
 				res.status(hTTPStatus.OK).send("Updated password.");
-
-				return;
 			}
 			catch (error)
 			{
 				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({ message: "Internal Server Error", error });
-
-				return;
 			}
 		}
 	).post(
@@ -369,14 +379,10 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 						}
 					),
 				});
-
-				return;
 			}
 			catch (error)
 			{
 				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({ message: "Internal Server Error", error });
-
-				return;
 			}
 		}
 	).post(
@@ -386,21 +392,63 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		*/
 		"/verify",
 		userToken.userTokenDecode(mySQLPool, false),
+		userToken.userTokenDecodeRequireVerificationStatus(mySQLPool, false),
 		async (req: express.Request, res: express.Response) =>
 		{
 			const { pin }: UserVerify = req.body.load;
 
 			try
 			{
+				const sanitizedPin = sanitizer.sanitizePin(pin);
+
+				let verification: IVerification[];
+
+				[
+					verification,
+				] = await mySQLPool.promise().query<IVerification[]>(
+					"SELECT * FROM verification WHERE user_id = ? AND pin = ?;",
+					[
+						req.body.userDecoded.id,
+						sanitizedPin,
+					]
+				);
+
+				if (verification.length == 0)
+				{
+					res.status(hTTPStatus.BAD_REQUEST).json({
+						message: "❌ Invalid pin",
+					});
+
+					return;
+				}
+
+				await mySQLPool.promise().query(
+					"UPDATE user SET verified = 1 WHERE id = ?;",
+					[
+						req.body.userDecoded.id,
+					]
+				);
+
 				res.status(hTTPStatus.OK).json({
-					message: "Verified",
+					message: "✅ User verified",
 				});
 			}
-			catch (error)
+			catch (error: Error | any)
 			{
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({ message: "Internal Server Error", error });
+				if (error instanceof Error)
+				{
+					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+						message: "Internal Server Error",
+						error: error.message
+					});
 
-				return;
+					return
+				}
+
+				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+					message: "Internal Server Error",
+					error: "Unknown Error"
+				});
 			}
 		}
 	);
