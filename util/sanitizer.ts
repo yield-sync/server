@@ -55,12 +55,19 @@ export default {
 		}
 
 		const trimmed = input.trim();
+
 		if (!trimmed)
 		{
-			return "";
+			throw new Error("Input must be a non-empty string");
 		}
 
-		// Remove all except alphanumeric and periods
-		return trimmed.replace(/[^a-zA-Z0-9.]/g, "");
+		// Keep only letters (A-Z, a-z) and numbers (0-9)
+		const sanitized = trimmed.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+
+		if (sanitized.length !== 6) {
+			throw new Error("PIN must be exactly 6 alphanumeric characters");
+		}
+
+		return sanitized;
 	}
 }
