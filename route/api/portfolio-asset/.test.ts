@@ -265,7 +265,7 @@ describe("Request: GET", () => {
 
 				expect(response.statusCode).toBe(400);
 
-				expect(response.text).toBe("Invalid percent_allocation");
+				expect(response.text).toBe("❌ Invalid percent_allocation");
 			});
 
 			it("Should fail if to insert percent_allocation < 0..", async () => {
@@ -282,7 +282,7 @@ describe("Request: GET", () => {
 
 				expect(response.statusCode).toBe(400);
 
-				expect(response.text).toBe("Invalid percent_allocation");
+				expect(response.text).toBe("❌ Invalid percent_allocation");
 			});
 		});
 		describe("Route: /api/portfolio-asset/update", () => {

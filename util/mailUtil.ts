@@ -46,7 +46,7 @@ export default {
 	sendRecoveryEmail: async (toEmail: string, recoveryPin: string) => {
 		if (!validateEmail(toEmail))
 		{
-			throw new Error("Invalid toEmail");
+			throw new Error("❌ Invalid toEmail");
 		}
 
 		try
@@ -96,7 +96,7 @@ export default {
 	sendVerificationEmail: async (toEmail: string, verificationPin: string) => {
 		if (!validateEmail(toEmail))
 		{
-			throw new Error("Invalid toEmail");
+			throw new Error("❌ Invalid toEmail");
 		}
 
 		const email = getVerificationEmail(verificationPin);

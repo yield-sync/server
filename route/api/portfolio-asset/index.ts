@@ -46,7 +46,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				if (percent_allocation < 0 || percent_allocation > 10_000)
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("Invalid percent_allocation");
+					res.status(hTTPStatus.BAD_REQUEST).send("❌ Invalid percent_allocation");
 
 					return;
 				}
@@ -73,7 +73,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				if (portfolios.length == 0)
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("Invalid portfolio_id");
+					res.status(hTTPStatus.BAD_REQUEST).send("❌ Invalid portfolio_id");
 
 					return;
 				}
@@ -151,7 +151,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				if (percent_allocation < 0 || percent_allocation > 10_000)
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("Invalid percent_allocation");
+					res.status(hTTPStatus.BAD_REQUEST).send("❌ Invalid percent_allocation");
 
 					return;
 				}
@@ -178,7 +178,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				if (portfolios.length == 0)
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("Invalid portfolio_id");
+					res.status(hTTPStatus.BAD_REQUEST).send("❌ Invalid portfolio_id");
 
 					return;
 				}

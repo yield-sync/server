@@ -74,7 +74,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				if (symbol == "QUERY")
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("Invalid query passed");
+					res.status(hTTPStatus.BAD_REQUEST).send("❌ Invalid query passed");
 
 					return;
 				}

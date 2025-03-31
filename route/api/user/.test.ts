@@ -181,7 +181,7 @@ describe("Request: POST", () =>
 
 				expect(response.statusCode).toBe(400);
 
-				expect(response.error.text).toBe("Invalid email");
+				expect(response.error.text).toBe("❌ Invalid email");
 
 				const [results]: MySQLQueryResult = await mySQLPool.promise().query(
 					"SELECT * FROM user;"

@@ -250,7 +250,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				if (!validateEmail(email))
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("Invalid email");
+					res.status(hTTPStatus.BAD_REQUEST).send("❌ Invalid email");
 
 					return;
 				}
@@ -339,7 +339,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				if (!bcrypt.compareSync(password, users[0].password))
 				{
-					res.status(401).send("Invalid password.");
+					res.status(401).send("❌ Invalid password.");
 
 					return;
 				}
@@ -399,14 +399,14 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				if (users.length != 1)
 				{
-					res.status(401).send("Invalid password or email");
+					res.status(401).send("❌ Invalid password or email");
 
 					return;
 				}
 
 				if (!bcrypt.compareSync(password, users[0].password))
 				{
-					res.status(401).send("Invalid password or email");
+					res.status(401).send("❌ Invalid password or email");
 
 					return;
 				}
