@@ -99,47 +99,39 @@ export default {
 			throw new Error("Invalid toEmail");
 		}
 
-		try
-		{
-			const email = getVerificationEmail(verificationPin);
+		const email = getVerificationEmail(verificationPin);
 
-			const response = await fetch(
-				"https://api.brevo.com/v3/smtp/email",
-				{
-					method: "POST",
-					headers: {
-						"Accept": "application/json",
-						"Content-Type": "application/json",
-						"api-key": config.api.brevo.key
-					},
-					body: JSON.stringify({
-						sender: {
-							name: "Yield Sync",
-							email: `no-reply@${config.app.domain}`
-						},
-						to: [
-							{
-								email: toEmail,
-								name: "Valued User"
-							}
-						],
-						subject: email.subject,
-						htmlContent: email.body
-					}),
-				}
-			);
-
-			if (!response.ok)
+		const response = await fetch(
+			"https://api.brevo.com/v3/smtp/email",
 			{
-				throw new HttpRequestError(`Http Request Error: ${response.status}`);
+				method: "POST",
+				headers: {
+					"Accept": "application/json",
+					"Content-Type": "application/json",
+					"api-key": config.api.brevo.key
+				},
+				body: JSON.stringify({
+					sender: {
+						name: "Yield Sync",
+						email: `no-reply@${config.app.domain}`
+					},
+					to: [
+						{
+							email: toEmail,
+							name: "Valued User"
+						}
+					],
+					subject: email.subject,
+					htmlContent: email.body
+				}),
 			}
+		);
 
-			return await response.json();
-		}
-		catch (error)
+		if (!response.ok)
 		{
-			console.error(error);
-			throw new HttpRequestError(`Http Request Error: ${error}`);
+			throw new HttpRequestError(`Http Request Error: ${response.status}`);
 		}
+
+		return await response.json();
 	},
 }
