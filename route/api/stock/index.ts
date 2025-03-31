@@ -3,7 +3,7 @@ import mysql from "mysql2";
 
 import { loadRequired } from "../../../middleware/load";
 import userToken from "../../../middleware/user-token";
-import { hTTPStatus } from "../../../constants";
+import { INTERNAL_SERVER_ERROR, hTTPStatus } from "../../../constants";
 import DBHandlerQueryStock from "../../../db-handler/query_stock";
 import DBHandlerStock from "../../../db-handler/stock";
 import { sanitizeSymbolQuery } from "../../../util/sanitizer";
@@ -29,9 +29,22 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				res.status(hTTPStatus.OK).json(await DBHandlerStock.getStock(mySQLPool));
 			}
-			catch (error)
+			catch (error: Error | any)
 			{
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({ message: "Internal Server Error", error });
+				if (error instanceof Error)
+				{
+					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+						message: INTERNAL_SERVER_ERROR,
+						error: error.message
+					});
+
+					return
+				}
+
+				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+					message: INTERNAL_SERVER_ERROR,
+					error: "Unknown Error"
+				});
 			}
 		}
 	).get(
@@ -204,10 +217,22 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				res.status(hTTPStatus.ACCEPTED).json(response);
 			}
-			catch (error)
+			catch (error: Error | any)
 			{
-				console.error(error);
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({ message: "Internal Server Error", error });
+				if (error instanceof Error)
+				{
+					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+						message: INTERNAL_SERVER_ERROR,
+						error: error.message
+					});
+
+					return
+				}
+
+				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+					message: INTERNAL_SERVER_ERROR,
+					error: "Unknown Error"
+				});
 			}
 		}
 	).post(
@@ -244,10 +269,22 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				res.status(hTTPStatus.OK).send("Deleted stock");
 			}
-			catch (error)
+			catch (error: Error | any)
 			{
-				console.error(error);
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({ message: "Internal Server Error", error });
+				if (error instanceof Error)
+				{
+					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+						message: INTERNAL_SERVER_ERROR,
+						error: error.message
+					});
+
+					return
+				}
+
+				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+					message: INTERNAL_SERVER_ERROR,
+					error: "Unknown Error"
+				});
 			}
 		}
 	);
