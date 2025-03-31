@@ -41,11 +41,26 @@ export function sanitizeSymbolQuery(input: unknown): string
 		return "";
 	};
 
-	// Remove all except letters and trim to 10 characters
-	return trimmed.replace(/[^a-zA-Z]/g, "").substring(0, 10).toUpperCase();
+	// Remove all except letters and trim to 6 characters
+	return trimmed.replace(/[^a-zA-Z]/g, "").substring(0, 6).toUpperCase();
 }
 
 export default {
 	sanitizeQuery,
 	sanitizeSymbolQuery,
+	sanitizePin: (input: unknown): string => {
+		if (typeof input !== "string")
+		{
+			throw new TypeError("Input must be a string");
+		}
+
+		const trimmed = input.trim();
+		if (!trimmed)
+		{
+			return "";
+		}
+
+		// Remove all except alphanumeric and periods
+		return trimmed.replace(/[^a-zA-Z0-9.]/g, "");
+	}
 }
