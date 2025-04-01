@@ -89,6 +89,29 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 			try
 			{
+				const email: string = sanitizer.sanitizeEmail(req.params.email);
+
+				const [
+					users,
+				]: [
+					IUser[],
+					FieldPacket[]
+				] = await mySQLPool.promise().query<IUser[]>(
+					"SELECT id FROM user WHERE email = ?;",
+					[
+						email,
+					]
+				);
+
+				if (users.length == 0)
+				{
+					res.status(hTTPStatus.BAD_REQUEST).json({
+						message: "❌ Invalid email"
+					});
+
+					return;
+				}
+
 				// Check if there is already a recovery in the database
 				let recovery: IRecovery[];
 
@@ -97,7 +120,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				] = await mySQLPool.promise().query<IRecovery[]>(
 					"SELECT * FROM recovery WHERE user_id = ?;",
 					[
-						req.body.userDecoded.id,
+						users[0].id,
 					]
 				);
 
@@ -122,7 +145,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				await mySQLPool.promise().query(
 					"INSERT INTO recovery (user_id, pin) VALUES (?, ?);",
 					[
-						req.body.userDecoded.id,
+						users[0].id,
 						verificationPin,
 					]
 				);
@@ -515,15 +538,37 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		* @route POST /api/user/verify
 		* @access Public
 		*/
-		"/recover-password",
-		userToken.userTokenDecode(mySQLPool, false),
-		userToken.userTokenDecodeRequireVerificationStatus(mySQLPool, false),
+		"/recover-password/:email",
 		async (req: express.Request, res: express.Response) =>
 		{
 			const { pin, passwordNew }: UserRecoverPassword = req.body.load;
 
 			try
 			{
+				console.log(req.params.email)
+				const email: string = sanitizer.sanitizeEmail(req.params.email);
+
+				const [
+					users,
+				]: [
+					IUser[],
+					FieldPacket[]
+				] = await mySQLPool.promise().query<IUser[]>(
+					"SELECT id FROM user WHERE email = ?;",
+					[
+						email,
+					]
+				);
+
+				if (users.length == 0)
+				{
+					res.status(hTTPStatus.BAD_REQUEST).json({
+						message: "❌ Invalid email"
+					});
+
+					return;
+				}
+
 				const sanitizedPin = sanitizer.sanitizePin(pin);
 
 				if (!validatePassword(passwordNew))
@@ -540,7 +585,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				] = await mySQLPool.promise().query<IRecovery[]>(
 					"SELECT * FROM recovery WHERE user_id = ? AND pin = ?;",
 					[
-						req.body.userDecoded.id,
+						users[0].id,
 						sanitizedPin,
 					]
 				);
@@ -557,8 +602,8 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				await mySQLPool.promise().query(
 					"UPDATE user SET password = ? WHERE id = ?;",
 					[
-						req.body.userDecoded.id,
 						await bcrypt.hash(passwordNew, 10),
+						users[0].id,
 					]
 				);
 

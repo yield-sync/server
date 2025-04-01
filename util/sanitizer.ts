@@ -46,6 +46,28 @@ export function sanitizeSymbolQuery(input: unknown): string
 }
 
 export default {
+	/**
+	* @notice Sanitize an email
+	* @param input {unknown} The input to sanitize
+	* @returns A trimmed, uppercase string with only alphanumeric characters and periods
+	* @throws {TypeError} If input is not a string
+	*/
+	sanitizeEmail: (input: unknown): string => {
+		if (typeof input !== "string") {
+			throw new TypeError("Input must be a string");
+		}
+
+		// Trim whitespace and convert to lowercase
+		const trimmed = input.trim().toLowerCase();
+
+		// Validate the email format
+		const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+		if (!emailRegex.test(trimmed)) {
+			throw new Error("Invalid email format");
+		}
+
+		return trimmed;
+	},
 	sanitizeQuery,
 	sanitizeSymbolQuery,
 	sanitizePin: (input: unknown): string => {
