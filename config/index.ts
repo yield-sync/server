@@ -31,10 +31,10 @@ export default
 		},
 
 		database: {
-			name: "yield_sync",
 			host: process.env.APP__DATABASE__HOST,
 			user: process.env.APP__DATABASE__USER,
 			password: process.env.APP__DATABASE__PASSWORD,
+			name: process.env.APP__DATABASE__NAME || "yield_sync",
 		},
 
 		secretKey: process.env.APP__SECRET_KEY || "secret",

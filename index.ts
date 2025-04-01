@@ -1,3 +1,7 @@
+class InitializationError extends
+	Error
+{}
+
 import bodyParser from "body-parser";
 import history from "connect-history-api-fallback";
 import cors from "cors";
@@ -18,9 +22,15 @@ import routeApiStock from "./route/api/stock";
 import routeApiUser from "./route/api/user";
 
 
-if (!config.app.database.host || !config.port)
+if (
+	!config.port ||
+	!config.app.database.host ||
+	!config.app.database.user ||
+	!config.app.database.password ||
+	!config.app.database.name
+)
 {
-	throw new Error("Missing required configuration");
+	throw new InitializationError("Missing required configuration values");
 }
 
 
