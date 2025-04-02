@@ -32,7 +32,6 @@ if (
 {
 	throw new InitializationError("Missing required configuration values");
 }
-console.log(config.app.database);
 
 
 const MYSQL_POOL: mysql.Pool = mysql.createPool({

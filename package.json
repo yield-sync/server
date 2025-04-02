@@ -5,12 +5,11 @@
   "description": "Server for yield-sync",
   "main": "server.ts",
   "scripts": {
-    "build": "rimraf dist && npx tsc && cp -r static/ dist/",
+    "build": "node dist/sql/db-builder.js && rimraf dist && npx tsc && cp -r static/ dist/",
     "dev": "npm run build && cross-env NODE_ENV=development concurrently \"tsc --watch\" \"nodemon dist/index.js\"",
     "lint": "eslint . --ext .ts --fix",
     "start": "npm run build && cross-env NODE_ENV=production node dist/index.js",
-    "test": "jest --verbose",
-    "db-builder-production": "npm run build && node dist/sql/db-builder.js --production"
+    "test": "jest --verbose"
   },
   "jest": {
     "preset": "ts-jest",

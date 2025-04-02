@@ -1,3 +1,7 @@
+class DBBuilderError extends
+	Error
+{}
+
 import mysql from "mysql2";
 
 import config from "../config";
@@ -227,9 +231,18 @@ export const dBBuilder = async (mySQLPool: mysql.Pool, dBName: string, reset: bo
 /**
 * @notice This is the function to build the production SQL DB
 */
-export async function dBBuilderProduction()
+export async function dBBuilderProduction(overwrite: boolean)
 {
-	console.log("Initializing SQL database..");
+	if (
+		!config.app.database.host ||
+		!config.app.database.name ||
+		!config.app.database.password ||
+		!config.port ||
+		!config.app.database.user
+	)
+	{
+		throw new DBBuilderError("Missing required configuration values");
+	}
 
 	const mySQLPool: mysql.Pool = mysql.createPool({
 		host: config.app.database.host,
@@ -240,12 +253,45 @@ export async function dBBuilderProduction()
 		queueLimit: 0,
 	});
 
-	// [mock-db] drop and recreate
-	await dBBuilder(mySQLPool, config.app.database.name, true);
+	try
+	{
+		// Check if the database exists
+		const [databases] = await mySQLPool.promise().query("SHOW DATABASES LIKE ?;", [config.app.database.name]);
 
-	mySQLPool.end();
+		if (!Array.isArray(databases))
+		{
+			throw new DBBuilderError("\"databases\" value not array");
+		}
 
-	console.log("Done.");
+		// If the database exists and overwrite is not requested, skip creation
+		if (databases.length > 0 && !overwrite)
+		{
+			console.log(`Database "${config.app.database.name}" already exists. Skipping creation.`);
+
+			return;
+		}
+
+		// Drop and recreate the database if overwrite is requested or if it doesn't exist
+		if (overwrite)
+		{
+			await mySQLPool.promise().query("DROP DATABASE IF EXISTS ??;", [config.app.database.name]);
+
+			console.log(`Database "${config.app.database.name}" dropped.`);
+		}
+
+		// Create the database and run the queries
+		await dBBuilder(mySQLPool, config.app.database.name);
+
+		console.log(`Database "${config.app.database.name}" created.`);
+	}
+	catch (error)
+	{
+		throw new DBBuilderError("Error initializing the database: " + error);
+	}
+	finally
+	{
+		await mySQLPool.promise().end();
+	}
 };
 
 /**
@@ -265,13 +311,7 @@ export default dBBuilder;
 // **Run only if executed from the CLI**
 if (require.main === module)
 {
-	// **Automatically Run Only If `--production` Flag Is Passed**
-	if (process.argv.includes("--production"))
-	{
-		dBBuilderProduction();
-	}
-	else
-	{
-		console.log("Nothing happened. If you want to build production db pass '--production' option.");
-	}
+	console.log("Initializing SQL database..");
+
+	dBBuilderProduction(process.argv.includes("--overwrite") ? true : false);
 }
