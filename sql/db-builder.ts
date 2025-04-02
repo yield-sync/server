@@ -213,6 +213,7 @@ export const dBBuilder = async (mySQLPool: mysql.Pool, dBName: string, reset: bo
 	await mySQLPool.promise().query("CREATE DATABASE ??;", [
 		dBName,
 	]);
+
 	await mySQLPool.promise().query("USE ??;", [
 		dBName,
 	]);
