@@ -34,6 +34,7 @@ export default
 			host: process.env.APP__DATABASE__HOST,
 			user: process.env.APP__DATABASE__USER,
 			password: process.env.APP__DATABASE__PASSWORD,
+			port: process.env.APP__DATABASE__PORT,
 			name: process.env.APP__DATABASE__NAME || "yield_sync",
 		},
 

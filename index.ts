@@ -23,22 +23,24 @@ import routeApiUser from "./route/api/user";
 
 
 if (
-	!config.port ||
 	!config.app.database.host ||
-	!config.app.database.user ||
+	!config.app.database.name ||
 	!config.app.database.password ||
-	!config.app.database.name
+	!config.port ||
+	!config.app.database.user
 )
 {
 	throw new InitializationError("Missing required configuration values");
 }
+console.log(config.app.database);
 
 
 const MYSQL_POOL: mysql.Pool = mysql.createPool({
-	database: config.app.database.name,
 	host: config.app.database.host,
-	user: config.app.database.user,
+	database: config.app.database.name,
 	password: config.app.database.password,
+	port: Number(config.app.database.port),
+	user: config.app.database.user,
 	waitForConnections: true,
 	connectionLimit: 10,
 	queueLimit: 0,
