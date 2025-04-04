@@ -43,9 +43,9 @@ const MYSQL_POOL: mysql.Pool = mysql.createPool({
 	connectionLimit: 10,
 	queueLimit: 0,
 }).on("connection", (connection) => {
-	console.log("✅ Successfully connected to the MySQL Database")
+	console.log("✅ Server successfully connected to the MySQL Database")
 }).on("error", (err) => {
-	console.error("MySQL Pool Error:", err);
+	console.error("MySQL Create Pool Error:", err);
 });
 
 
