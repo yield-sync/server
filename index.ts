@@ -6,7 +6,7 @@ import bodyParser from "body-parser";
 import history from "connect-history-api-fallback";
 import cors from "cors";
 import express from "express";
-import fs from 'fs';
+import fs from "fs";
 import http from "http";
 import mysql from "mysql2";
 import path from "path";
@@ -42,9 +42,11 @@ const MYSQL_POOL: mysql.Pool = mysql.createPool({
 	waitForConnections: true,
 	connectionLimit: 10,
 	queueLimit: 0,
-}).on("connection", (connection) => {
-	console.log("✅ Server successfully connected to the MySQL Database")
-}).on("error", (err) => {
+}).on("connection", (connection) => 
+{
+	console.log("✅ Server successfully connected to the MySQL Database");
+}).on("error", (err) => 
+{
 	console.error("MySQL Create Pool Error:", err);
 });
 
@@ -92,13 +94,13 @@ http.createServer(
 		"*",
 		(req: express.Request, res: express.Response) =>
 		{
-			const filePath = path.join(__dirname, "frontend", "dist", "index.html")
+			const filePath = path.join(__dirname, "frontend", "dist", "index.html");
 
 			if (!fs.existsSync(filePath))
 			{
 				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
 					message: INTERNAL_SERVER_ERROR,
-					error: `${filePath} does not exist`
+					error: `${filePath} does not exist`,
 				});
 
 				return;

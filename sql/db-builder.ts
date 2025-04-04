@@ -257,16 +257,22 @@ export async function dBBuilderProduction(overwrite: boolean)
 		waitForConnections: true,
 		connectionLimit: 10,
 		queueLimit: 0,
-	}).on("connection", (connection) => {
-		console.log("✅ Successfully connected to the MySQL Database")
-	}).on("error", (err) => {
+	}).on("connection", (connection) => 
+	{
+		console.log("✅ Successfully connected to the MySQL Database");
+	}).on("error", (err) => 
+	{
 		console.error("MySQL Pool Error:", err);
 	});
 
 	try
 	{
 		// Check if the database exists
-		const [databases] = await mySQLPool.promise().query("SHOW DATABASES LIKE ?;", [config.app.database.name]);
+		const [
+			databases,
+		] = await mySQLPool.promise().query("SHOW DATABASES LIKE ?;", [
+			config.app.database.name,
+		]);
 
 		if (!Array.isArray(databases))
 		{
@@ -284,7 +290,9 @@ export async function dBBuilderProduction(overwrite: boolean)
 		// Drop and recreate the database if overwrite is requested or if it doesn't exist
 		if (overwrite)
 		{
-			await mySQLPool.promise().query("DROP DATABASE IF EXISTS ??;", [config.app.database.name]);
+			await mySQLPool.promise().query("DROP DATABASE IF EXISTS ??;", [
+				config.app.database.name,
+			]);
 
 			console.log(`Database "${config.app.database.name}" dropped.`);
 		}

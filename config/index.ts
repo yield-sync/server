@@ -9,7 +9,7 @@ export default
 
 	api: {
 		brevo: {
-			key: process.env.API__BREVO__KEY || ""
+			key: process.env.API__BREVO__KEY || "",
 		},
 		coingecko: {
 			uRL: "https://api.coingecko.com/",

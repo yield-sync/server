@@ -65,7 +65,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				{
 					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
 						message: INTERNAL_SERVER_ERROR,
-						error: error.message
+						error: error.message,
 					});
 
 					return;
@@ -73,7 +73,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
 					message: INTERNAL_SERVER_ERROR,
-					error: "Unknown Error"
+					error: "Unknown Error",
 				});
 			}
 		}
@@ -99,7 +99,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					if (error instanceof Error)
 					{
 						res.status(hTTPStatus.BAD_REQUEST).json({
-							message: "❌ Invalid email format"
+							message: "❌ Invalid email format",
 						});
 
 						return;
@@ -123,7 +123,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				if (users.length == 0)
 				{
 					res.status(hTTPStatus.BAD_REQUEST).json({
-						message: "❌ Email not found"
+						message: "❌ Email not found",
 					});
 
 					return;
@@ -149,14 +149,14 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					if (timestamp.getTime() - created.getTime() < THREE_MINUTES_IN_MS)
 					{
 						res.status(hTTPStatus.TOO_MANY_REQUEST).json({
-							message: "⏳ 3 minutes must pass before last request for recovery email"
+							message: "⏳ 3 minutes must pass before last request for recovery email",
 						});
 
 						return;
 					}
 				}
 
-				const verificationPin = Math.random().toString(36).slice(2, 8).padEnd(6, '0');
+				const verificationPin = Math.random().toString(36).slice(2, 8).padEnd(6, "0");
 
 				// Create an instance of recovery in the DB
 				await mySQLPool.promise().query(
@@ -170,7 +170,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				await mailUtil.sendRecoveryEmail(req.params.email, verificationPin);
 
 				res.status(hTTPStatus.OK).json({
-					message: "✅ Password recovery email sent"
+					message: "✅ Password recovery email sent",
 				});
 			}
 			catch (error: Error | any)
@@ -179,7 +179,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				{
 					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
 						message: INTERNAL_SERVER_ERROR,
-						error: error.message
+						error: error.message,
 					});
 
 					return;
@@ -187,7 +187,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
 					message: INTERNAL_SERVER_ERROR,
-					error: "Unknown Error"
+					error: "Unknown Error",
 				});
 			}
 		}
@@ -225,7 +225,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					if (timestamp.getTime() - created.getTime() < THREE_MINUTES_IN_MS)
 					{
 						res.status(hTTPStatus.BAD_REQUEST).json({
-							message: "⏳ 3 minutes must pass before last request for verification email"
+							message: "⏳ 3 minutes must pass before last request for verification email",
 						});
 
 						return;
@@ -240,7 +240,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					]
 				);
 
-				const verificationPin = Math.random().toString(36).slice(2, 8).padEnd(6, '0');
+				const verificationPin = Math.random().toString(36).slice(2, 8).padEnd(6, "0");
 
 				// Create an instance of verifcation in the DB
 				await mySQLPool.promise().query(
@@ -253,7 +253,9 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				await mailUtil.sendVerificationEmail(req.body.userDecoded.email, verificationPin);
 
-				res.status(hTTPStatus.OK).send({ message: "✅ Created verification" });
+				res.status(hTTPStatus.OK).send({
+					message: "✅ Created verification", 
+				});
 			}
 			catch (error: Error | any)
 			{
@@ -261,14 +263,14 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				{
 					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
 						message: INTERNAL_SERVER_ERROR,
-						error: error.message
+						error: error.message,
 					});
 				}
 				else
 				{
 					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
 						message: INTERNAL_SERVER_ERROR,
-						error: "Unknown Error"
+						error: "Unknown Error",
 					});
 				}
 
@@ -316,7 +318,9 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				if (users.length > 0)
 				{
-					res.status(hTTPStatus.BAD_REQUEST).json({ message: "❌ This email is already being used." });
+					res.status(hTTPStatus.BAD_REQUEST).json({
+						message: "❌ This email is already being used.", 
+					});
 
 					return;
 				}
@@ -329,7 +333,9 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					]
 				);
 
-				res.status(hTTPStatus.CREATED).json({ message: "✅ Created user!" });
+				res.status(hTTPStatus.CREATED).json({
+					message: "✅ Created user!", 
+				});
 
 				return;
 			}
@@ -339,7 +345,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				{
 					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
 						message: INTERNAL_SERVER_ERROR,
-						error: error.message
+						error: error.message,
 					});
 
 					return;
@@ -347,7 +353,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
 					message: INTERNAL_SERVER_ERROR,
-					error: "Unknown Error"
+					error: "Unknown Error",
 				});
 			}
 		}
@@ -400,7 +406,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				{
 					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
 						message: INTERNAL_SERVER_ERROR,
-						error: error.message
+						error: error.message,
 					});
 
 					return;
@@ -408,7 +414,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
 					message: INTERNAL_SERVER_ERROR,
-					error: "Unknown Error"
+					error: "Unknown Error",
 				});
 			}
 		}
@@ -472,7 +478,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				{
 					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
 						message: INTERNAL_SERVER_ERROR,
-						error: error.message
+						error: error.message,
 					});
 
 					return;
@@ -480,7 +486,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
 					message: INTERNAL_SERVER_ERROR,
-					error: "Unknown Error"
+					error: "Unknown Error",
 				});
 			}
 		}
@@ -494,7 +500,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		userToken.userTokenDecodeRequireVerificationStatus(mySQLPool, false),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const { pin }: UserVerify = req.body.load;
+			const { pin, }: UserVerify = req.body.load;
 
 			try
 			{
@@ -538,7 +544,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				{
 					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
 						message: INTERNAL_SERVER_ERROR,
-						error: error.message
+						error: error.message,
 					});
 
 					return;
@@ -546,7 +552,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
 					message: INTERNAL_SERVER_ERROR,
-					error: "Unknown Error"
+					error: "Unknown Error",
 				});
 			}
 		}
@@ -558,11 +564,11 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		"/recover-password/:email",
 		async (req: express.Request, res: express.Response) =>
 		{
-			const { pin, passwordNew }: UserRecoverPassword = req.body.load;
+			const { pin, passwordNew, }: UserRecoverPassword = req.body.load;
 
 			try
 			{
-				console.log(req.params.email)
+				console.log(req.params.email);
 				const email: string = sanitizer.sanitizeEmail(req.params.email);
 
 				const [
@@ -580,7 +586,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				if (users.length == 0)
 				{
 					res.status(hTTPStatus.BAD_REQUEST).json({
-						message: "❌ Invalid email"
+						message: "❌ Invalid email",
 					});
 
 					return;
@@ -634,7 +640,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				{
 					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
 						message: INTERNAL_SERVER_ERROR,
-						error: error.message
+						error: error.message,
 					});
 
 					return;
@@ -642,7 +648,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
 					message: INTERNAL_SERVER_ERROR,
-					error: "Unknown Error"
+					error: "Unknown Error",
 				});
 			}
 		}
