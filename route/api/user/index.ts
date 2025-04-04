@@ -253,7 +253,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				await mailUtil.sendVerificationEmail(req.body.userDecoded.email, verificationPin);
 
-				res.status(hTTPStatus.OK).send({ message: "Created verification" });
+				res.status(hTTPStatus.OK).send({ message: "✅ Created verification" });
 			}
 			catch (error: Error | any)
 			{
@@ -529,7 +529,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				);
 
 				res.status(hTTPStatus.OK).json({
-					message: "✅ User verified",
+					message: "✅ Email verified",
 				});
 			}
 			catch (error: Error | any)

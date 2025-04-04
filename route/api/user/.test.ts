@@ -23,6 +23,7 @@ let mySQLPool: mysql.Pool;
 
 jest.mock("../../../util/mailUtil.ts", () => ({
 	sendRecoveryEmail: jest.fn(),
+	sendVerificationEmail: jest.fn(),
 }));
 
 
@@ -64,7 +65,7 @@ describe("Request: GET", () =>
 {
 	describe("Route: /api/user/", () =>
 	{
-		describe("Expected Failure", () => {
+		describe("❌ Expected Failure", () => {
 			it("Should NOT allow creating a user with invalid email..", async () =>
 			{
 				const response = await request(app).get("/api/user/").send();
@@ -76,7 +77,7 @@ describe("Request: GET", () =>
 			});
 		});
 
-		describe("Expected Success", () => {
+		describe("✅ Expected Success", () => {
 			it("Should return JSON of user profile..", async () =>
 			{
 				const EMAIL: string = "testemail@example.com";
@@ -117,7 +118,7 @@ describe("Request: GET", () =>
 			});
 		});
 
-		describe("Expected Failure Part 2", () => {
+		describe("❌ Expected Failure Part 2", () => {
 			it("Should state that verification is required if over 5 days from creation and not verified..", async () =>
 			{
 				const EMAIL: string = "testemail@example.com";
@@ -171,7 +172,7 @@ describe("Request: GET", () =>
 	describe("Route: /api/user/send-password-recovery-email/:email", () => {
 		beforeEach(() => jest.clearAllMocks());
 
-		describe("Expected Failure", () => {
+		describe("❌ Expected Failure", () => {
 			it("Should revert if an invalid email is passed to the route..", async () => {
 				const res = await request(app).get("/api/user/send-password-recovery-email/not-an-email");
 
@@ -187,7 +188,7 @@ describe("Request: GET", () =>
 			});
 		});
 
-		describe("Expected Sucess", () => {
+		describe("✅ Expected Success", () => {
 			it("Should send the password recovery email..", async () => {
 				const email = "testemail@example.com";
 				const password = "testpassword!";
@@ -206,7 +207,7 @@ describe("Request: GET", () =>
 			});
 		});
 
-		describe("Expected Failure Part 2", () => {
+		describe("❌ Expected Failure Part 2", () => {
 			it("Should not be able to send another email until 3 minutes has passed since the last one..", async () => {
 				const email = "testemail@example.com";
 				const password = "testpassword!";
@@ -234,20 +235,20 @@ describe("Request: GET", () =>
 	});
 
 	describe("Route: /api/user/send-verification-email", () => {
-		describe("Expected Failure", () => {
+		describe("❌ Expected Failure", () => {
 			it("[auth] Should require a user token..", async () =>
 			{
 
 			});
 		});
 
-		describe("Expected Sucess", () => {
+		describe("✅ Expected Success", () => {
 			it("Should send the verification email..", async () => {
 
 			});
 		});
 
-		describe("Expected Failure Part 2", () => {
+		describe("❌ Expected Failure Part 2", () => {
 			it("Should not be able to send another email until 3 minutes has passed since the last one..", async () => {
 
 			});
@@ -263,7 +264,7 @@ describe("Request: POST", () =>
 {
 	describe("Route: /api/user/create", () =>
 	{
-		describe("Expected Failure", () => {
+		describe("❌ Expected Failure", () => {
 			it("Should NOT allow creating a user with invalid email..", async () =>
 			{
 				const email = "notemail";
@@ -360,7 +361,7 @@ describe("Request: POST", () =>
 			});
 		});
 
-		describe("Expected Success", () =>
+		describe("✅ Expected Success", () =>
 		{
 			const email: string = "testemail@example.com";
 			const password: string = "testpassword!";
@@ -569,7 +570,67 @@ describe("Request: POST", () =>
 	});
 
 	describe("Route: /api/user/verify", () => {
+		describe("❌ Expected Failure", () => {
+			it("Should fail verification with an invalid token..", async () => {
+				const res = await request(app).post("/api/user/verify").send({ token: "invalid.token.value" });
 
+				expect(res.statusCode).toBe(401);
+
+				expect(res.body.message).toBe("Access denied: Invalid or missing token");
+			});
+		});
+
+		describe("✅ Expected Success", () => {
+			it("Should verify a user with a valid token..", async () => {
+				const email = "testemail@example.com";
+				const password = "testpassword!";
+
+				await request(app).post("/api/user/create").send({ load: { email, password } });
+
+				const [user] = await mySQLPool.promise().query<IUser>("SELECT * FROM user WHERE email = ?", [email]);
+
+				const resLogin = await request(app).post("/api/user/login").send({
+					load: {
+						email,
+						password
+					}
+				}).expect(200);
+
+				const token = (JSON.parse(resLogin.text)).token;
+
+				await request(app).get(`/api/user/send-verification-email`).set(
+					'authorization',
+					`Bearer ${token}`
+				).send();
+
+				expect(mailUtil.sendVerificationEmail).toHaveBeenCalled();
+
+				const [verification] = await mySQLPool.promise().query<IVerification>(
+					"SELECT * FROM verification WHERE user_id = ?",
+					[user[0].id]
+				);
+
+				const res = await request(app).post("/api/user/verify").set(
+					'authorization',
+					`Bearer ${token}`
+				).send({
+					load: {
+						pin: verification[0].pin
+					}
+				});
+
+				expect(res.statusCode).toBe(200);
+
+				expect(res.body.message).toBe("✅ Email verified");
+
+				const [userUpdated] = await mySQLPool.promise().query<IUser>(
+					"SELECT verified FROM user WHERE id = ?",
+					[user[0].id]
+				);
+
+				expect(userUpdated[0].verified[0]).toBe(1);
+			});
+		});
 	});
 
 	describe("Route: /api/user/recover-password/:email", () => {
