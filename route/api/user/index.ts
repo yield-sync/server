@@ -68,7 +68,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 						error: error.message
 					});
 
-					return
+					return;
 				}
 
 				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
@@ -89,7 +89,24 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 			try
 			{
-				const email: string = sanitizer.sanitizeEmail(req.params.email);
+				let email: string;
+				try
+				{
+					email = sanitizer.sanitizeEmail(req.params.email);
+				}
+				catch (error)
+				{
+					if (error instanceof Error)
+					{
+						res.status(hTTPStatus.BAD_REQUEST).json({
+							message: "❌ Invalid email format"
+						});
+
+						return;
+					}
+
+					throw new Error(error);
+				}
 
 				const [
 					users,
@@ -106,7 +123,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				if (users.length == 0)
 				{
 					res.status(hTTPStatus.BAD_REQUEST).json({
-						message: "❌ Invalid email"
+						message: "❌ Email not found"
 					});
 
 					return;
@@ -165,7 +182,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 						error: error.message
 					});
 
-					return
+					return;
 				}
 
 				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
@@ -325,7 +342,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 						error: error.message
 					});
 
-					return
+					return;
 				}
 
 				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
@@ -386,7 +403,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 						error: error.message
 					});
 
-					return
+					return;
 				}
 
 				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
@@ -458,7 +475,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 						error: error.message
 					});
 
-					return
+					return;
 				}
 
 				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
@@ -524,7 +541,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 						error: error.message
 					});
 
-					return
+					return;
 				}
 
 				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
@@ -620,7 +637,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 						error: error.message
 					});
 
-					return
+					return;
 				}
 
 				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({

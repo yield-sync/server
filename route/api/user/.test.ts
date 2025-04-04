@@ -164,11 +164,17 @@ describe("Request: GET", () =>
 	describe("Route: /api/user/send-password-recovery-email/:email", () => {
 		describe("Expected Failure", () => {
 			it("Should revert if an invalid email is passed to the route..", async () => {
+				const res = await request(app).get("/api/user/send-password-recovery-email/not-an-email");
 
+				expect(res.statusCode).toBe(400);
+				expect(res.body.message).toBe("❌ Invalid email format");
 			});
 
 			it("Should revert if a valid email is not found in the database..", async () => {
+				const res = await request(app).get("/api/user/send-password-recovery-email/missing@example.com");
 
+				expect(res.statusCode).toBe(400);
+				expect(res.body.message).toBe("❌ Email not found");
 			});
 		});
 

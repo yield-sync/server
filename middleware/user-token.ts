@@ -148,7 +148,7 @@ export default {
 						error: error.message
 					});
 
-					return
+					return;
 				}
 
 				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({

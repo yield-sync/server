@@ -43,7 +43,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 						error: error.message
 					});
 
-					return
+					return;
 				}
 
 				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
@@ -81,7 +81,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 						error: error.message
 					});
 
-					return
+					return;
 				}
 
 				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
@@ -236,7 +236,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 						error: error.message
 					});
 
-					return
+					return;
 				}
 
 				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
@@ -299,7 +299,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 						error: error.message
 					});
 
-					return
+					return;
 				}
 
 				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
