@@ -160,6 +160,14 @@ describe("Request: GET", () =>
 			});
 		});
 	});
+
+	describe("Route: /api/user/send-recovery-email/:email", () => {
+
+	});
+
+	describe("Route: /api/user/send-verification-email", () => {
+
+	});
 });
 
 describe("Request: POST", () =>
@@ -469,5 +477,13 @@ describe("Request: POST", () =>
 
 			expect(typeof TOKEN_NEW).toBe("string");
 		});
+	});
+
+	describe("Route: /api/user/verify", () => {
+
+	});
+
+	describe("Route: /api/user/recover-password/:email", () => {
+
 	});
 });
