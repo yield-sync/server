@@ -1,8 +1,11 @@
+class InitializationError extends
+	Error
+{}
+
 class DBBuilderError extends
 	Error
 {}
 
-import { URL } from "url";
 import mysql from "mysql2";
 
 import config from "../config";
@@ -234,6 +237,17 @@ export const dBBuilder = async (mySQLPool: mysql.Pool, dBName: string, reset: bo
 */
 export async function dBBuilderProduction(overwrite: boolean)
 {
+	if (
+		!config.app.database.host ||
+		!config.app.database.name ||
+		!config.app.database.password ||
+		!config.port ||
+		!config.app.database.user
+	)
+	{
+		throw new InitializationError("Missing required configuration values");
+	}
+
 	const mySQLPool: mysql.Pool = mysql.createPool({
 		host: config.app.database.host,
 		database: config.app.database.name,

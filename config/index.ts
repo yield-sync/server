@@ -31,7 +31,6 @@ export default
 		},
 
 		database: {
-			url: process.env.MYSQL_URL,
 			host: process.env.APP__DATABASE__HOST,
 			user: process.env.APP__DATABASE__USER,
 			password: process.env.APP__DATABASE__PASSWORD,
