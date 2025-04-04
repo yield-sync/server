@@ -1,11 +1,11 @@
 {
-  "author": "",
-  "name": "server",
-  "version": "0.0.1",
+  "author": "harpoonjs.eth",
+  "name": "ys-server",
+  "version": "0.0.2",
   "description": "Server for yield-sync",
-  "main": "server.ts",
+  "main": "index.ts",
   "scripts": {
-    "build": "node dist/sql/db-builder.js && rimraf dist && npx tsc && cp -r static/ dist/",
+    "build": "rimraf dist && npx tsc && cp -r static/ dist/ && node dist/sql/db-builder.js",
     "dev": "npm run build && cross-env NODE_ENV=development concurrently \"tsc --watch\" \"nodemon dist/index.js\"",
     "lint": "eslint . --ext .ts --fix",
     "start": "npm run build && cross-env NODE_ENV=production node dist/index.js",

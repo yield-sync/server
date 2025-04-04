@@ -2,6 +2,7 @@ class DBBuilderError extends
 	Error
 {}
 
+import { URL } from "url";
 import mysql from "mysql2";
 
 import config from "../config";
@@ -233,24 +234,19 @@ export const dBBuilder = async (mySQLPool: mysql.Pool, dBName: string, reset: bo
 */
 export async function dBBuilderProduction(overwrite: boolean)
 {
-	if (
-		!config.app.database.host ||
-		!config.app.database.name ||
-		!config.app.database.password ||
-		!config.port ||
-		!config.app.database.user
-	)
-	{
-		throw new DBBuilderError("Missing required configuration values");
-	}
-
 	const mySQLPool: mysql.Pool = mysql.createPool({
 		host: config.app.database.host,
-		user: config.app.database.user,
+		database: config.app.database.name,
 		password: config.app.database.password,
+		port: Number(config.app.database.port),
+		user: config.app.database.user,
 		waitForConnections: true,
 		connectionLimit: 10,
 		queueLimit: 0,
+	}).on("connection", (connection) => {
+		console.log("✅ Successfully connected to the MySQL Database")
+	}).on("error", (err) => {
+		console.error("MySQL Pool Error:", err);
 	});
 
 	try

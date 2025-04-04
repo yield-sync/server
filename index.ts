@@ -33,7 +33,6 @@ if (
 	throw new InitializationError("Missing required configuration values");
 }
 
-
 const MYSQL_POOL: mysql.Pool = mysql.createPool({
 	host: config.app.database.host,
 	database: config.app.database.name,
@@ -43,8 +42,9 @@ const MYSQL_POOL: mysql.Pool = mysql.createPool({
 	waitForConnections: true,
 	connectionLimit: 10,
 	queueLimit: 0,
-}).on("error", (err) =>
-{
+}).on("connection", (connection) => {
+	console.log("✅ Successfully connected to the MySQL Database")
+}).on("error", (err) => {
 	console.error("MySQL Pool Error:", err);
 });
 
