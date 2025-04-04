@@ -79,10 +79,10 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		}
 	).get(
 		/**
-		* @route get /api/user/send-recovery-email
+		* @route get /api/user/send-password-recovery-email
 		* @access Public
 		*/
-		"/send-recovery-email/:email",
+		"/send-password-recovery-email/:email",
 		async (req: express.Request, res: express.Response) =>
 		{
 			const timestamp = new Date();

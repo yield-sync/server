@@ -161,12 +161,53 @@ describe("Request: GET", () =>
 		});
 	});
 
-	describe("Route: /api/user/send-recovery-email/:email", () => {
+	describe("Route: /api/user/send-password-recovery-email/:email", () => {
+		describe("Expected Failure", () => {
+			it("Should revert if an invalid email is passed to the route..", async () => {
 
+			});
+
+			it("Should revert if a valid email is not found in the database..", async () => {
+
+			});
+		});
+
+		describe("Expected Sucess", () => {
+			it("Should send the password recovery email..", async () => {
+
+			});
+		});
+
+		describe("Expected Failure Part 2", () => {
+			it("Should not be able to send another email until 3 minutes has passed since the last one..", async () => {
+
+			});
+		});
 	});
 
 	describe("Route: /api/user/send-verification-email", () => {
+		describe("Expected Failure", () => {
+			it("[auth] Should require a user token..", async () =>
+			{
 
+			});
+		});
+
+		describe("Expected Sucess", () => {
+			it("Should send the verification email..", async () => {
+
+			});
+		});
+
+		describe("Expected Failure Part 2", () => {
+			it("Should not be able to send another email until 3 minutes has passed since the last one..", async () => {
+
+			});
+
+			it("Should not be able to send another email if the user is already verified..", async () => {
+
+			});
+		});
 	});
 });
 
