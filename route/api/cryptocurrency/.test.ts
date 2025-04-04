@@ -91,6 +91,17 @@ describe("Request: GET", () =>
 				await request(app).get("/api/cryptocurrency/search/query").send().expect(401);
 			});
 
+			it("[auth] Should require a valid user token..", async () =>
+			{
+				const res = await request(app).get("/api/cryptocurrency/search/query").send({
+					token: "invalid.token.value"
+				});
+
+				expect(res.statusCode).toBe(401);
+
+				expect(res.body.message).toBe("Access denied: Invalid or missing token");
+			});
+
 			it("Should fail if query is not provided..", async () =>
 			{
 				await request(app).post("/api/cryptocurrency/search").set(

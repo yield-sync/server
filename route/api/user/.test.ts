@@ -626,8 +626,10 @@ describe("Request: POST", () =>
 				await request(app).post("/api/user/verify").send().expect(401);
 			});
 
-			it("Should fail verification with an invalid token..", async () => {
-				const res = await request(app).post("/api/user/verify").send({ token: "invalid.token.value" });
+			it("[auth] Should require a valid user token..", async () => {
+				const res = await request(app).post("/api/user/verify").send({
+					token: "invalid.token.value"
+				});
 
 				expect(res.statusCode).toBe(401);
 
