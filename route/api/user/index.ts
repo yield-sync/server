@@ -170,7 +170,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				await mailUtil.sendRecoveryEmail(req.params.email, verificationPin);
 
 				res.status(hTTPStatus.OK).json({
-					message: "Email sent"
+					message: "✅ Password recovery email sent"
 				});
 			}
 			catch (error: Error | any)

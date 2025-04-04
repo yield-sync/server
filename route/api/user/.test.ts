@@ -6,6 +6,7 @@ import routeApi from "../index";
 import routeApiUser from "./index";
 import config from "../../../config";
 import DBBuilder, { dBDrop } from "../../../sql/db-builder";
+import mailUtil from "../../../util/mailUtil";
 
 
 const request = require('supertest');
@@ -17,6 +18,11 @@ const ERROR_PASSWORD: string = "❌ Password Must be ASCII, longer than 8 charac
 
 let app: Express;
 let mySQLPool: mysql.Pool;
+
+
+jest.mock("../../../util/mailUtil.ts", () => ({
+	sendRecoveryEmail: jest.fn(),
+}));
 
 
 afterAll(async () =>
@@ -180,7 +186,18 @@ describe("Request: GET", () =>
 
 		describe("Expected Sucess", () => {
 			it("Should send the password recovery email..", async () => {
+				const email = "testemail@example.com";
+				const password = "testpassword!";
 
+				await request(app).post("/api/user/create").send({ load: { email, password } });
+
+				expect(mailUtil.sendRecoveryEmail).not.toHaveBeenCalled();
+
+				const res = await request(app).get(`/api/user/send-password-recovery-email/${email}`);
+
+				expect(res.statusCode).toBe(200);
+
+				expect(res.body.message).toBe("✅ Password recovery email sent");
 			});
 		});
 
