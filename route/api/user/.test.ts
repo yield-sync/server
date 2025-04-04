@@ -17,6 +17,9 @@ const jwt = require("jsonwebtoken");
 const DB_NAME: string = "mock_db_user";
 const ERROR_PASSWORD: string = "❌ Password Must be ASCII, longer than 8 characters, and contain a special character";
 
+const email = "testemail@example.com";
+const password = "testpassword!";
+
 let app: Express;
 let mySQLPool: mysql.Pool;
 
@@ -190,9 +193,6 @@ describe("Request: GET", () =>
 
 		describe("✅ Expected Success", () => {
 			it("Should send the password recovery email..", async () => {
-				const email = "testemail@example.com";
-				const password = "testpassword!";
-
 				await request(app).post("/api/user/create").send({ load: { email, password } });
 
 				expect(mailUtil.sendRecoveryEmail).not.toHaveBeenCalled();
@@ -209,9 +209,6 @@ describe("Request: GET", () =>
 
 		describe("❌ Expected Failure Part 2", () => {
 			it("Should not be able to send another email until 3 minutes has passed since the last one..", async () => {
-				const email = "testemail@example.com";
-				const password = "testpassword!";
-
 				await request(app).post("/api/user/create").send({
 					load: {
 						email: email,
@@ -238,19 +235,76 @@ describe("Request: GET", () =>
 		describe("❌ Expected Failure", () => {
 			it("[auth] Should require a user token..", async () =>
 			{
-
+				await request(app).get("/api/user/send-verification-email").send().expect(401);
 			});
 		});
 
 		describe("✅ Expected Success", () => {
 			it("Should send the verification email..", async () => {
+				await request(app).post("/api/user/create").send({ load: { email, password } });
 
+				const [user] = await mySQLPool.promise().query<IUser>("SELECT * FROM user WHERE email = ?", [email]);
+
+				const resLogin = await request(app).post("/api/user/login").send({
+					load: {
+						email,
+						password
+					}
+				}).expect(200);
+
+				const token = (JSON.parse(resLogin.text)).token;
+
+				const res = await request(app).get(`/api/user/send-verification-email`).set(
+					'authorization',
+					`Bearer ${token}`
+				).send();
+
+				expect(res.status).toBe(200);
+
+				expect(mailUtil.sendVerificationEmail).toHaveBeenCalled();
+
+				const [verification] = await mySQLPool.promise().query<IVerification>(
+					"SELECT * FROM verification WHERE user_id = ?",
+					[user[0].id]
+				);
+
+				if (!Array.isArray(verification))
+				{
+					throw new Error("Expected result is not Array");
+				}
+
+				expect(verification.length).toBeGreaterThan(0);
 			});
 		});
 
 		describe("❌ Expected Failure Part 2", () => {
 			it("Should not be able to send another email until 3 minutes has passed since the last one..", async () => {
+				await request(app).post("/api/user/create").send({ load: { email, password } });
 
+				await mySQLPool.promise().query<IUser>("SELECT * FROM user WHERE email = ?", [email]);
+
+				const resLogin = await request(app).post("/api/user/login").send({
+					load: {
+						email,
+						password
+					}
+				}).expect(200);
+
+				const token = (JSON.parse(resLogin.text)).token;
+
+				await request(app).get(`/api/user/send-verification-email`).set(
+					'authorization',
+					`Bearer ${token}`
+				).send();
+
+				expect(mailUtil.sendVerificationEmail).toHaveBeenCalled();
+
+				const res = await request(app).get(`/api/user/send-verification-email`).set(
+					'authorization',
+					`Bearer ${token}`
+				).send();
+
+				expect(res.body.message).toBe("⏳ 3 minutes must pass before last request for verification email",);
 			});
 
 			it("Should not be able to send another email if the user is already verified..", async () => {
@@ -291,7 +345,6 @@ describe("Request: POST", () =>
 			it("Should NOT allow creating a user with short password..",
 			async () =>
 			{
-				const email = "testemail@example.com";
 				const password = "123";
 
 				const response = await request(app).post("/api/user/create").send({
@@ -314,7 +367,6 @@ describe("Request: POST", () =>
 
 			it("Should NOT allow password without special characters..", async () =>
 			{
-				const email = "testemail@example.com";
 				const password = "12345678";
 
 				const response = await request(app).post("/api/user/create").send({
@@ -337,8 +389,6 @@ describe("Request: POST", () =>
 
 			it("Should NOT allow creating a user with non-ASCII password..", async () =>
 			{
-				const email = "testemail@example.com";
-
 				// Contains non-ASCII character
 				const password = "!12345678¢";
 
@@ -571,6 +621,11 @@ describe("Request: POST", () =>
 
 	describe("Route: /api/user/verify", () => {
 		describe("❌ Expected Failure", () => {
+			it("[auth] Should require a user token..", async () =>
+			{
+				await request(app).post("/api/user/verify").send().expect(401);
+			});
+
 			it("Should fail verification with an invalid token..", async () => {
 				const res = await request(app).post("/api/user/verify").send({ token: "invalid.token.value" });
 
@@ -582,9 +637,6 @@ describe("Request: POST", () =>
 
 		describe("✅ Expected Success", () => {
 			it("Should verify a user with a valid token..", async () => {
-				const email = "testemail@example.com";
-				const password = "testpassword!";
-
 				await request(app).post("/api/user/create").send({ load: { email, password } });
 
 				const [user] = await mySQLPool.promise().query<IUser>("SELECT * FROM user WHERE email = ?", [email]);
@@ -602,8 +654,6 @@ describe("Request: POST", () =>
 					'authorization',
 					`Bearer ${token}`
 				).send();
-
-				expect(mailUtil.sendVerificationEmail).toHaveBeenCalled();
 
 				const [verification] = await mySQLPool.promise().query<IVerification>(
 					"SELECT * FROM verification WHERE user_id = ?",
