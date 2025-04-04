@@ -40,15 +40,15 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				{
 					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
 						message: INTERNAL_SERVER_ERROR,
-						error: error.message
+						error: error.message,
 					});
 
-					return
+					return;
 				}
 
 				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
 					message: INTERNAL_SERVER_ERROR,
-					error: "Unknown Error"
+					error: "Unknown Error",
 				});
 			}
 		}
@@ -78,15 +78,15 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				{
 					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
 						message: INTERNAL_SERVER_ERROR,
-						error: error.message
+						error: error.message,
 					});
 
-					return
+					return;
 				}
 
 				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
 					message: INTERNAL_SERVER_ERROR,
-					error: "Unknown Error"
+					error: "Unknown Error",
 				});
 			}
 		}
@@ -233,15 +233,15 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				{
 					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
 						message: INTERNAL_SERVER_ERROR,
-						error: error.message
+						error: error.message,
 					});
 
-					return
+					return;
 				}
 
 				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
 					message: INTERNAL_SERVER_ERROR,
-					error: "Unknown Error"
+					error: "Unknown Error",
 				});
 			}
 		}
@@ -296,15 +296,15 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				{
 					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
 						message: INTERNAL_SERVER_ERROR,
-						error: error.message
+						error: error.message,
 					});
 
-					return
+					return;
 				}
 
 				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
 					message: INTERNAL_SERVER_ERROR,
-					error: "Unknown Error"
+					error: "Unknown Error",
 				});
 			}
 		}

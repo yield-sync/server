@@ -43,7 +43,8 @@ function getVerificationEmail(verificationPin: string)
 };
 
 export default {
-	sendRecoveryEmail: async (toEmail: string, recoveryPin: string) => {
+	sendRecoveryEmail: async (toEmail: string, recoveryPin: string) => 
+	{
 		if (!validateEmail(toEmail))
 		{
 			throw new Error("❌ Invalid toEmail");
@@ -60,21 +61,21 @@ export default {
 					headers: {
 						"Accept": "application/json",
 						"Content-Type": "application/json",
-						"api-key": config.api.brevo.key
+						"api-key": config.api.brevo.key,
 					},
 					body: JSON.stringify({
 						sender: {
 							name: "Yield Sync",
-							email: `no-reply@${config.app.domain}`
+							email: `no-reply@${config.app.domain}`,
 						},
 						to: [
 							{
 								email: toEmail,
-								name: "Valued User"
-							}
+								name: "Valued User",
+							},
 						],
 						subject: email.subject,
-						htmlContent: email.body
+						htmlContent: email.body,
 					}),
 				}
 			);
@@ -93,7 +94,8 @@ export default {
 		}
 	},
 
-	sendVerificationEmail: async (toEmail: string, verificationPin: string) => {
+	sendVerificationEmail: async (toEmail: string, verificationPin: string) => 
+	{
 		if (!validateEmail(toEmail))
 		{
 			throw new Error("❌ Invalid toEmail");
@@ -108,21 +110,21 @@ export default {
 				headers: {
 					"Accept": "application/json",
 					"Content-Type": "application/json",
-					"api-key": config.api.brevo.key
+					"api-key": config.api.brevo.key,
 				},
 				body: JSON.stringify({
 					sender: {
 						name: "Yield Sync",
-						email: `no-reply@${config.app.domain}`
+						email: `no-reply@${config.app.domain}`,
 					},
 					to: [
 						{
 							email: toEmail,
-							name: "Valued User"
-						}
+							name: "Valued User",
+						},
 					],
 					subject: email.subject,
-					htmlContent: email.body
+					htmlContent: email.body,
 				}),
 			}
 		);
@@ -134,4 +136,4 @@ export default {
 
 		return await response.json();
 	},
-}
+};

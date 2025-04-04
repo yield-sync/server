@@ -111,8 +111,10 @@ export default {
 	{
 		return _userTokenDecode(mySQLPool, true, requireVerification);
 	},
-	userTokenDecodeRequireVerificationStatus: (mySQLPool: mysql.Pool, expectedVerificationStatus: boolean) => {
-		return async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+	userTokenDecodeRequireVerificationStatus: (mySQLPool: mysql.Pool, expectedVerificationStatus: boolean) => 
+	{
+		return async (req: express.Request, res: express.Response, next: express.NextFunction) => 
+		{
 			try
 			{
 				const [
@@ -124,13 +126,13 @@ export default {
 					"SELECT * FROM user WHERE id = ? AND verified = ?;",
 					[
 						req.body.userDecoded.id,
-						expectedVerificationStatus ? "1" : "0"
+						expectedVerificationStatus ? "1" : "0",
 					]
 				);
 
 				if (users.length == 0)
 				{
-					const message = expectedVerificationStatus ? "Expected user to be verified" : "Expected user to NOT be verified"
+					const message = expectedVerificationStatus ? "Expected user to be verified" : "Expected user to NOT be verified";
 
 					res.status(hTTPStatus.BAD_REQUEST).json({
 						message,
@@ -145,19 +147,19 @@ export default {
 				{
 					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
 						message: INTERNAL_SERVER_ERROR,
-						error: error.message
+						error: error.message,
 					});
 
-					return
+					return;
 				}
 
 				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
 					message: INTERNAL_SERVER_ERROR,
-					error: "Unknown Error"
+					error: "Unknown Error",
 				});
 			}
 
-			next()
-		}
+			next();
+		};
 	},
 };
