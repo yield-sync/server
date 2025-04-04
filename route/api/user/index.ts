@@ -148,7 +148,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					// If not enough time since last request has passed..
 					if (timestamp.getTime() - created.getTime() < THREE_MINUTES_IN_MS)
 					{
-						res.status(hTTPStatus.BAD_REQUEST).json({
+						res.status(hTTPStatus.TOO_MANY_REQUEST).json({
 							message: "⏳ 3 minutes must pass before last request for recovery email"
 						});
 

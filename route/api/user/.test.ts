@@ -5,6 +5,7 @@ import mysql from "mysql2";
 import routeApi from "../index";
 import routeApiUser from "./index";
 import config from "../../../config";
+import { hTTPStatus } from "../../../constants";
 import DBBuilder, { dBDrop } from "../../../sql/db-builder";
 import mailUtil from "../../../util/mailUtil";
 
@@ -168,6 +169,8 @@ describe("Request: GET", () =>
 	});
 
 	describe("Route: /api/user/send-password-recovery-email/:email", () => {
+		beforeEach(() => jest.clearAllMocks());
+
 		describe("Expected Failure", () => {
 			it("Should revert if an invalid email is passed to the route..", async () => {
 				const res = await request(app).get("/api/user/send-password-recovery-email/not-an-email");
@@ -195,6 +198,8 @@ describe("Request: GET", () =>
 
 				const res = await request(app).get(`/api/user/send-password-recovery-email/${email}`);
 
+				expect(mailUtil.sendRecoveryEmail).toHaveBeenCalled();
+
 				expect(res.statusCode).toBe(200);
 
 				expect(res.body.message).toBe("✅ Password recovery email sent");
@@ -203,7 +208,27 @@ describe("Request: GET", () =>
 
 		describe("Expected Failure Part 2", () => {
 			it("Should not be able to send another email until 3 minutes has passed since the last one..", async () => {
+				const email = "testemail@example.com";
+				const password = "testpassword!";
 
+				await request(app).post("/api/user/create").send({
+					load: {
+						email: email,
+						password: password
+					}
+				});
+
+				await request(app).get(`/api/user/send-password-recovery-email/${email}`);
+
+				await request(app).get(`/api/user/send-password-recovery-email/${email}`);
+
+				expect(mailUtil.sendRecoveryEmail).toBeCalledTimes(1);
+
+				const res = await request(app).get(`/api/user/send-password-recovery-email/${email}`).expect(
+					hTTPStatus.TOO_MANY_REQUEST
+				);
+
+				expect(res.body.message).toBe("⏳ 3 minutes must pass before last request for recovery email");
 			});
 		});
 	});
