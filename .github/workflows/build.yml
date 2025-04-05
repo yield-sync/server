@@ -24,7 +24,9 @@ jobs:
       - name: Copy Frontend Build to Server
         run: |
           mkdir -p ./static
+          echo "Copying frontend to static folder"
           cp -r frontend/dist/* ./static
+          ls ./static
 
       - name: Deploy to Railway
         run: |

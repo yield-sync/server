@@ -16,15 +16,15 @@ async function main(overwrite)
 
 	try
 	{
-		execSync("git submodule update --init --recursive --remote --merge", {
-			cwd: pathFrontendSubmodule,
-			stdio: "inherit",
-		});
+		//execSync("git submodule update --init --recursive --remote --merge", {
+		//	cwd: pathFrontendSubmodule,
+		//	stdio: "inherit",
+		//});
 
-		execSync(`npm install && npm run build`, {
-			cwd: path.resolve(pathFrontendSubmodule, "frontend"),
-			stdio: "inherit",
-		});
+		//execSync(`npm install && npm run build`, {
+		//	cwd: path.resolve(pathFrontendSubmodule, "frontend"),
+		//	stdio: "inherit",
+		//});
 	}
 	catch (err)
 	{
