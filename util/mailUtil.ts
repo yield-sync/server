@@ -43,7 +43,7 @@ function getVerificationEmail(verificationPin: string)
 };
 
 export default {
-	sendRecoveryEmail: async (toEmail: string, recoveryPin: string) => 
+	sendRecoveryEmail: async (toEmail: string, recoveryPin: string) =>
 	{
 		if (!validateEmail(toEmail))
 		{
@@ -54,6 +54,7 @@ export default {
 		{
 			const email = getRecoveryEmail(recoveryPin);
 
+			// TODO: Replace this service with something else. BREVO sucks!
 			const response = await fetch(
 				"https://api.brevo.com/v3/smtp/email",
 				{
@@ -94,7 +95,7 @@ export default {
 		}
 	},
 
-	sendVerificationEmail: async (toEmail: string, verificationPin: string) => 
+	sendVerificationEmail: async (toEmail: string, verificationPin: string) =>
 	{
 		if (!validateEmail(toEmail))
 		{

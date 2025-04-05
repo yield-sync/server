@@ -21,5 +21,11 @@
     "sql/**/*.ts",
     "global.d.ts",
     "middleware/*.ts",
+  ],
+  "exclude": [
+    "dist",
+    "./frontend",
+    "./frontend/*",
+    "./frontend/**"
   ]
 }
