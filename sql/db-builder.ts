@@ -237,6 +237,8 @@ export const dBBuilder = async (mySQLPool: mysql.Pool, dBName: string, reset: bo
 */
 export async function dBBuilderProduction(overwrite: boolean)
 {
+	console.log("[dBBuilderProduction] Initializing production SQL database..");
+
 	if (
 		!config.app.database.host ||
 		!config.app.database.name ||
@@ -257,12 +259,12 @@ export async function dBBuilderProduction(overwrite: boolean)
 		waitForConnections: true,
 		connectionLimit: 10,
 		queueLimit: 0,
-	}).on("connection", (connection) => 
+	}).on("connection", (connection) =>
 	{
-		console.log("✅ Successfully connected to the MySQL Database");
-	}).on("error", (err) => 
+		console.log("[info] ✅ Successfully connected to the MySQL Database");
+	}).on("error", (err) =>
 	{
-		console.error("MySQL Pool Error:", err);
+		console.error("[error] MySQL Pool:", err);
 	});
 
 	try
@@ -282,7 +284,7 @@ export async function dBBuilderProduction(overwrite: boolean)
 		// If the database exists and overwrite is not requested, skip creation
 		if (databases.length > 0 && !overwrite)
 		{
-			console.log(`Database "${config.app.database.name}" already exists. Skipping creation.`);
+			console.log(`[info] Database "${config.app.database.name}" already exists. Skipping creation.`);
 
 			return;
 		}
@@ -294,13 +296,13 @@ export async function dBBuilderProduction(overwrite: boolean)
 				config.app.database.name,
 			]);
 
-			console.log(`Database "${config.app.database.name}" dropped.`);
+			console.log(`[info] Database "${config.app.database.name}" dropped.`);
 		}
 
 		// Create the database and run the queries
 		await dBBuilder(mySQLPool, config.app.database.name);
 
-		console.log(`Database "${config.app.database.name}" created.`);
+		console.log(`[info] Database "${config.app.database.name}" created.`);
 	}
 	catch (error)
 	{
@@ -325,11 +327,3 @@ export const dBDrop = async (dBName: string, mySQLPool: mysql.Pool) =>
 };
 
 export default dBBuilder;
-
-// **Run only if executed from the CLI**
-if (require.main === module)
-{
-	console.log("Initializing SQL database..");
-
-	dBBuilderProduction(process.argv.includes("--overwrite") ? true : false);
-}

@@ -10,7 +10,7 @@ import DBBuilder, { dBDrop } from "../../../sql/db-builder";
 import mailUtil from "../../../util/mailUtil";
 
 
-const request = require('supertest');
+const request = require("supertest");
 const jwt = require("jsonwebtoken");
 
 
@@ -105,7 +105,7 @@ describe("Request: GET", () =>
 				const token = (JSON.parse(resLogin.text)).token;
 
 				const response = await request(app).get("/api/user/").set(
-					'authorization',
+					"authorization",
 					`Bearer ${token}`
 				).send();
 
@@ -159,7 +159,7 @@ describe("Request: GET", () =>
 				);
 
 				const response = await request(app).get("/api/user/").set(
-					'authorization',
+					"authorization",
 					`Bearer ${token}`
 				).send();
 
@@ -255,7 +255,7 @@ describe("Request: GET", () =>
 				const token = (JSON.parse(resLogin.text)).token;
 
 				const res = await request(app).get(`/api/user/send-verification-email`).set(
-					'authorization',
+					"authorization",
 					`Bearer ${token}`
 				).send();
 
@@ -293,14 +293,14 @@ describe("Request: GET", () =>
 				const token = (JSON.parse(resLogin.text)).token;
 
 				await request(app).get(`/api/user/send-verification-email`).set(
-					'authorization',
+					"authorization",
 					`Bearer ${token}`
 				).send();
 
 				expect(mailUtil.sendVerificationEmail).toHaveBeenCalled();
 
 				const res = await request(app).get(`/api/user/send-verification-email`).set(
-					'authorization',
+					"authorization",
 					`Bearer ${token}`
 				).send();
 
@@ -557,7 +557,7 @@ describe("Request: POST", () =>
 			expect(typeof TOKEN).toBe("string");
 
 			await request(app).post("/api/user/password-update").set(
-				'authorization',
+				"authorization",
 				`Bearer ${TOKEN}`
 			).send({
 				load: {
@@ -595,7 +595,7 @@ describe("Request: POST", () =>
 			expect(typeof TOKEN).toBe("string");
 
 			await request(app).post("/api/user/password-update").set(
-				'authorization',
+				"authorization",
 				`Bearer ${TOKEN}`
 			).send({
 				load: {
@@ -653,7 +653,7 @@ describe("Request: POST", () =>
 				const token = (JSON.parse(resLogin.text)).token;
 
 				await request(app).get(`/api/user/send-verification-email`).set(
-					'authorization',
+					"authorization",
 					`Bearer ${token}`
 				).send();
 
@@ -663,7 +663,7 @@ describe("Request: POST", () =>
 				);
 
 				const res = await request(app).post("/api/user/verify").set(
-					'authorization',
+					"authorization",
 					`Bearer ${token}`
 				).send({
 					load: {
