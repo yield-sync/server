@@ -1,0 +1,34 @@
+name: Build Server and Frontend
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Server
+        uses: actions/checkout@v3
+
+      - name: Clone Frontend
+        run: git clone https://github.com/yield-sync/frontend.git frontend
+
+      - name: Install Frontend & Build
+        run: |
+          cd frontend
+          npm install
+          npm run build
+          cd ..
+
+      - name: Copy Frontend Build to Server
+        run: |
+          mkdir -p ./static
+          cp -r frontend/dist/* ./static
+
+      - name: Deploy to Railway
+        run: |
+          curl -Ls https://railway.app/install.sh | sh
+          railway up --service server
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
