@@ -42,19 +42,25 @@ const MYSQL_POOL: mysql.Pool = mysql.createPool({
 	waitForConnections: true,
 	connectionLimit: 10,
 	queueLimit: 0,
-}).on("connection", (connection) => 
+}).on("connection", (connection) =>
 {
 	console.log("✅ Server successfully connected to the MySQL Database");
-}).on("error", (err) => 
+}).on("error", (err) =>
 {
 	console.error("MySQL Create Pool Error:", err);
 });
 
 
 http.createServer(
-	express().use(bodyParser.json()).use(bodyParser.urlencoded({
-		extended: false,
-	})).use(cors()).use(
+	express().use(
+		bodyParser.json()
+	).use(
+		bodyParser.urlencoded({
+			extended: false, 
+		})
+	).use(
+		cors()
+	).use(
 		express.static(__dirname + "/static")
 	).use(
 		rateLimiter.global
