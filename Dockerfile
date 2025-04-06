@@ -1,5 +1,5 @@
 # At the top of Dockerfile
-ARG CACHE_BUST
+ARG CACHE_BUSTER=default
 FROM node:20
 
 ARG CACHE_BUSTER
@@ -14,9 +14,16 @@ RUN rm -rf frontend
 RUN git clone https://github.com/yield-sync/frontend.git frontend
 
 WORKDIR /app/frontend
+
+# Pull latest changes (if any)
+RUN git pull origin main
+
+# Install npm packages and rebuild if something was pulled
 RUN npm install && npm run build
 
 WORKDIR /app
+
+# Copy server files
 COPY . .
 RUN npm install
 
