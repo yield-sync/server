@@ -9,6 +9,7 @@ import { dBBuilderProduction } from "./sql/db-builder";
 
 async function main(overwrite: boolean)
 {
+	console.log(config);
 	if (
 		!config.api.coingecko.key ||
 		!config.api.coingecko.uRL
