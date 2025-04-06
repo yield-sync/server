@@ -1,10 +1,7 @@
 # At the top of Dockerfile
-ARG CACHE_BUSTER=default
 FROM node:20
 
-ARG CACHE_BUSTER
-RUN echo "Cache busting arg: $CACHE_BUSTER"
-
+# Go to app dir
 WORKDIR /app
 
 # Remove any existing frontend directory to ensure we get the latest version
