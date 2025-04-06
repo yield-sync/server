@@ -56,7 +56,7 @@ http.createServer(
 		bodyParser.json()
 	).use(
 		bodyParser.urlencoded({
-			extended: false, 
+			extended: false,
 		})
 	).use(
 		cors()

@@ -111,9 +111,9 @@ export default {
 	{
 		return _userTokenDecode(mySQLPool, true, requireVerification);
 	},
-	userTokenDecodeRequireVerificationStatus: (mySQLPool: mysql.Pool, expectedVerificationStatus: boolean) => 
+	userTokenDecodeRequireVerificationStatus: (mySQLPool: mysql.Pool, expectedVerificationStatus: boolean) =>
 	{
-		return async (req: express.Request, res: express.Response, next: express.NextFunction) => 
+		return async (req: express.Request, res: express.Response, next: express.NextFunction) =>
 		{
 			try
 			{

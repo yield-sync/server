@@ -254,7 +254,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				await mailUtil.sendVerificationEmail(req.body.userDecoded.email, verificationPin);
 
 				res.status(hTTPStatus.OK).send({
-					message: "✅ Created verification", 
+					message: "✅ Created verification",
 				});
 			}
 			catch (error: Error | any)
@@ -319,7 +319,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				if (users.length > 0)
 				{
 					res.status(hTTPStatus.BAD_REQUEST).json({
-						message: "❌ This email is already being used.", 
+						message: "❌ This email is already being used.",
 					});
 
 					return;
@@ -334,7 +334,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				);
 
 				res.status(hTTPStatus.CREATED).json({
-					message: "✅ Created user!", 
+					message: "✅ Created user!",
 				});
 
 				return;
