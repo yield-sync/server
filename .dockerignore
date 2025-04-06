@@ -1,0 +1,26 @@
+# Node modules (server & frontend)
+node_modules
+frontend/node_modules
+
+# Logs
+*.log
+npm-debug.log*
+
+# Build output
+dist
+frontend/dist
+static
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Git stuff
+.git
+.gitignore
+frontend/.git
+frontend/.gitignore
+
+# Docker files themselves
+Dockerfile
+.dockerignore
