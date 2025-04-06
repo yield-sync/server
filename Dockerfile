@@ -7,6 +7,9 @@ RUN echo "Cache busting arg: $CACHE_BUSTER"
 
 WORKDIR /app
 
+# Remove any existing frontend directory to ensure we get the latest version
+RUN rm -rf frontend
+
 # This layer will be invalidated if CACHE_BUSTER changes
 RUN git clone https://github.com/yield-sync/frontend.git frontend
 
