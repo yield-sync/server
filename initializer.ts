@@ -9,18 +9,17 @@ import { dBBuilderProduction } from "./sql/db-builder";
 
 async function main(overwrite: boolean)
 {
-	if (
-		!config.api.coingecko.key ||
-		!config.api.coingecko.uRL
-	)
+	if (!config.app.secretKey)
+	{
+		throw new InitializerError("Missing secret values");
+	}
+
+	if (!config.api.coingecko.key || !config.api.coingecko.uRL)
 	{
 		throw new InitializerError("Missing api.coingecko values");
 	}
 
-	if (
-		!config.api.financialModelingPrep.uRL ||
-		!config.api.financialModelingPrep.key
-	)
+	if (!config.api.financialModelingPrep.uRL || !config.api.financialModelingPrep.key)
 	{
 		throw new InitializerError("Missing api.financialModelingPrep values");
 	}

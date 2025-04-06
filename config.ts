@@ -9,16 +9,16 @@ export default
 
 	api: {
 		brevo: {
-			key: process.env.API__BREVO__KEY || "",
+			key: process.env.API__BREVO__KEY,
 		},
 		coingecko: {
 			uRL: "https://api.coingecko.com/",
-			key: process.env.API__COINGECKO__KEY || "",
+			key: process.env.API__COINGECKO__KEY,
 
 		},
 		financialModelingPrep: {
 			uRL: "https://financialmodelingprep.com/",
-			key: process.env.API__FINANCIAL_MODELING_PREP__KEY || "",
+			key: process.env.API__FINANCIAL_MODELING_PREP__KEY,
 		},
 	},
 
@@ -35,9 +35,9 @@ export default
 			user: process.env.APP__DATABASE__USER,
 			password: process.env.APP__DATABASE__PASSWORD,
 			port: process.env.APP__DATABASE__PORT,
-			name: process.env.APP__DATABASE__NAME || "yield_sync",
+			name: "yield_sync",
 		},
 
-		secretKey: process.env.APP__SECRET_KEY || "secret",
+		secretKey: process.env.APP__SECRET_KEY,
 	},
 };
