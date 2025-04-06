@@ -33,7 +33,7 @@ async function main(overwrite: boolean)
 		!config.app.database.user
 	)
 	{
-		throw new InitializerError("Missing database connection values");
+		throw new InitializerError("Missing SQL database connection values");
 	}
 
 	await dBBuilderProduction(overwrite);
@@ -41,5 +41,13 @@ async function main(overwrite: boolean)
 
 if (require.main === module)
 {
-	main(process.argv.includes("--overwrite") ? true : false);
+	try
+	{
+		main(process.argv.includes("--overwrite") ? true : false);
+	}
+	catch (e)
+	{
+		console.error(e);
+		process.exit(1);
+	}
 }

@@ -243,7 +243,7 @@ export async function dBBuilderProduction(overwrite: boolean)
 		!config.app.database.user
 	)
 	{
-		throw new DBBuilderError("Missing required configuration values");
+		throw new DBBuilderError("Missing SQL database connection values");
 	}
 
 	const mySQLPool: mysql.Pool = mysql.createPool({

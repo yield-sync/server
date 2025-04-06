@@ -5,7 +5,7 @@
   "description": "Server for yield-sync",
   "main": "index.ts",
   "scripts": {
-    "build": "rimraf dist && npx tsc && cp -r static/ dist/ && node dist/initializer.js;",
+    "build": "rimraf dist && npx tsc && cp -r static/ dist/ && node dist/initializer.js",
     "dev": "npm run build && cross-env NODE_ENV=development concurrently \"tsc --watch\" \"nodemon dist/index.js\"",
     "lint": "eslint . --ext .ts --fix",
     "start": "npm run build && cross-env NODE_ENV=production node dist/index.js",
