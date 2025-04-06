@@ -1,5 +1,5 @@
 # At the top of Dockerfile
-ARG CACHE_BUSTER=default
+ARG CACHE_BUST
 FROM node:20
 
 ARG CACHE_BUSTER
