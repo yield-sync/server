@@ -1,4 +1,3 @@
-# Start with the Node.js base image
 FROM node:20
 
 # Set working directory
