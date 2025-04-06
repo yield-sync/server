@@ -3,8 +3,8 @@ FROM node:20
 # Set working directory
 WORKDIR /app
 
-# Clone the frontend repo within workspace
-RUN git clone https://github.com/yield-sync/frontend.git frontend
+# Clone frontend repo (will re-run when CACHE_BUSTER changes)
+RUN echo "Cache busting arg: $CACHE_BUSTER" && git clone https://github.com/yield-sync/frontend.git frontend
 
 # Go to frontend repo
 WORKDIR /app/frontend
