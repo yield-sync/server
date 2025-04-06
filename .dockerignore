@@ -9,7 +9,6 @@ npm-debug.log*
 # Build output
 dist
 frontend/dist
-static
 
 # System files
 .DS_Store
