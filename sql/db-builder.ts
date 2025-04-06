@@ -1,7 +1,3 @@
-class InitializationError extends
-	Error
-{}
-
 class DBBuilderError extends
 	Error
 {}
@@ -247,7 +243,7 @@ export async function dBBuilderProduction(overwrite: boolean)
 		!config.app.database.user
 	)
 	{
-		throw new InitializationError("Missing required configuration values");
+		throw new DBBuilderError("Missing required configuration values");
 	}
 
 	const mySQLPool: mysql.Pool = mysql.createPool({
