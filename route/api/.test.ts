@@ -18,7 +18,4 @@ describe("Request: GET", () =>
 			expect(response.statusCode).toBe(200);
 		});
 	});
-
-	describe("/api/recover-account", () =>
-	{});
 });
