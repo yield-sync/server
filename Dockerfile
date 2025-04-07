@@ -18,10 +18,12 @@ RUN git pull origin main
 # Install npm packages and rebuild if something was pulled
 RUN npm install && npm run build
 
+# Go to app dir
 WORKDIR /app
 
 # Copy server files
 COPY . .
 RUN npm install
 
+# Execute "npm run start"
 CMD ["npm", "start"]
