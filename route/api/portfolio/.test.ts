@@ -80,7 +80,7 @@ describe("Request: POST (1/2)", () =>
 {
 	describe("Route: /api/portfolio/create", () =>
 	{
-		describe("❌ Expected Failure", () =>
+		describe("Expected Failure", () =>
 		{
 			it("[auth] Should require a user token..", async () =>
 			{
@@ -122,7 +122,7 @@ describe("Request: POST (1/2)", () =>
 			});
 		});
 
-		describe("✅ Expected Success", () =>
+		describe("Expected Success", () =>
 		{
 			it("Should insert portfolio into database..", async () =>
 			{
@@ -161,7 +161,7 @@ describe("Request: GET", () =>
 {
 	describe("Route: /api/portfolio/", () =>
 	{
-		describe("✅ Expected Success", () =>
+		describe("Expected Success", () =>
 		{
 			it("Should be able to retrieve portfolio(s) from database..", async () =>
 			{
@@ -194,7 +194,7 @@ describe("Request: POST (2/2)", () =>
 {
 	describe("Route: /api/portfolio/update", () =>
 	{
-		describe("❌ Expected Failure", () =>
+		describe("Expected Failure", () =>
 		{
 			it("[auth] Should require a user token..", async () =>
 			{
@@ -292,7 +292,7 @@ describe("Request: POST (2/2)", () =>
 			});
 		});
 
-		describe("✅ Expected Success", () =>
+		describe("Expected Success", () =>
 		{
 			it("Should update portfolio into database..", async () =>
 			{
@@ -358,7 +358,7 @@ describe("Request: POST (2/2)", () =>
 
 	describe("Route: /api/portfolio/delete", () =>
 	{
-		describe("✅ Expected Success", () =>
+		describe("Expected Success", () =>
 		{
 			it("Should be able to delete portfolio from database..", async () =>
 			{

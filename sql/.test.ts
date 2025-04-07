@@ -66,7 +66,7 @@ describe("Database Initialization", () =>
 
 describe("table: stock", () =>
 {
-	describe("❌ Expected Failure", () =>
+	describe("Expected Failure", () =>
 	{
 		it("Should fail when inserting stock without exchange..", async () =>
 		{
@@ -99,7 +99,7 @@ describe("table: stock", () =>
 		});
 	});
 
-	describe("✅ Expected Success", () =>
+	describe("Expected Success", () =>
 	{
 		it("Should allows inserting a stock with ISIN..", async () =>
 		{
@@ -112,7 +112,7 @@ describe("table: stock", () =>
 		});
 	});
 
-	describe("❌ Expected Failure Part 2", () =>
+	describe("Expected Failure Part 2", () =>
 	{
 		it("Should fail when inserting duplicate ISIN..", async () =>
 		{
@@ -134,7 +134,7 @@ describe("table: stock", () =>
 
 describe("Table: cryptocurrency", () =>
 {
-	describe("❌ Expected Failure", () =>
+	describe("Expected Failure", () =>
 	{
 		it("Should fail when inserting cryptocurrency without coingecko_id..", async () =>
 		{
@@ -147,7 +147,7 @@ describe("Table: cryptocurrency", () =>
 		});
 	});
 
-	describe("✅ Expected Success", () =>
+	describe("Expected Success", () =>
 	{
 		it("Should allow inserting a cryptocurrency with platform..", async () =>
 		{
@@ -189,7 +189,7 @@ describe("Table: cryptocurrency", () =>
 		});
 	});
 
-	describe("❌ Expected Failure Part 2", () =>
+	describe("Expected Failure Part 2", () =>
 	{
 		it("Should fail when inserting duplicate coingecko_id..", async () =>
 		{
@@ -258,7 +258,7 @@ describe("Table: portfolio_asset", () => {
 	});
 
 
-	describe("✅ Expected Success", () => {
+	describe("Expected Success", () => {
 		it("Should allow inserting portfolio assets within allocation limits..", async () => {
 
 
@@ -291,7 +291,7 @@ describe("Table: portfolio_asset", () => {
 		});
 	});
 
-	describe("❌ Expected Failure", () => {
+	describe("Expected Failure", () => {
 		it("Should fail when inserting portfolio asset exceeding allocation limit..", async () => {
 			// Insert portfolio assets up to 90%
 			await expect(

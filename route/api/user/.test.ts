@@ -68,7 +68,7 @@ describe("Request: GET", () =>
 {
 	describe("Route: /api/user/", () =>
 	{
-		describe("❌ Expected Failure", () => {
+		describe("Expected Failure", () => {
 			it("Should NOT allow creating a user with invalid email..", async () =>
 			{
 				const response = await request(app).get("/api/user/").send();
@@ -80,7 +80,7 @@ describe("Request: GET", () =>
 			});
 		});
 
-		describe("✅ Expected Success", () => {
+		describe("Expected Success", () => {
 			it("Should return JSON of user profile..", async () =>
 			{
 				const EMAIL: string = "testemail@example.com";
@@ -121,7 +121,7 @@ describe("Request: GET", () =>
 			});
 		});
 
-		describe("❌ Expected Failure Part 2", () => {
+		describe("Expected Failure Part 2", () => {
 			it("Should state that verification is required if over 5 days from creation and not verified..", async () =>
 			{
 				const EMAIL: string = "testemail@example.com";
@@ -175,7 +175,7 @@ describe("Request: GET", () =>
 	describe("Route: /api/user/send-password-recovery-email/:email", () => {
 		beforeEach(() => jest.clearAllMocks());
 
-		describe("❌ Expected Failure", () => {
+		describe("Expected Failure", () => {
 			it("Should revert if an invalid email is passed to the route..", async () => {
 				const res = await request(app).get("/api/user/send-password-recovery-email/not-an-email");
 
@@ -191,7 +191,7 @@ describe("Request: GET", () =>
 			});
 		});
 
-		describe("✅ Expected Success", () => {
+		describe("Expected Success", () => {
 			it("Should send the password recovery email..", async () => {
 				await request(app).post("/api/user/create").send({ load: { email, password } });
 
@@ -207,7 +207,7 @@ describe("Request: GET", () =>
 			});
 		});
 
-		describe("❌ Expected Failure Part 2", () => {
+		describe("Expected Failure Part 2", () => {
 			it("Should not be able to send another email until 3 minutes has passed since the last one..", async () => {
 				await request(app).post("/api/user/create").send({
 					load: {
@@ -232,14 +232,14 @@ describe("Request: GET", () =>
 	});
 
 	describe("Route: /api/user/send-verification-email", () => {
-		describe("❌ Expected Failure", () => {
+		describe("Expected Failure", () => {
 			it("[auth] Should require a user token..", async () =>
 			{
 				await request(app).get("/api/user/send-verification-email").send().expect(401);
 			});
 		});
 
-		describe("✅ Expected Success", () => {
+		describe("Expected Success", () => {
 			it("Should send the verification email..", async () => {
 				await request(app).post("/api/user/create").send({ load: { email, password } });
 
@@ -277,7 +277,7 @@ describe("Request: GET", () =>
 			});
 		});
 
-		describe("❌ Expected Failure Part 2", () => {
+		describe("Expected Failure Part 2", () => {
 			it("Should not be able to send another email until 3 minutes has passed since the last one..", async () => {
 				await request(app).post("/api/user/create").send({ load: { email, password } });
 
@@ -318,7 +318,7 @@ describe("Request: POST", () =>
 {
 	describe("Route: /api/user/create", () =>
 	{
-		describe("❌ Expected Failure", () => {
+		describe("Expected Failure", () => {
 			it("Should NOT allow creating a user with invalid email..", async () =>
 			{
 				const email = "notemail";
@@ -411,7 +411,7 @@ describe("Request: POST", () =>
 			});
 		});
 
-		describe("✅ Expected Success", () =>
+		describe("Expected Success", () =>
 		{
 			const email: string = "testemail@example.com";
 			const password: string = "testpassword!";
@@ -620,7 +620,7 @@ describe("Request: POST", () =>
 	});
 
 	describe("Route: /api/user/verify", () => {
-		describe("❌ Expected Failure", () => {
+		describe("Expected Failure", () => {
 			it("[auth] Should require a user token..", async () =>
 			{
 				await request(app).post("/api/user/verify").send().expect(401);
@@ -637,7 +637,7 @@ describe("Request: POST", () =>
 			});
 		});
 
-		describe("✅ Expected Success", () => {
+		describe("Expected Success", () => {
 			it("Should verify a user with a valid token..", async () => {
 				await request(app).post("/api/user/create").send({ load: { email, password } });
 

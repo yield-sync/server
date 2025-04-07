@@ -127,7 +127,7 @@ beforeEach(async () =>
 
 describe("Request: GET", () => {
 	describe("Route: /api/portfolio-asset/create", () => {
-		describe("❌ Expected Failure", () => {
+		describe("Expected Failure", () => {
 			it("[auth] Should require a user token to insert portfolio asset into DB..", async () => {
 				await request(app).post("/api/portfolio-asset/create").send({
 					load: {
@@ -210,7 +210,7 @@ describe("Request: GET", () => {
 			});
 		});
 
-		describe("✅ Expected Success", () => {
+		describe("Expected Success", () => {
 			it("Should insert portfolio asset into database..", async () => {
 				const RES_PORTFOLIO_ASSET = await request(app).post("/api/portfolio-asset/create").set(
 					'authorization',
@@ -286,7 +286,7 @@ describe("Request: GET", () => {
 			});
 		});
 		describe("Route: /api/portfolio-asset/update", () => {
-			describe("❌ Expected Failure", () => {
+			describe("Expected Failure", () => {
 				it("[auth] Should require a user token to insert portfolio asset into DB..", async () => {
 					await request(app).put("/api/portfolio-asset/update/invalid-id").send().expect(401);
 
@@ -364,7 +364,7 @@ describe("Request: GET", () => {
 				});
 			});
 
-			describe("✅ Expected Success", () => {
+			describe("Expected Success", () => {
 				it("Should update portfolio asset in the database..", async () => {
 					await request(app).post("/api/portfolio-asset/create").set(
 						'authorization',

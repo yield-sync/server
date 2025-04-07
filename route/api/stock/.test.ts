@@ -118,7 +118,7 @@ describe("Request: GET", () => {
 	describe("/api/stock/search/:query", () => {
 		afterEach(() => jest.clearAllMocks());
 
-		describe("❌ Expected Failure", () => {
+		describe("Expected Failure", () => {
 			it("Should return 400 for an invalid query..", async () => {
 				const res = await request(app).get("/api/stock/search/QUERY").set("authorization", `Bearer ${token}`);
 
@@ -126,7 +126,7 @@ describe("Request: GET", () => {
 			});
 		});
 
-		describe("✅ Expected Success", () => {
+		describe("Expected Success", () => {
 			it("Should return stock from DB if it exists and NOT make external request..", async () => {
 				const futureDate = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000);
 

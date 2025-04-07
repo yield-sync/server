@@ -84,7 +84,7 @@ describe("Request: GET", () =>
 {
 	describe("Route: /api/cryptocurrency/search/:query", () =>
 	{
-		describe("❌ Expected Failure", () =>
+		describe("Expected Failure", () =>
 		{
 			it("[auth] Should require a user token..", async () =>
 			{
@@ -113,7 +113,7 @@ describe("Request: GET", () =>
 			});
 		});
 
-		describe("✅ Expected Success", () => {
+		describe("Expected Success", () => {
 			const cryptoSymbol: string = "USD";
 
 			describe("No external request made", () => {
@@ -268,7 +268,7 @@ describe("Request: GET", () =>
 
 describe("Request: PUT", () =>
 {
-	describe("✅ Expected Success", () =>
+	describe("Expected Success", () =>
 	{
 		describe("Route: /api/cryptocurrency/update", () =>
 		{
