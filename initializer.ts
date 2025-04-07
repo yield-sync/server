@@ -1,14 +1,22 @@
+import config from "./config";
+import { dBBuilderProduction } from "./sql/db-builder";
+
+
+require("dotenv").config();
+
+
 class InitializerError extends
 	Error
 {}
 
 
-import config from "./config";
-import { dBBuilderProduction } from "./sql/db-builder";
-
-
 async function main(overwrite: boolean)
 {
+	if (!process.env.NO_CACHE || process.env.NO_CACHE != "1")
+	{
+		console.warn("[warn] ENV NO_CACHE not set to 1");
+	}
+
 	if (!config.app.secretKey)
 	{
 		throw new InitializerError("Missing secret values");
