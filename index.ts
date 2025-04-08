@@ -12,7 +12,7 @@ import mysql from "mysql2";
 import path from "path";
 
 import config from "./config";
-import { INTERNAL_SERVER_ERROR, hTTPStatus } from "./constants";
+import { INTERNAL_SERVER_ERROR, HTTPStatus } from "./constants";
 import rateLimiter from "./rate-limiter";
 import routeApi from "./route/api";
 import routeApiCryptocurrency from "./route/api/cryptocurrency";
@@ -104,7 +104,7 @@ http.createServer(
 
 			if (!fs.existsSync(filePath))
 			{
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 					message: INTERNAL_SERVER_ERROR,
 					error: `${filePath} does not exist`,
 				});

@@ -6,7 +6,7 @@ export const stockExchanges: string[] = [
 	"amex",
 ];
 
-export const hTTPStatus = {
+export const HTTPStatus = {
 	OK: 200,
 	CREATED: 201,
 	ACCEPTED: 202,
