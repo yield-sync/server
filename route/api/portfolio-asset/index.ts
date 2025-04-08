@@ -60,7 +60,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					"SELECT * FROM portfolio WHERE id = ? AND user_id = ?;",
 					[
 						portfolio_id,
-						req.body.userDecoded.id,
+						req.userDecoded.id,
 					]
 				);
 
@@ -165,7 +165,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					"SELECT * FROM portfolio WHERE id = ? AND user_id = ?;",
 					[
 						portfolio_id,
-						req.body.userDecoded.id,
+						req.userDecoded.id,
 					]
 				);
 

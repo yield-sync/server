@@ -198,4 +198,16 @@ declare global
 		pin: string;
 		created: Date;
 	}
+
+	declare namespace Express {
+		export interface Request {
+			userDecoded?: {
+				id: number;
+				email: string;
+				admin: Buffer;
+				verified: Buffer;
+				[key: string]: any;
+			};
+		}
+	}
 }

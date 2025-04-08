@@ -28,7 +28,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				] = await mySQLPool.promise().query<IPortfolio[]>(
 					"SELECT * FROM portfolio WHERE user_id = ?;",
 					[
-						req.body.userDecoded.id,
+						req.userDecoded.id,
 					]
 				);
 
@@ -79,7 +79,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				await mySQLPool.promise().query(
 					"INSERT INTO portfolio (user_id, name) VALUES (?, ?);",
 					[
-						req.body.userDecoded.id,
+						req.userDecoded.id,
 						name,
 					]
 				);
@@ -139,7 +139,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					"UPDATE portfolio SET name = ? WHERE user_id = ? AND id = ?;",
 					[
 						name,
-						req.body.userDecoded.id,
+						req.userDecoded.id,
 						id,
 					]
 				);
@@ -190,7 +190,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				await mySQLPool.promise().query(
 					"DELETE FROM portfolio WHERE user_id = ? AND id = ?;",
 					[
-						req.body.userDecoded.id,
+						req.userDecoded.id,
 						portfolio_id,
 					]
 				);

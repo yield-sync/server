@@ -95,7 +95,7 @@ const _userTokenDecode = (
 		}
 
 		// Attach decoded user to request object
-		req.body.userDecoded = decoded;
+		req.userDecoded = decoded;
 
 		next();
 	};
@@ -125,7 +125,7 @@ export default {
 				] = await mySQLPool.promise().query<IUser[]>(
 					"SELECT * FROM user WHERE id = ? AND verified = ?;",
 					[
-						req.body.userDecoded.id,
+						req.userDecoded.id,
 						expectedVerificationStatus ? "1" : "0",
 					]
 				);

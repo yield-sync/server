@@ -38,7 +38,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				] = await mySQLPool.promise().query<IUser[]>(
 					"SELECT * FROM user WHERE email = ?;",
 					[
-						req.body.userDecoded.email,
+						req.userDecoded.email,
 					]
 				);
 
@@ -201,7 +201,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				await mySQLPool.promise().query<IUser[]>(
 					"DELETE FROM verification WHERE user_id = ?;",
 					[
-						req.body.userDecoded.id,
+						req.userDecoded.id,
 					]
 				);
 
@@ -211,12 +211,12 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				await mySQLPool.promise().query(
 					"INSERT INTO verification (user_id, pin) VALUES (?, ?);",
 					[
-						req.body.userDecoded.id,
+						req.userDecoded.id,
 						verificationPin,
 					]
 				);
 
-				await mailUtil.sendVerificationEmail(req.body.userDecoded.email, verificationPin);
+				await mailUtil.sendVerificationEmail(req.userDecoded.email, verificationPin);
 
 				res.status(HTTPStatus.OK).send({
 					message: "✅ Created verification",
@@ -413,7 +413,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				] = await mySQLPool.promise().query<IVerification[]>(
 					"SELECT * FROM verification WHERE user_id = ?;",
 					[
-						req.body.userDecoded.id,
+						req.userDecoded.id,
 					]
 				);
 
@@ -431,7 +431,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				] = await mySQLPool.promise().query<IVerification[]>(
 					"SELECT * FROM verification WHERE user_id = ? AND pin = ?;",
 					[
-						req.body.userDecoded.id,
+						req.userDecoded.id,
 						sanitizer.sanitizePin(pin),
 					]
 				);
@@ -444,7 +444,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 						await mySQLPool.promise().query<IUser[]>(
 							"DELETE FROM verification WHERE user_id = ?;",
 							[
-								req.body.userDecoded.id,
+								req.userDecoded.id,
 							]
 						);
 
@@ -476,7 +476,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				await mySQLPool.promise().query(
 					"UPDATE user SET verified = 1 WHERE id = ?;",
 					[
-						req.body.userDecoded.id,
+						req.userDecoded.id,
 					]
 				);
 
@@ -674,7 +674,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				] = await mySQLPool.promise().query<IUser[]>(
 					"SELECT * FROM user WHERE email = ?;",
 					[
-						req.body.userDecoded.email,
+						req.userDecoded.email,
 					]
 				);
 
@@ -689,7 +689,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					"UPDATE user SET password = ? WHERE id = ?;",
 					[
 						await bcrypt.hash(passwordNew, 10),
-						req.body.userDecoded.id,
+						req.userDecoded.id,
 					]
 				);
 
