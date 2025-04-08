@@ -5,7 +5,8 @@ import mysql from "mysql2";
 import routeApi from "../index";
 import routeApiUser from "./index";
 import config from "../../../config";
-import { hTTPStatus } from "../../../constants";
+import { HTTPStatus } from "../../../constants";
+import rateLimiter from "../../../rate-limiter";
 import DBBuilder, { dBDrop } from "../../../sql/db-builder";
 import mailUtil from "../../../util/mailUtil";
 
@@ -172,19 +173,19 @@ describe("Request: GET", () =>
 		});
 	});
 
-	describe("Route: /api/user/send-password-recovery-email/:email", () => {
+	describe("Route: /api/user/password-recovery/send-email/:email", () => {
 		beforeEach(() => jest.clearAllMocks());
 
 		describe("Expected Failure", () => {
 			it("Should revert if an invalid email is passed to the route..", async () => {
-				const res = await request(app).get("/api/user/send-password-recovery-email/not-an-email");
+				const res = await request(app).get("/api/user/password-recovery/send-email/not-an-email");
 
 				expect(res.statusCode).toBe(400);
 				expect(res.body.message).toBe("❌ Invalid email format");
 			});
 
 			it("Should revert if a valid email is not found in the database..", async () => {
-				const res = await request(app).get("/api/user/send-password-recovery-email/missing@example.com");
+				const res = await request(app).get("/api/user/password-recovery/send-email/missing@example.com");
 
 				expect(res.statusCode).toBe(400);
 				expect(res.body.message).toBe("❌ Email not found");
@@ -197,7 +198,7 @@ describe("Request: GET", () =>
 
 				expect(mailUtil.sendRecoveryEmail).not.toHaveBeenCalled();
 
-				const res = await request(app).get(`/api/user/send-password-recovery-email/${email}`);
+				const res = await request(app).get(`/api/user/password-recovery/send-email/${email}`);
 
 				expect(mailUtil.sendRecoveryEmail).toHaveBeenCalled();
 
@@ -208,39 +209,47 @@ describe("Request: GET", () =>
 		});
 
 		describe("Expected Failure Part 2", () => {
-			it("Should not be able to send another email until 3 minutes has passed since the last one..", async () => {
+			it("allows up to 5 requests..", async () => {
+				// Create a user
 				await request(app).post("/api/user/create").send({
 					load: {
-						email: email,
-						password: password
+						email,
+						password
 					}
-				});
+				}).expect(201);
 
-				await request(app).get(`/api/user/send-password-recovery-email/${email}`);
+				// Reset rate limit here
+				rateLimiter.emailRateLimiter.resetKey("::ffff:127.0.0.1");
 
-				await request(app).get(`/api/user/send-password-recovery-email/${email}`);
+				for (let i = 0; i < 5; i++)
+				{
+					await request(app).get(`/api/user/password-recovery/send-email/${email}`).expect(200);
+				}
 
-				expect(mailUtil.sendRecoveryEmail).toBeCalledTimes(1);
+				expect(mailUtil.sendRecoveryEmail).toBeCalledTimes(5);
 
-				const res = await request(app).get(`/api/user/send-password-recovery-email/${email}`).expect(
-					hTTPStatus.TOO_MANY_REQUEST
+				const res = await request(app).get(`/api/user/password-recovery/send-email/${email}`).expect(
+					HTTPStatus.TOO_MANY_REQUEST
 				);
 
-				expect(res.body.message).toBe("⏳ 3 minutes must pass before last request for recovery email");
+				expect(res.text).toBe("⏳ Too many requests, please try again in 2 hours");
 			});
 		});
 	});
 
-	describe("Route: /api/user/send-verification-email", () => {
+	describe("Route: /api/user/verification/send-verification", () => {
 		describe("Expected Failure", () => {
 			it("[auth] Should require a user token..", async () =>
 			{
-				await request(app).get("/api/user/send-verification-email").send().expect(401);
+				await request(app).get("/api/user/verification/send-verification").send().expect(401);
 			});
 		});
 
 		describe("Expected Success", () => {
 			it("Should send the verification email..", async () => {
+				// Reset rate limit here
+				rateLimiter.emailRateLimiter.resetKey("::ffff:127.0.0.1");
+
 				await request(app).post("/api/user/create").send({ load: { email, password } });
 
 				const [user] = await mySQLPool.promise().query<IUser>("SELECT * FROM user WHERE email = ?", [email]);
@@ -254,7 +263,7 @@ describe("Request: GET", () =>
 
 				const token = (JSON.parse(resLogin.text)).token;
 
-				const res = await request(app).get(`/api/user/send-verification-email`).set(
+				const res = await request(app).get(`/api/user/verification/send-verification`).set(
 					"authorization",
 					`Bearer ${token}`
 				).send();
@@ -278,10 +287,19 @@ describe("Request: GET", () =>
 		});
 
 		describe("Expected Failure Part 2", () => {
-			it("Should not be able to send another email until 3 minutes has passed since the last one..", async () => {
-				await request(app).post("/api/user/create").send({ load: { email, password } });
+			it("allows up to 5 requests..", async () => {
+				// Reset rate limit here
+				rateLimiter.emailRateLimiter.resetKey("::ffff:127.0.0.1");
 
-				await mySQLPool.promise().query<IUser>("SELECT * FROM user WHERE email = ?", [email]);
+				// Create a user
+				await request(app).post("/api/user/create").send({
+					load: {
+						email,
+						password
+					}
+				}).expect(201);
+
+				const [user] = await mySQLPool.promise().query<IUser>("SELECT * FROM user WHERE email = ?", [email]);
 
 				const resLogin = await request(app).post("/api/user/login").send({
 					load: {
@@ -292,19 +310,25 @@ describe("Request: GET", () =>
 
 				const token = (JSON.parse(resLogin.text)).token;
 
-				await request(app).get(`/api/user/send-verification-email`).set(
+
+				for (let i = 0; i < 5; i++)
+				{
+					await request(app).get(`/api/user/verification/send-verification`).set(
+						"authorization",
+						`Bearer ${token}`
+					).expect(200);
+				}
+
+				expect(mailUtil.sendRecoveryEmail).toBeCalledTimes(5);
+
+				const res = await request(app).get(`/api/user/verification/send-verification`).set(
 					"authorization",
 					`Bearer ${token}`
-				).send();
+				).expect(
+					HTTPStatus.TOO_MANY_REQUEST
+				);
 
-				expect(mailUtil.sendVerificationEmail).toHaveBeenCalled();
-
-				const res = await request(app).get(`/api/user/send-verification-email`).set(
-					"authorization",
-					`Bearer ${token}`
-				).send();
-
-				expect(res.body.message).toBe("⏳ 3 minutes must pass before last request for verification email",);
+				expect(res.text).toBe("⏳ Too many requests, please try again in 2 hours");
 			});
 
 			it("Should not be able to send another email if the user is already verified..", async () => {
@@ -619,15 +643,15 @@ describe("Request: POST", () =>
 		});
 	});
 
-	describe("Route: /api/user/verify", () => {
+	describe("Route: /api/user/verification/verify", () => {
 		describe("Expected Failure", () => {
 			it("[auth] Should require a user token..", async () =>
 			{
-				await request(app).post("/api/user/verify").send().expect(401);
+				await request(app).post("/api/user/verification/verify").send().expect(401);
 			});
 
 			it("[auth] Should require a valid user token..", async () => {
-				const res = await request(app).post("/api/user/verify").send({
+				const res = await request(app).post("/api/user/verification/verify").send({
 					token: "invalid.token.value"
 				});
 
@@ -635,10 +659,139 @@ describe("Request: POST", () =>
 
 				expect(res.body.message).toBe("Access denied: Invalid or missing token");
 			});
+
+			it("Should not verify if no verification found..", async () => {
+				rateLimiter.emailRateLimiter.resetKey("::ffff:127.0.0.1");
+
+				await request(app).post("/api/user/create").send({ load: { email, password } });
+
+				const resLogin = await request(app).post("/api/user/login").send({
+					load: {
+						email,
+						password
+					}
+				}).expect(200);
+
+				const token = (JSON.parse(resLogin.text)).token;
+
+				const res = await request(app).post("/api/user/verification/verify").set(
+					"authorization",
+					`Bearer ${token}`
+				).send({
+					load: {
+						pin: "000000"
+					}
+				});
+				expect(res.statusCode).toBe(400);
+
+				expect(res.body.message).toBe("❌ No verification found");
+			});
+
+			it("Should not verify if invalid pin passed..", async () => {
+				/**
+				* @dev There is a 1/(36^6) chance that this fails (lol)
+				*/
+				rateLimiter.emailRateLimiter.resetKey("::ffff:127.0.0.1");
+
+				await request(app).post("/api/user/create").send({ load: { email, password } });
+
+				const resLogin = await request(app).post("/api/user/login").send({
+					load: {
+						email,
+						password
+					}
+				}).expect(200);
+
+				const token = (JSON.parse(resLogin.text)).token;
+
+				await request(app).get(`/api/user/verification/send-verification`).set(
+					"authorization",
+					`Bearer ${token}`
+				).send().expect(200);
+
+				const res = await request(app).post("/api/user/verification/verify").set(
+					"authorization",
+					`Bearer ${token}`
+				).send({
+					load: {
+						pin: "000000"
+					}
+				});
+				expect(res.statusCode).toBe(400);
+
+				expect(res.body.message).toBe("❌ Invalid pin");
+			});
+
+			it("Should delete verification if 3 invalid pins passed..", async () => {
+				/**
+				* @dev There is a 1/(36^6) chance that this fails (lol)
+				*/
+				rateLimiter.emailRateLimiter.resetKey("::ffff:127.0.0.1");
+
+				await request(app).post("/api/user/create").send({ load: { email, password } });
+
+				const resLogin = await request(app).post("/api/user/login").send({
+					load: {
+						email,
+						password
+					}
+				}).expect(200);
+
+				const token = (JSON.parse(resLogin.text)).token;
+
+				await request(app).get(`/api/user/verification/send-verification`).set(
+					"authorization",
+					`Bearer ${token}`
+				).send().expect(200);
+
+
+				for (let i = 0; i < 2; i++)
+				{
+					const res = await request(app).post("/api/user/verification/verify").set(
+						"authorization",
+						`Bearer ${token}`
+					).send({
+						load: {
+							pin: "000000"
+						}
+					}).expect(400);
+
+					expect(res.body.message).toBe("❌ Invalid pin");
+				}
+
+				const res = await request(app).post("/api/user/verification/verify").set(
+					"authorization",
+					`Bearer ${token}`
+				).send({
+					load: {
+						pin: "000000"
+					}
+				});
+
+				expect(res.statusCode).toBe(400);
+
+				expect(res.body.message).toBe("❌ Invalid pin and attempts exceeded");
+
+				const [user] = await mySQLPool.promise().query<IUser>("SELECT * FROM user WHERE email = ?", [email]);
+
+				const [verification] = await mySQLPool.promise().query<IVerification>(
+					"SELECT * FROM verification WHERE user_id = ?",
+					[user[0].id]
+				);
+
+				if (!Array.isArray(verification))
+				{
+					throw new Error("Expected result is not Array");
+				}
+
+				expect(verification.length).toBe(0);
+			});
 		});
 
 		describe("Expected Success", () => {
 			it("Should verify a user with a valid token..", async () => {
+				rateLimiter.emailRateLimiter.resetKey("::ffff:127.0.0.1");
+
 				await request(app).post("/api/user/create").send({ load: { email, password } });
 
 				const [user] = await mySQLPool.promise().query<IUser>("SELECT * FROM user WHERE email = ?", [email]);
@@ -652,17 +805,17 @@ describe("Request: POST", () =>
 
 				const token = (JSON.parse(resLogin.text)).token;
 
-				await request(app).get(`/api/user/send-verification-email`).set(
+				await request(app).get(`/api/user/verification/send-verification`).set(
 					"authorization",
 					`Bearer ${token}`
-				).send();
+				).send().expect(200);
 
 				const [verification] = await mySQLPool.promise().query<IVerification>(
 					"SELECT * FROM verification WHERE user_id = ?",
 					[user[0].id]
 				);
 
-				const res = await request(app).post("/api/user/verify").set(
+				const res = await request(app).post("/api/user/verification/verify").set(
 					"authorization",
 					`Bearer ${token}`
 				).send({
@@ -685,7 +838,140 @@ describe("Request: POST", () =>
 		});
 	});
 
-	describe("Route: /api/user/recover-password/:email", () => {
+	describe("Route: /api/user/password-recovery/recover/:email", () => {
+		describe("Expected Failure", () => {
+			it("Should not recover password if no recovery found..", async () => {
+				// Reset rate limit here
+				rateLimiter.emailRateLimiter.resetKey("::ffff:127.0.0.1");
 
+				// Create a user
+				await request(app).post("/api/user/create").send({
+					load: {
+						email,
+						password
+					}
+				}).expect(201);
+
+				const res = await request(app).post(`/api/user/password-recovery/recover/${email}`).send({
+					load: {
+						pin: "000000",
+						passwordNew: password
+					}
+				}).expect(HTTPStatus.BAD_REQUEST);
+
+				expect(res.body.message).toBe("❌ No recovery found");
+			});
+
+			it("Should catch if an invalid pin passed..", async () => {
+				// Reset rate limit here
+				rateLimiter.emailRateLimiter.resetKey("::ffff:127.0.0.1");
+
+				// Create a user
+				await request(app).post("/api/user/create").send({
+					load: {
+						email,
+						password
+					}
+				}).expect(201);
+
+				await request(app).get(`/api/user/password-recovery/send-email/${email}`).expect(200);
+
+				const res = await request(app).post(`/api/user/password-recovery/recover/${email}`).send({
+					load: {
+						pin: "000000",
+						passwordNew: password
+					}
+				}).expect(HTTPStatus.BAD_REQUEST);
+
+				expect(res.body.message).toBe("❌ Invalid pin");
+			});
+
+			it("allows up to 5 requests..", async () => {
+				// Reset rate limit here
+				rateLimiter.emailRateLimiter.resetKey("::ffff:127.0.0.1");
+
+				// Create a user
+				await request(app).post("/api/user/create").send({
+					load: {
+						email,
+						password
+					}
+				}).expect(201);
+
+				await request(app).get(`/api/user/password-recovery/send-email/${email}`).expect(200);
+
+				for (let i = 0; i < 2; i++)
+				{
+					const res = await request(app).post(`/api/user/password-recovery/recover/${email}`).send({
+						load: {
+							pin: "000000",
+							passwordNew: password
+						}
+					}).expect(HTTPStatus.BAD_REQUEST);
+
+					expect(res.body.message).toBe("❌ Invalid pin");
+				}
+
+				const res = await request(app).post(`/api/user/password-recovery/recover/${email}`).send({
+					load: {
+						pin: "000000",
+						passwordNew: password
+					}
+				});
+
+				expect(res.body.message).toBe("❌ Invalid pin and attempts exceeded");
+
+				expect(res.status).toBe(HTTPStatus.TOO_MANY_REQUEST);
+			});
+		});
+
+		describe("Expected Sucess", () => {
+			it("Should change password with valid pin..", async () => {
+				// Reset rate limit here
+				rateLimiter.emailRateLimiter.resetKey("::ffff:127.0.0.1");
+
+				// Create a user
+				await request(app).post("/api/user/create").send({
+					load: {
+						email,
+						password
+					}
+				}).expect(201);
+
+				await request(app).get(`/api/user/password-recovery/send-email/${email}`).expect(200);
+
+				const [user] = await mySQLPool.promise().query<IUser>("SELECT * FROM user WHERE email = ?", [email]);
+
+				const [recovery] = await mySQLPool.promise().query<IVerification>(
+					"SELECT * FROM recovery WHERE user_id = ?",
+					[user[0].id]
+				);
+
+				if (!Array.isArray(recovery))
+				{
+					throw new Error("Expected result is not Array");
+				}
+
+				const res = await request(app).post(`/api/user/password-recovery/recover/${email}`).send({
+					load: {
+						pin: recovery[0].pin,
+						passwordNew: "somenewpassword123!"
+					}
+				}).expect(HTTPStatus.OK);
+
+				expect(res.body.message).toBe("✅ User password updated");
+
+				const resLogin = await request(app).post("/api/user/login").send({
+					load: {
+						email,
+						password: "somenewpassword123!"
+					}
+				}).expect(200);
+
+				const token = (JSON.parse(resLogin.text)).token;
+
+				expect(typeof token).toBe("string");
+			});
+		});
 	});
 });

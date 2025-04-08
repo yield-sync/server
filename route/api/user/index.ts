@@ -3,7 +3,8 @@ import express from "express";
 import mysql from "mysql2";
 
 import config from "../../../config";
-import { INTERNAL_SERVER_ERROR, hTTPStatus } from "../../../constants";
+import rateLimiter from "../../../rate-limiter";
+import { INTERNAL_SERVER_ERROR, HTTPStatus } from "../../../constants";
 import userToken from "../../../middleware/user-token";
 import mailUtil from "../../../util/mailUtil";
 import { validateEmail, validatePassword } from "../../../util/validation";
@@ -11,8 +12,6 @@ import sanitizer from "../../../util/sanitizer";
 
 
 const jsonWebToken = require("jsonwebtoken");
-
-const THREE_MINUTES_IN_MS: number = 5 * 60 * 1000;
 
 const ERROR_INVALID_PASSWORD: string = "❌ Password Must be ASCII, longer than 8 characters, and contain a special character";
 
@@ -53,7 +52,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					};
 				});
 
-				res.status(hTTPStatus.OK).send({
+				res.status(HTTPStatus.OK).send({
 					email: normalizedUsers[0].email,
 					admin: normalizedUsers[0].admin,
 					verified: normalizedUsers[0].verified,
@@ -63,7 +62,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				if (error instanceof Error)
 				{
-					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+					res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 						message: INTERNAL_SERVER_ERROR,
 						error: error.message,
 					});
@@ -71,7 +70,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 					message: INTERNAL_SERVER_ERROR,
 					error: "Unknown Error",
 				});
@@ -79,10 +78,11 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		}
 	).get(
 		/**
-		* @route get /api/user/send-password-recovery-email
+		* @route get /api/user/password-recovery/send-email
 		* @access Public
 		*/
-		"/send-password-recovery-email/:email",
+		"/password-recovery/send-email/:email",
+		rateLimiter.emailRateLimiter,
 		async (req: express.Request, res: express.Response) =>
 		{
 			const timestamp = new Date();
@@ -98,7 +98,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				{
 					if (error instanceof Error)
 					{
-						res.status(hTTPStatus.BAD_REQUEST).json({
+						res.status(HTTPStatus.BAD_REQUEST).json({
 							message: "❌ Invalid email format",
 						});
 
@@ -122,7 +122,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				if (users.length == 0)
 				{
-					res.status(hTTPStatus.BAD_REQUEST).json({
+					res.status(HTTPStatus.BAD_REQUEST).json({
 						message: "❌ Email not found",
 					});
 
@@ -141,20 +141,13 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					]
 				);
 
-				if (recovery.length > 0)
-				{
-					const created = new Date(recovery[0].created);
-
-					// If not enough time since last request has passed..
-					if (timestamp.getTime() - created.getTime() < THREE_MINUTES_IN_MS)
-					{
-						res.status(hTTPStatus.TOO_MANY_REQUEST).json({
-							message: "⏳ 3 minutes must pass before last request for recovery email",
-						});
-
-						return;
-					}
-				}
+				// If verification already exists -> delete it
+				await mySQLPool.promise().query<IUser[]>(
+					"DELETE FROM recovery WHERE user_id = ?;",
+					[
+						users[0].id,
+					]
+				);
 
 				const verificationPin = Math.random().toString(36).slice(2, 8).padEnd(6, "0");
 
@@ -169,7 +162,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				await mailUtil.sendRecoveryEmail(req.params.email, verificationPin);
 
-				res.status(hTTPStatus.OK).json({
+				res.status(HTTPStatus.OK).json({
 					message: "✅ Password recovery email sent",
 				});
 			}
@@ -177,7 +170,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				if (error instanceof Error)
 				{
-					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+					res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 						message: INTERNAL_SERVER_ERROR,
 						error: error.message,
 					});
@@ -185,7 +178,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 					message: INTERNAL_SERVER_ERROR,
 					error: "Unknown Error",
 				});
@@ -193,45 +186,17 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		}
 	).get(
 		/**
-		* @route GET /api/user/send-verification-email
+		* @route GET /api/user/verification/send-verification
 		* @access User
 		*/
-		"/send-verification-email",
+		"/verification/send-verification",
 		userToken.userTokenDecode(mySQLPool, false),
 		userToken.userTokenDecodeRequireVerificationStatus(mySQLPool, false),
+		rateLimiter.emailRateLimiter,
 		async (req: express.Request, res: express.Response) =>
 		{
-			const timestamp = new Date();
-
-			// Check if there is already a verification in the database
-			let verification: IVerification[];
-
 			try
 			{
-				[
-					verification,
-				] = await mySQLPool.promise().query<IVerification[]>(
-					"SELECT * FROM verification WHERE user_id = ?;",
-					[
-						req.body.userDecoded.id,
-					]
-				);
-
-				if (verification.length > 0)
-				{
-					const created = new Date(verification[0].created);
-
-					// If not enough time since last request has passed..
-					if (timestamp.getTime() - created.getTime() < THREE_MINUTES_IN_MS)
-					{
-						res.status(hTTPStatus.BAD_REQUEST).json({
-							message: "⏳ 3 minutes must pass before last request for verification email",
-						});
-
-						return;
-					}
-				}
-
 				// If verification already exists -> delete it
 				await mySQLPool.promise().query<IUser[]>(
 					"DELETE FROM verification WHERE user_id = ?;",
@@ -253,7 +218,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				await mailUtil.sendVerificationEmail(req.body.userDecoded.email, verificationPin);
 
-				res.status(hTTPStatus.OK).send({
+				res.status(HTTPStatus.OK).send({
 					message: "✅ Created verification",
 				});
 			}
@@ -261,14 +226,14 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				if (error instanceof Error)
 				{
-					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+					res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 						message: INTERNAL_SERVER_ERROR,
 						error: error.message,
 					});
 				}
 				else
 				{
-					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+					res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 						message: INTERNAL_SERVER_ERROR,
 						error: "Unknown Error",
 					});
@@ -292,14 +257,14 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				if (!validateEmail(email))
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("❌ Invalid email");
+					res.status(HTTPStatus.BAD_REQUEST).send("❌ Invalid email");
 
 					return;
 				}
 
 				if (!validatePassword(password))
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send(ERROR_INVALID_PASSWORD);
+					res.status(HTTPStatus.BAD_REQUEST).send(ERROR_INVALID_PASSWORD);
 
 					return;
 				}
@@ -318,7 +283,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				if (users.length > 0)
 				{
-					res.status(hTTPStatus.BAD_REQUEST).json({
+					res.status(HTTPStatus.BAD_REQUEST).json({
 						message: "❌ This email is already being used.",
 					});
 
@@ -333,7 +298,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					]
 				);
 
-				res.status(hTTPStatus.CREATED).json({
+				res.status(HTTPStatus.CREATED).json({
 					message: "✅ Created user!",
 				});
 
@@ -343,7 +308,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				if (error instanceof Error)
 				{
-					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+					res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 						message: INTERNAL_SERVER_ERROR,
 						error: error.message,
 					});
@@ -351,7 +316,337 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
+					message: INTERNAL_SERVER_ERROR,
+					error: "Unknown Error",
+				});
+			}
+		}
+	).post(
+		/**
+		* @route POST /api/user/login
+		* @desc Login
+		* @access Public
+		*/
+		"/login",
+		async (req: express.Request, res: express.Response) =>
+		{
+			const { email, password, }: UserLogin = req.body.load;
+
+			try
+			{
+				const [
+					users,
+				]: [
+					IUser[],
+					FieldPacket[]
+				] = await mySQLPool.promise().query<IUser[]>(
+					"SELECT * FROM user WHERE email = ?;",
+					[
+						email,
+					]
+				);
+
+				if (users.length != 1)
+				{
+					res.status(401).send("❌ Invalid password or email");
+
+					return;
+				}
+
+				if (!bcrypt.compareSync(password, users[0].password))
+				{
+					res.status(401).send("❌ Invalid password or email");
+
+					return;
+				}
+
+				res.status(HTTPStatus.OK).send({
+					token: jsonWebToken.sign(
+						{
+							id: users[0].id,
+							email: users[0].email,
+							admin: users[0].admin,
+							verified: users[0].verified,
+						},
+						config.app.secretKey,
+						{
+							expiresIn: config.nodeENV == "production" ? 7200 : 10000000,
+						}
+					),
+				});
+			}
+			catch (error: Error | any)
+			{
+				if (error instanceof Error)
+				{
+					res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
+						message: INTERNAL_SERVER_ERROR,
+						error: error.message,
+					});
+
+					return;
+				}
+
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
+					message: INTERNAL_SERVER_ERROR,
+					error: "Unknown Error",
+				});
+			}
+		}
+	).post(
+		/**
+		* @route POST /api/user/verification/verify
+		* @access Public
+		*/
+		"/verification/verify",
+		userToken.userTokenDecode(mySQLPool, false),
+		userToken.userTokenDecodeRequireVerificationStatus(mySQLPool, false),
+		async (req: express.Request, res: express.Response) =>
+		{
+			const { pin, }: UserVerify = req.body.load;
+
+			try
+			{
+				const [
+					verification,
+				] = await mySQLPool.promise().query<IVerification[]>(
+					"SELECT * FROM verification WHERE user_id = ?;",
+					[
+						req.body.userDecoded.id,
+					]
+				);
+
+				if (verification.length == 0)
+				{
+					res.status(HTTPStatus.BAD_REQUEST).json({
+						message: "❌ No verification found",
+					});
+
+					return;
+				}
+
+				const [
+					verificationWithPin,
+				] = await mySQLPool.promise().query<IVerification[]>(
+					"SELECT * FROM verification WHERE user_id = ? AND pin = ?;",
+					[
+						req.body.userDecoded.id,
+						sanitizer.sanitizePin(pin),
+					]
+				);
+
+				if (verificationWithPin.length === 0)
+				{
+					// If on 3rd attempt..
+					if (verification[0].attempts === 2)
+					{
+						await mySQLPool.promise().query<IUser[]>(
+							"DELETE FROM verification WHERE user_id = ?;",
+							[
+								req.body.userDecoded.id,
+							]
+						);
+
+						res.status(HTTPStatus.BAD_REQUEST).json({
+							message: "❌ Invalid pin and attempts exceeded",
+						});
+
+						return;
+					}
+
+					const attempts = verification[0].attempts + 1;
+
+					// Increment the attempt
+					await mySQLPool.promise().query(
+						"UPDATE verification SET attempts = ? WHERE id = ?;",
+						[
+							attempts,
+							verification[0].id,
+						]
+					);
+
+					res.status(HTTPStatus.BAD_REQUEST).json({
+						message: "❌ Invalid pin",
+					});
+
+					return;
+				}
+
+				await mySQLPool.promise().query(
+					"UPDATE user SET verified = 1 WHERE id = ?;",
+					[
+						req.body.userDecoded.id,
+					]
+				);
+
+				res.status(HTTPStatus.OK).json({
+					message: "✅ Email verified",
+				});
+			}
+			catch (error: Error | any)
+			{
+				if (error instanceof Error)
+				{
+					res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
+						message: INTERNAL_SERVER_ERROR,
+						error: error.message,
+					});
+
+					return;
+				}
+
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
+					message: INTERNAL_SERVER_ERROR,
+					error: "Unknown Error",
+				});
+			}
+		}
+	).post(
+		/**
+		* @route POST /api/user/
+		* @access Public
+		*/
+		"/password-recovery/recover/:email",
+		async (req: express.Request, res: express.Response) =>
+		{
+			const { pin, passwordNew, }: UserRecoverPassword = req.body.load;
+
+			try
+			{
+				const email: string = sanitizer.sanitizeEmail(req.params.email);
+
+				const [
+					users,
+				]: [
+					IUser[],
+					FieldPacket[]
+				] = await mySQLPool.promise().query<IUser[]>(
+					"SELECT id FROM user WHERE email = ?;",
+					[
+						email,
+					]
+				);
+
+				if (users.length == 0)
+				{
+					res.status(HTTPStatus.BAD_REQUEST).json({
+						message: "❌ Invalid email",
+					});
+
+					return;
+				}
+
+				if (!validatePassword(passwordNew))
+				{
+					res.status(HTTPStatus.BAD_REQUEST).json({
+						message: ERROR_INVALID_PASSWORD
+					});
+
+					return;
+				}
+
+				let recovery: IRecovery[];
+
+				[
+					recovery,
+				] = await mySQLPool.promise().query<IRecovery[]>(
+					"SELECT * FROM recovery WHERE user_id = ?;",
+					[
+						users[0].id,
+					]
+				);
+
+				if (recovery.length == 0)
+				{
+					res.status(HTTPStatus.BAD_REQUEST).json({
+						message: "❌ No recovery found",
+					});
+
+					return;
+				}
+
+				const sanitizedPin = sanitizer.sanitizePin(pin);
+
+				const [
+					recoveryWithPin,
+				] = await mySQLPool.promise().query<IRecovery[]>(
+					"SELECT * FROM recovery WHERE user_id = ? AND pin = ?;",
+					[
+						users[0].id,
+						sanitizedPin,
+					]
+				);
+
+				if (recoveryWithPin.length === 0)
+				{
+					// If on 3rd attempt..
+					if (recovery[0].attempts === 2)
+					{
+						await mySQLPool.promise().query<IUser[]>(
+							"DELETE FROM recovery WHERE user_id = ?;",
+							[
+								users[0].id,
+							]
+						);
+
+						res.status(HTTPStatus.TOO_MANY_REQUEST).json({
+							message: "❌ Invalid pin and attempts exceeded",
+						});
+
+						return;
+					}
+
+					const attempts = recovery[0].attempts + 1;
+
+					// Increment the attempt
+					await mySQLPool.promise().query(
+						"UPDATE recovery SET attempts = ? WHERE id = ?;",
+						[
+							attempts,
+							users[0].id,
+						]
+					);
+
+					res.status(HTTPStatus.BAD_REQUEST).json({
+						message: "❌ Invalid pin",
+					});
+
+					return;
+				}
+
+				await mySQLPool.promise().query(
+					"UPDATE user SET password = ? WHERE id = ?;",
+					[
+						await bcrypt.hash(passwordNew, 10),
+						users[0].id,
+					]
+				);
+
+				await mySQLPool.promise().query<IUser[]>(
+					"DELETE FROM recovery WHERE user_id = ?;",
+					[
+						users[0].id,
+					]
+				);
+
+				res.status(HTTPStatus.OK).json({
+					message: "✅ User password updated",
+				});
+			}
+			catch (error: Error | any)
+			{
+				if (error instanceof Error)
+				{
+					res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
+						message: INTERNAL_SERVER_ERROR,
+						error: error.message,
+					});
+
+					return;
+				}
+
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 					message: INTERNAL_SERVER_ERROR,
 					error: "Unknown Error",
 				});
@@ -398,13 +693,13 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					]
 				);
 
-				res.status(hTTPStatus.OK).send("Updated password.");
+				res.status(HTTPStatus.OK).send("Updated password.");
 			}
 			catch (error: Error | any)
 			{
 				if (error instanceof Error)
 				{
-					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+					res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 						message: INTERNAL_SERVER_ERROR,
 						error: error.message,
 					});
@@ -412,246 +707,12 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 					message: INTERNAL_SERVER_ERROR,
 					error: "Unknown Error",
 				});
 			}
 		}
-	).post(
-		/**
-		* @route POST /api/user/login
-		* @desc Login
-		* @access Public
-		*/
-		"/login",
-		async (req: express.Request, res: express.Response) =>
-		{
-			const { email, password, }: UserLogin = req.body.load;
-
-			try
-			{
-				const [
-					users,
-				]: [
-					IUser[],
-					FieldPacket[]
-				] = await mySQLPool.promise().query<IUser[]>(
-					"SELECT * FROM user WHERE email = ?;",
-					[
-						email,
-					]
-				);
-
-				if (users.length != 1)
-				{
-					res.status(401).send("❌ Invalid password or email");
-
-					return;
-				}
-
-				if (!bcrypt.compareSync(password, users[0].password))
-				{
-					res.status(401).send("❌ Invalid password or email");
-
-					return;
-				}
-
-				res.status(hTTPStatus.OK).send({
-					token: jsonWebToken.sign(
-						{
-							id: users[0].id,
-							email: users[0].email,
-							admin: users[0].admin,
-							verified: users[0].verified,
-						},
-						config.app.secretKey,
-						{
-							expiresIn: config.nodeENV == "production" ? 7200 : 10000000,
-						}
-					),
-				});
-			}
-			catch (error: Error | any)
-			{
-				if (error instanceof Error)
-				{
-					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
-						message: INTERNAL_SERVER_ERROR,
-						error: error.message,
-					});
-
-					return;
-				}
-
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
-					message: INTERNAL_SERVER_ERROR,
-					error: "Unknown Error",
-				});
-			}
-		}
-	).post(
-		/**
-		* @route POST /api/user/verify
-		* @access Public
-		*/
-		"/verify",
-		userToken.userTokenDecode(mySQLPool, false),
-		userToken.userTokenDecodeRequireVerificationStatus(mySQLPool, false),
-		async (req: express.Request, res: express.Response) =>
-		{
-			const { pin, }: UserVerify = req.body.load;
-
-			try
-			{
-				const sanitizedPin = sanitizer.sanitizePin(pin);
-
-				let verification: IVerification[];
-
-				[
-					verification,
-				] = await mySQLPool.promise().query<IVerification[]>(
-					"SELECT * FROM verification WHERE user_id = ? AND pin = ?;",
-					[
-						req.body.userDecoded.id,
-						sanitizedPin,
-					]
-				);
-
-				if (verification.length == 0)
-				{
-					res.status(hTTPStatus.BAD_REQUEST).json({
-						message: "❌ Invalid pin",
-					});
-
-					return;
-				}
-
-				await mySQLPool.promise().query(
-					"UPDATE user SET verified = 1 WHERE id = ?;",
-					[
-						req.body.userDecoded.id,
-					]
-				);
-
-				res.status(hTTPStatus.OK).json({
-					message: "✅ Email verified",
-				});
-			}
-			catch (error: Error | any)
-			{
-				if (error instanceof Error)
-				{
-					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
-						message: INTERNAL_SERVER_ERROR,
-						error: error.message,
-					});
-
-					return;
-				}
-
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
-					message: INTERNAL_SERVER_ERROR,
-					error: "Unknown Error",
-				});
-			}
-		}
-	).post(
-		/**
-		* @route POST /api/user/verify
-		* @access Public
-		*/
-		"/recover-password/:email",
-		async (req: express.Request, res: express.Response) =>
-		{
-			const { pin, passwordNew, }: UserRecoverPassword = req.body.load;
-
-			try
-			{
-				console.log(req.params.email);
-				const email: string = sanitizer.sanitizeEmail(req.params.email);
-
-				const [
-					users,
-				]: [
-					IUser[],
-					FieldPacket[]
-				] = await mySQLPool.promise().query<IUser[]>(
-					"SELECT id FROM user WHERE email = ?;",
-					[
-						email,
-					]
-				);
-
-				if (users.length == 0)
-				{
-					res.status(hTTPStatus.BAD_REQUEST).json({
-						message: "❌ Invalid email",
-					});
-
-					return;
-				}
-
-				const sanitizedPin = sanitizer.sanitizePin(pin);
-
-				if (!validatePassword(passwordNew))
-				{
-					res.status(hTTPStatus.BAD_REQUEST).send(ERROR_INVALID_PASSWORD);
-
-					return;
-				}
-
-				let recovery: IRecovery[];
-
-				[
-					recovery,
-				] = await mySQLPool.promise().query<IRecovery[]>(
-					"SELECT * FROM recovery WHERE user_id = ? AND pin = ?;",
-					[
-						users[0].id,
-						sanitizedPin,
-					]
-				);
-
-				if (recovery.length == 0)
-				{
-					res.status(hTTPStatus.BAD_REQUEST).json({
-						message: "❌ Invalid pin",
-					});
-
-					return;
-				}
-
-				await mySQLPool.promise().query(
-					"UPDATE user SET password = ? WHERE id = ?;",
-					[
-						await bcrypt.hash(passwordNew, 10),
-						users[0].id,
-					]
-				);
-
-				res.status(hTTPStatus.OK).json({
-					message: "✅ User password updated",
-				});
-			}
-			catch (error: Error | any)
-			{
-				if (error instanceof Error)
-				{
-					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
-						message: INTERNAL_SERVER_ERROR,
-						error: error.message,
-					});
-
-					return;
-				}
-
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
-					message: INTERNAL_SERVER_ERROR,
-					error: "Unknown Error",
-				});
-			}
-		}
-	);;
+	);
 };
 

@@ -1,7 +1,7 @@
 import express from "express";
 import mysql from "mysql2";
 
-import { INTERNAL_SERVER_ERROR, hTTPStatus } from "../../../constants";
+import { INTERNAL_SERVER_ERROR, HTTPStatus } from "../../../constants";
 import externalAPI from "../../../external-api/coingecko";
 import { loadRequired } from "../../../middleware/load";
 import userToken from "../../../middleware/user-token";
@@ -30,7 +30,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					cryptocurrencies,
 				] = await mySQLPool.promise().query<ICryptocurrency[]>("SELECT * FROM cryptocurrency;");
 
-				res.status(hTTPStatus.OK).send(cryptocurrencies);
+				res.status(HTTPStatus.OK).send(cryptocurrencies);
 
 				return;
 			}
@@ -38,7 +38,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				if (error instanceof Error)
 				{
-					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+					res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 						message: INTERNAL_SERVER_ERROR,
 						error: error.message,
 					});
@@ -46,7 +46,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 					message: INTERNAL_SERVER_ERROR,
 					error: "Unknown Error",
 				});
@@ -70,13 +70,13 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					]
 				);
 
-				res.status(hTTPStatus.OK).send("Deleted cryptocurrency");
+				res.status(HTTPStatus.OK).send("Deleted cryptocurrency");
 			}
 			catch (error: Error | any)
 			{
 				if (error instanceof Error)
 				{
-					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+					res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 						message: INTERNAL_SERVER_ERROR,
 						error: error.message,
 					});
@@ -84,7 +84,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 					message: INTERNAL_SERVER_ERROR,
 					error: "Unknown Error",
 				});
@@ -225,13 +225,13 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				resJSON.cryptocurrencies = cryptocurrencies;
 
-				res.status(hTTPStatus.OK).json(resJSON);
+				res.status(HTTPStatus.OK).json(resJSON);
 			}
 			catch (error: Error | any)
 			{
 				if (error instanceof Error)
 				{
-					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+					res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 						message: INTERNAL_SERVER_ERROR,
 						error: error.message,
 					});
@@ -239,7 +239,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 					message: INTERNAL_SERVER_ERROR,
 					error: "Unknown Error",
 				});
@@ -274,7 +274,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				if (existingAsset.length === 0)
 				{
-					res.status(hTTPStatus.NOT_FOUND).send("Asset not found");
+					res.status(HTTPStatus.NOT_FOUND).send("Asset not found");
 					return;
 				}
 
@@ -288,13 +288,13 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					]
 				);
 
-				res.status(hTTPStatus.OK).send("Updated cryptocurrency");
+				res.status(HTTPStatus.OK).send("Updated cryptocurrency");
 			}
 			catch (error: Error | any)
 			{
 				if (error instanceof Error)
 				{
-					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+					res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 						message: INTERNAL_SERVER_ERROR,
 						error: error.message,
 					});
@@ -302,7 +302,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 					message: INTERNAL_SERVER_ERROR,
 					error: "Unknown Error",
 				});

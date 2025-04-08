@@ -1,45 +1,30 @@
 // [REQUIRE] Personal
-import rateLimit from "express-rate-limit";
+import rateLimit, { RateLimitRequestHandler } from "express-rate-limit";
 
 
 // [INIT] Const
 const defaultMessage: string = "Too many requests, please try again later";
 
+const TWO_HOURS_IN_MS = 2 * 60 * 60 * 1000;
+const FIFTEEN_MINUTES_IN_MS = 15 * 60 * 1000;
+
 
 export default {
-	// [GLOBAL]
 	global: rateLimit({
-		// 15 minutes
-		windowMs: 15 * 60 * 1000,
+		windowMs: FIFTEEN_MINUTES_IN_MS,
 		max: 500,
 		message: {
 			executed: true,
 			status: false,
 			message: defaultMessage,
 		},
-	}),
+	}) as RateLimitRequestHandler,
 
-
-	// [REGISTRATION]
-	registration: rateLimit({
-		windowMs: 60 * 60 * 1000,
-		max: 20,
-		message: {
-			executed: true,
-			status: false,
-			message: defaultMessage,
-		},
-	}),
-
-
-	// [GENERATE-API-KEY]
-	generateApiKey: rateLimit({
-		windowMs: 60 * 60 * 1000,
-		max: 1,
-		message: {
-			executed: true,
-			status: false,
-			message: defaultMessage,
-		},
-	}),
+	emailRateLimiter: rateLimit({
+		windowMs: TWO_HOURS_IN_MS,
+		max: 5, // Limit each IP to 5 requests per windowMs
+		message: "⏳ Too many requests, please try again in 2 hours",
+		standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+		legacyHeaders: false,  // Disable the `X-RateLimit-*` headers
+	}) as RateLimitRequestHandler,
 };

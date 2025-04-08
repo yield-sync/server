@@ -3,7 +3,7 @@ import mysql from "mysql2";
 
 import { loadRequired } from "../../../middleware/load";
 import userToken from "../../../middleware/user-token";
-import { INTERNAL_SERVER_ERROR, hTTPStatus } from "../../../constants";
+import { INTERNAL_SERVER_ERROR, HTTPStatus } from "../../../constants";
 import DBHandlerQueryStock from "../../../db-handler/query_stock";
 import DBHandlerStock from "../../../db-handler/stock";
 import { sanitizeSymbolQuery } from "../../../util/sanitizer";
@@ -27,13 +27,13 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		{
 			try
 			{
-				res.status(hTTPStatus.OK).json(await DBHandlerStock.getStock(mySQLPool));
+				res.status(HTTPStatus.OK).json(await DBHandlerStock.getStock(mySQLPool));
 			}
 			catch (error: Error | any)
 			{
 				if (error instanceof Error)
 				{
-					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+					res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 						message: INTERNAL_SERVER_ERROR,
 						error: error.message,
 					});
@@ -41,7 +41,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 					message: INTERNAL_SERVER_ERROR,
 					error: "Unknown Error",
 				});
@@ -74,7 +74,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				if (symbol == "QUERY")
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("❌ Invalid query passed");
+					res.status(HTTPStatus.BAD_REQUEST).send("❌ Invalid query passed");
 
 					return;
 				}
@@ -89,7 +89,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 					if (!externalStockQueryResult)
 					{
-						res.status(hTTPStatus.BAD_REQUEST).send("Nothing found for query");
+						res.status(HTTPStatus.BAD_REQUEST).send("Nothing found for query");
 
 						return;
 					}
@@ -150,7 +150,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					{
 						response.stocks = await DBHandlerStock.getStockBySymbol(mySQLPool, symbol);
 
-						res.status(hTTPStatus.ACCEPTED).json(response);
+						res.status(HTTPStatus.ACCEPTED).json(response);
 
 						return;
 					}
@@ -159,7 +159,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 					if (!externalStockQueryResult)
 					{
-						res.status(hTTPStatus.BAD_REQUEST).send("Nothing returned from external source");
+						res.status(HTTPStatus.BAD_REQUEST).send("Nothing returned from external source");
 
 						return;
 					}
@@ -215,13 +215,13 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				response.stocks = await DBHandlerStock.getStockBySymbol(mySQLPool, symbol);
 
-				res.status(hTTPStatus.ACCEPTED).json(response);
+				res.status(HTTPStatus.ACCEPTED).json(response);
 			}
 			catch (error: Error | any)
 			{
 				if (error instanceof Error)
 				{
-					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+					res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 						message: INTERNAL_SERVER_ERROR,
 						error: error.message,
 					});
@@ -229,7 +229,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 					message: INTERNAL_SERVER_ERROR,
 					error: "Unknown Error",
 				});
@@ -252,7 +252,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				if (!stock_id)
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("Stock ID is required");
+					res.status(HTTPStatus.BAD_REQUEST).send("Stock ID is required");
 					return;
 				}
 
@@ -261,19 +261,19 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				if ((existingStock as any[]).length === 0)
 				{
-					res.status(hTTPStatus.NOT_FOUND).send("Stock not found");
+					res.status(HTTPStatus.NOT_FOUND).send("Stock not found");
 					return;
 				}
 
 				await DBHandlerStock.deleteStock(mySQLPool, stock_id);
 
-				res.status(hTTPStatus.OK).send("Deleted stock");
+				res.status(HTTPStatus.OK).send("Deleted stock");
 			}
 			catch (error: Error | any)
 			{
 				if (error instanceof Error)
 				{
-					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+					res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 						message: INTERNAL_SERVER_ERROR,
 						error: error.message,
 					});
@@ -281,7 +281,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 					message: INTERNAL_SERVER_ERROR,
 					error: "Unknown Error",
 				});

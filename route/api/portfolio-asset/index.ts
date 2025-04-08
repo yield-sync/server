@@ -3,7 +3,7 @@ import mysql from "mysql2";
 
 import { loadRequired } from "../../../middleware/load";
 import userToken from "../../../middleware/user-token";
-import { INTERNAL_SERVER_ERROR, hTTPStatus } from "../../../constants";
+import { INTERNAL_SERVER_ERROR, HTTPStatus } from "../../../constants";
 
 
 export default (mySQLPool: mysql.Pool): express.Router =>
@@ -25,28 +25,28 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				if (!stock_id)
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("No stock_id received");
+					res.status(HTTPStatus.BAD_REQUEST).send("No stock_id received");
 
 					return;
 				}
 
 				if (!portfolio_id)
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("No portfolio_id received");
+					res.status(HTTPStatus.BAD_REQUEST).send("No portfolio_id received");
 
 					return;
 				}
 
 				if (!percent_allocation)
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("No percent_allocation received");
+					res.status(HTTPStatus.BAD_REQUEST).send("No percent_allocation received");
 
 					return;
 				}
 
 				if (percent_allocation < 0 || percent_allocation > 10_000)
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("❌ Invalid percent_allocation");
+					res.status(HTTPStatus.BAD_REQUEST).send("❌ Invalid percent_allocation");
 
 					return;
 				}
@@ -66,14 +66,14 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				if (!Array.isArray(portfolios))
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("Expected result is not Array");
+					res.status(HTTPStatus.BAD_REQUEST).send("Expected result is not Array");
 
 					return;
 				}
 
 				if (portfolios.length == 0)
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("❌ Invalid portfolio_id");
+					res.status(HTTPStatus.BAD_REQUEST).send("❌ Invalid portfolio_id");
 
 					return;
 				}
@@ -88,7 +88,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					]
 				);
 
-				res.status(hTTPStatus.CREATED).send("Portfolio asset created");
+				res.status(HTTPStatus.CREATED).send("Portfolio asset created");
 
 				return;
 
@@ -97,7 +97,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				if (error instanceof Error)
 				{
-					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+					res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 						message: INTERNAL_SERVER_ERROR,
 						error: error.message,
 					});
@@ -105,7 +105,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 					message: INTERNAL_SERVER_ERROR,
 					error: "Unknown Error",
 				});
@@ -130,28 +130,28 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				if (!stock_id)
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("No stock_id received");
+					res.status(HTTPStatus.BAD_REQUEST).send("No stock_id received");
 
 					return;
 				}
 
 				if (!portfolio_id)
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("No portfolio_id received");
+					res.status(HTTPStatus.BAD_REQUEST).send("No portfolio_id received");
 
 					return;
 				}
 
 				if (!percent_allocation)
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("No percent_allocation received");
+					res.status(HTTPStatus.BAD_REQUEST).send("No percent_allocation received");
 
 					return;
 				}
 
 				if (percent_allocation < 0 || percent_allocation > 10_000)
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("❌ Invalid percent_allocation");
+					res.status(HTTPStatus.BAD_REQUEST).send("❌ Invalid percent_allocation");
 
 					return;
 				}
@@ -171,14 +171,14 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				if (!Array.isArray(portfolios))
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("Expected result is not Array");
+					res.status(HTTPStatus.BAD_REQUEST).send("Expected result is not Array");
 
 					return;
 				}
 
 				if (portfolios.length == 0)
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("❌ Invalid portfolio_id");
+					res.status(HTTPStatus.BAD_REQUEST).send("❌ Invalid portfolio_id");
 
 					return;
 				}
@@ -194,7 +194,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					]
 				);
 
-				res.status(hTTPStatus.CREATED).send("Portfolio asset updated");
+				res.status(HTTPStatus.CREATED).send("Portfolio asset updated");
 
 				return;
 
@@ -203,7 +203,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				if (error instanceof Error)
 				{
-					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+					res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 						message: INTERNAL_SERVER_ERROR,
 						error: error.message,
 					});
@@ -211,7 +211,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 					message: INTERNAL_SERVER_ERROR,
 					error: "Unknown Error",
 				});

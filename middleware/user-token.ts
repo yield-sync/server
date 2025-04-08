@@ -2,7 +2,7 @@ import express from "express";
 import mysql from "mysql2";
 
 import config from "../config";
-import { INTERNAL_SERVER_ERROR, hTTPStatus } from "../constants";
+import { INTERNAL_SERVER_ERROR, HTTPStatus } from "../constants";
 
 
 const jwt = require("jsonwebtoken");
@@ -55,7 +55,7 @@ const _userTokenDecode = (
 
 		if (!decoded)
 		{
-			res.status(hTTPStatus.UNAUTHORIZED).json({
+			res.status(HTTPStatus.UNAUTHORIZED).json({
 				message: "Access denied: Invalid or missing token",
 			});
 
@@ -64,7 +64,7 @@ const _userTokenDecode = (
 
 		if (requireAdmin && decoded.admin.data[0] !== 1)
 		{
-			res.status(hTTPStatus.FORBIDDEN).json({
+			res.status(HTTPStatus.FORBIDDEN).json({
 				message: "Access denied: You are not an admin",
 			});
 
@@ -81,13 +81,13 @@ const _userTokenDecode = (
 
 		if (users.length != 1)
 		{
-			res.status(hTTPStatus.UNAUTHORIZED).send("User not found from decoded token (or multiple users returned)");
+			res.status(HTTPStatus.UNAUTHORIZED).send("User not found from decoded token (or multiple users returned)");
 			return;
 		}
 
 		if (requireVerification && _creationOverFiveDays(users[0].created))
 		{
-			res.status(hTTPStatus.UNAUTHORIZED).json({
+			res.status(HTTPStatus.UNAUTHORIZED).json({
 				message: "Access denied: 5 days have passed since account creation. Please verify account.",
 			});
 
@@ -134,7 +134,7 @@ export default {
 				{
 					const message = expectedVerificationStatus ? "Expected user to be verified" : "Expected user to NOT be verified";
 
-					res.status(hTTPStatus.BAD_REQUEST).json({
+					res.status(HTTPStatus.BAD_REQUEST).json({
 						message,
 					});
 
@@ -145,7 +145,7 @@ export default {
 			{
 				if (error instanceof Error)
 				{
-					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+					res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 						message: INTERNAL_SERVER_ERROR,
 						error: error.message,
 					});
@@ -153,7 +153,7 @@ export default {
 					return;
 				}
 
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 					message: INTERNAL_SERVER_ERROR,
 					error: "Unknown Error",
 				});

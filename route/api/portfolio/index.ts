@@ -3,7 +3,7 @@ import mysql from "mysql2";
 
 import { loadRequired } from "../../../middleware/load";
 import userToken from "../../../middleware/user-token";
-import { INTERNAL_SERVER_ERROR, hTTPStatus } from "../../../constants";
+import { INTERNAL_SERVER_ERROR, HTTPStatus } from "../../../constants";
 
 
 export default (mySQLPool: mysql.Pool): express.Router =>
@@ -32,7 +32,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					]
 				);
 
-				res.status(hTTPStatus.OK).send(portfolios);
+				res.status(HTTPStatus.OK).send(portfolios);
 
 				return;
 			}
@@ -40,7 +40,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				if (error instanceof Error)
 				{
-					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+					res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 						message: INTERNAL_SERVER_ERROR,
 						error: error.message,
 					});
@@ -48,7 +48,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 					message: INTERNAL_SERVER_ERROR,
 					error: "Unknown Error",
 				});
@@ -71,7 +71,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				if (!name)
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("No portfolio name provided");
+					res.status(HTTPStatus.BAD_REQUEST).send("No portfolio name provided");
 
 					return;
 				}
@@ -84,7 +84,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					]
 				);
 
-				res.status(hTTPStatus.CREATED).send("Created portfolio");
+				res.status(HTTPStatus.CREATED).send("Created portfolio");
 
 				return;
 			}
@@ -92,7 +92,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				if (error instanceof Error)
 				{
-					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+					res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 						message: INTERNAL_SERVER_ERROR,
 						error: error.message,
 					});
@@ -100,7 +100,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 					message: INTERNAL_SERVER_ERROR,
 					error: "Unknown Error",
 				});
@@ -123,14 +123,14 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				if (!id)
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("No portfolio id provided");
+					res.status(HTTPStatus.BAD_REQUEST).send("No portfolio id provided");
 
 					return;
 				}
 
 				if (!name)
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("No portfolio name provided");
+					res.status(HTTPStatus.BAD_REQUEST).send("No portfolio name provided");
 
 					return;
 				}
@@ -144,7 +144,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					]
 				);
 
-				res.status(hTTPStatus.CREATED).send("Updated portfolio");
+				res.status(HTTPStatus.CREATED).send("Updated portfolio");
 
 				return;
 			}
@@ -152,7 +152,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				if (error instanceof Error)
 				{
-					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+					res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 						message: INTERNAL_SERVER_ERROR,
 						error: error.message,
 					});
@@ -160,7 +160,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 					message: INTERNAL_SERVER_ERROR,
 					error: "Unknown Error",
 				});
@@ -182,7 +182,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				if (!portfolio_id)
 				{
-					res.status(hTTPStatus.BAD_REQUEST).send("No portfolio id provided");
+					res.status(HTTPStatus.BAD_REQUEST).send("No portfolio id provided");
 
 					return;
 				}
@@ -195,7 +195,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					]
 				);
 
-				res.status(hTTPStatus.CREATED).send("Deleted portfolio");
+				res.status(HTTPStatus.CREATED).send("Deleted portfolio");
 
 				return;
 			}
@@ -203,7 +203,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				if (error instanceof Error)
 				{
-					res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+					res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 						message: INTERNAL_SERVER_ERROR,
 						error: error.message,
 					});
@@ -211,7 +211,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				res.status(hTTPStatus.INTERNAL_SERVER_ERROR).json({
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 					message: INTERNAL_SERVER_ERROR,
 					error: "Unknown Error",
 				});

@@ -181,6 +181,7 @@ declare global
 	{
 		id: number;
 		user_id: number;
+		attempts: number;
 		name: string;
 		pin: string;
 		created: Date;
@@ -192,6 +193,7 @@ declare global
 	{
 		id: number;
 		user_id: number;
+		attempts: number;
 		name: string;
 		pin: string;
 		created: Date;

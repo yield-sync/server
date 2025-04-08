@@ -1,6 +1,6 @@
 import express from "express";
 
-import { hTTPStatus } from "../constants";
+import { HTTPStatus } from "../constants";
 
 
 export const loadRequired = () =>
@@ -9,7 +9,7 @@ export const loadRequired = () =>
 	{
 		if (!req.body.load)
 		{
-			res.status(hTTPStatus.BAD_REQUEST).send("No load passed");
+			res.status(HTTPStatus.BAD_REQUEST).send("No load passed");
 			return;
 		}
 
