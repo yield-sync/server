@@ -661,6 +661,9 @@ describe("Request: POST", () =>
 			});
 
 			it("Should not verify if no verification found..", async () => {
+				/**
+				* @dev There is a 1/(36^6) chance that this fails (lol)
+				*/
 				rateLimiter.emailRateLimiter.resetKey("::ffff:127.0.0.1");
 
 				await request(app).post("/api/user/create").send({ load: { email, password } });
@@ -841,6 +844,9 @@ describe("Request: POST", () =>
 	describe("Route: /api/user/password-recovery/recover/:email", () => {
 		describe("Expected Failure", () => {
 			it("Should not recover password if no recovery found..", async () => {
+				/**
+				* @dev There is a 1/(36^6) chance that this fails (lol)
+				*/
 				// Reset rate limit here
 				rateLimiter.emailRateLimiter.resetKey("::ffff:127.0.0.1");
 
@@ -863,6 +869,9 @@ describe("Request: POST", () =>
 			});
 
 			it("Should catch if an invalid pin passed..", async () => {
+				/**
+				* @dev There is a 1/(36^6) chance that this fails (lol)
+				*/
 				// Reset rate limit here
 				rateLimiter.emailRateLimiter.resetKey("::ffff:127.0.0.1");
 
@@ -887,6 +896,9 @@ describe("Request: POST", () =>
 			});
 
 			it("allows up to 5 requests..", async () => {
+				/**
+				* @dev There is a 1/(36^6) chance that this fails (lol)
+				*/
 				// Reset rate limit here
 				rateLimiter.emailRateLimiter.resetKey("::ffff:127.0.0.1");
 
