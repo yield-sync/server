@@ -540,7 +540,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				if (!validatePassword(passwordNew))
 				{
 					res.status(HTTPStatus.BAD_REQUEST).json({
-						message: ERROR_INVALID_PASSWORD
+						message: ERROR_INVALID_PASSWORD,
 					});
 
 					return;

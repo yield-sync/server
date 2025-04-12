@@ -32,7 +32,9 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					]
 				);
 
-				res.status(HTTPStatus.OK).json({ portfolios });
+				res.status(HTTPStatus.OK).json({
+					portfolios, 
+				});
 
 				return;
 			}
@@ -51,6 +53,61 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 					message: INTERNAL_SERVER_ERROR,
 					error: "Unknown Error",
+				});
+			}
+		}
+	).get(
+		/**
+		* @route GET /api/portfolio/:id
+		* @desc Return single portfolio owned by user
+		* @access User
+		*/
+		"/:id",
+		userToken.userTokenDecode(mySQLPool),
+		async (req: express.Request, res: express.Response) =>
+		{
+			try
+			{
+				const portfolioId = parseInt(req.params.id, 10);
+
+				if (isNaN(portfolioId))
+				{
+					res.status(HTTPStatus.BAD_REQUEST).json({
+						message: "Invalid portfolio id", 
+					});
+					return;
+				}
+
+				const [
+					portfolios,
+				]: [
+					IPortfolio[],
+					FieldPacket[]
+				] = await mySQLPool.promise().query<IPortfolio[]>(
+					"SELECT * FROM portfolio WHERE user_id = ? AND id = ?;",
+					[
+						req.userDecoded.id,
+						portfolioId,
+					]
+				);
+
+				if (portfolios.length === 0)
+				{
+					res.status(HTTPStatus.NOT_FOUND).json({
+						message: "Portfolio not found", 
+					});
+					return;
+				}
+
+				res.status(HTTPStatus.OK).json({
+					portfolio: portfolios[0], 
+				});
+			}
+			catch (error: Error | any)
+			{
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
+					message: INTERNAL_SERVER_ERROR,
+					error: error instanceof Error ? error.message : "Unknown Error",
 				});
 			}
 		}
