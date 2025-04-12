@@ -75,7 +75,7 @@ const _userTokenDecode = (
 
 		[
 			users,
-		] = await mySQLPool.promise().query<IUser[]>("SELECT id, created FROM user WHERE id = ?;", [
+		] = await mySQLPool.promise().query<IUser[]>("SELECT id, created, verified FROM user WHERE id = ?;", [
 			decoded.id,
 		]);
 
@@ -85,7 +85,7 @@ const _userTokenDecode = (
 			return;
 		}
 
-		if (requireVerification && _creationOverFiveDays(users[0].created))
+		if (users[0].verified[0] === 0 && requireVerification && _creationOverFiveDays(users[0].created))
 		{
 			res.status(HTTPStatus.UNAUTHORIZED).json({
 				message: "Access denied: 5 days have passed since account creation. Please verify account.",

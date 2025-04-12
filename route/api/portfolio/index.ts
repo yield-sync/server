@@ -32,7 +32,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					]
 				);
 
-				res.status(HTTPStatus.OK).send(portfolios);
+				res.status(HTTPStatus.OK).json({ portfolios });
 
 				return;
 			}

@@ -180,7 +180,7 @@ describe("Request: GET", () =>
 
 				expect(RES_PORTFOLIO.statusCode).toBe(200);
 
-				let portfolio: [{ id: string, name: string }] = JSON.parse(RES_PORTFOLIO.text);
+				let portfolio = RES_PORTFOLIO.body.portfolios;
 
 				expect(portfolio.length).toBeGreaterThanOrEqual(1);
 
@@ -378,7 +378,7 @@ describe("Request: POST (2/2)", () =>
 					`Bearer ${token}`
 				).send();
 
-				let portfolio: [{ id: string, name: string }] = JSON.parse(RES_PORTFOLIO.text);
+				let portfolio = RES_PORTFOLIO.body.portfolios;
 
 				expect(portfolio.length).toBeGreaterThanOrEqual(1);
 
