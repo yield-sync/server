@@ -121,10 +121,15 @@ const queries: string[] = [
 			stock_id INT,
 			percent_allocation INT NOT NULL DEFAULT 0 CHECK (percent_allocation BETWEEN 0 AND 10000),
 			created DATETIME DEFAULT CURRENT_TIMESTAMP,
+
 			PRIMARY KEY (id),
+
 			FOREIGN KEY (portfolio_id) REFERENCES portfolio(id) ON DELETE CASCADE,
 			FOREIGN KEY (cryptocurrency_id) REFERENCES cryptocurrency(id) ON DELETE CASCADE,
-			FOREIGN KEY (stock_id) REFERENCES stock(id) ON DELETE CASCADE
+			FOREIGN KEY (stock_id) REFERENCES stock(id) ON DELETE CASCADE,
+
+			UNIQUE KEY unique_portfolio_cryptocurrency (portfolio_id, cryptocurrency_id),
+			UNIQUE KEY unique_portfolio_stock (portfolio_id, stock_id)
 		);
 	`,
 	// verification

@@ -213,7 +213,9 @@ describe("Table: query_stock", () => {
 });
 
 describe("Table: portfolio_asset", () => {
-	let stockId;
+	let stockIdApple;
+	let stockIdMicrosoft;
+	let cryptocurrencyIdEthereum;
 	let userId;
 	let portfolioId;
 
@@ -241,7 +243,33 @@ describe("Table: portfolio_asset", () => {
 			["AAPL"]
 		);
 
-		stockId = stockRows[0].id;
+		stockIdApple = stockRows[0].id;
+
+		// Create a stock
+		await testMySQLPool.promise().query(
+			"INSERT INTO stock (isin, symbol, name, exchange) VALUES (2, 'MSFT', 'Microsoft Inc.', 'nasdaq');"
+		);
+
+		const [stockRows2]: any = await testMySQLPool.promise().query(
+			"SELECT id FROM stock WHERE symbol = ?;",
+			["MSFT"]
+		);
+
+		stockIdMicrosoft = stockRows2[0].id;
+
+
+		// Create a cryptocurrency
+		await testMySQLPool.promise().query(
+			"INSERT INTO cryptocurrency (symbol, name, coingecko_id) VALUES (?, ?, ?);",
+			["ETH", `Ethereum`, `eth`]
+		);
+
+		const [cryptocurrencyRow]: any = await testMySQLPool.promise().query(
+			"SELECT id FROM cryptocurrency WHERE symbol = ?;",
+			["ETH"]
+		);
+
+		cryptocurrencyIdEthereum = cryptocurrencyRow[0].id;
 
 		// Create a portfolio
 		await testMySQLPool.promise().query(
@@ -260,8 +288,6 @@ describe("Table: portfolio_asset", () => {
 
 	describe("Expected Success", () => {
 		it("Should allow inserting portfolio assets within allocation limits..", async () => {
-
-
 			// Insert portfolio assets within 100% allocation (10,000 basis points)
 			await expect(
 				testMySQLPool.promise().query(
@@ -272,7 +298,7 @@ describe("Table: portfolio_asset", () => {
 							(?, ?, 5000)
 						;
 					`,
-					[portfolioId, stockId]
+					[portfolioId, stockIdApple]
 				)
 			).resolves.not.toThrow();
 
@@ -285,13 +311,71 @@ describe("Table: portfolio_asset", () => {
 							(?, ?, 5000)
 						;
 					`,
-					[portfolioId, stockId]
+					[portfolioId, stockIdMicrosoft]
 				)
 			).resolves.not.toThrow();
 		});
 	});
 
 	describe("Expected Failure", () => {
+		it("Should fail to enter multiple entries of the same cryptocurrency within the same portfolio..", async () => {
+			// Insert portfolio assets within 100% allocation (10,000 basis points)
+			await expect(
+				testMySQLPool.promise().query(
+					`
+						INSERT INTO portfolio_asset
+							(portfolio_id, stock_id, percent_allocation)
+						VALUES
+							(?, ?, 5000)
+						;
+					`,
+					[portfolioId, stockIdApple]
+				)
+			).resolves.not.toThrow();
+
+			await expect(
+				testMySQLPool.promise().query(
+					`
+						INSERT INTO portfolio_asset
+							(portfolio_id, stock_id, percent_allocation)
+						VALUES
+							(?, ?, 5000)
+						;
+					`,
+					[portfolioId, stockIdApple]
+				)
+			).rejects.toThrow("Duplicate entry '1-1' for key 'unique_portfolio_stock'");
+		});
+
+		it("Should fail to enter multiple entries of the same cryptocurrency within the same portfolio..", async () => {
+			// Insert portfolio assets within 100% allocation (10,000 basis points)
+			await expect(
+				testMySQLPool.promise().query(
+					`
+						INSERT INTO portfolio_asset
+							(portfolio_id, cryptocurrency_id, percent_allocation)
+						VALUES
+							(?, ?, 5000)
+						;
+					`,
+					[portfolioId, cryptocurrencyIdEthereum]
+				)
+			).resolves.not.toThrow();
+
+			await expect(
+				testMySQLPool.promise().query(
+					`
+						INSERT INTO portfolio_asset
+							(portfolio_id, cryptocurrency_id, percent_allocation)
+						VALUES
+							(?, ?, 5000)
+						;
+					`,
+					[portfolioId, cryptocurrencyIdEthereum]
+				)
+			).rejects.toThrow("Duplicate entry '1-1' for key 'unique_portfolio_cryptocurrency'");
+		});
+
 		it("Should fail when inserting portfolio asset exceeding allocation limit..", async () => {
 			// Insert portfolio assets up to 90%
 			await expect(
@@ -303,7 +387,7 @@ describe("Table: portfolio_asset", () => {
 							(?, ?, ?)
 						;
 					`,
-					[portfolioId, stockId, 9000]
+					[portfolioId, stockIdApple, 9000]
 				)
 			).resolves.not.toThrow();
 
@@ -318,7 +402,7 @@ describe("Table: portfolio_asset", () => {
 							(?, ?, ?)
 						;
 					`,
-					[portfolioId, stockId, 2000] // 20% more (total 110%)
+					[portfolioId, stockIdMicrosoft, 2000] // 20% more (total 110%)
 				)
 			).rejects.toThrow("[before insert] Total percent allocation for the portfolio exceeds 10000");
 		});
@@ -328,7 +412,7 @@ describe("Table: portfolio_asset", () => {
 			await expect(
 				testMySQLPool.promise().query(
 					"INSERT INTO portfolio_asset (portfolio_id, stock_id, percent_allocation) VALUES (?, ?, ?);",
-					[portfolioId, stockId, 10000]
+					[portfolioId, stockIdApple, 10000]
 				)
 			).resolves.not.toThrow();
 
