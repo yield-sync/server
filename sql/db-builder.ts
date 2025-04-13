@@ -253,7 +253,6 @@ export async function dBBuilderProduction(overwrite: boolean)
 
 	const mySQLPool: mysql.Pool = mysql.createPool({
 		host: config.app.database.host,
-		database: config.app.database.name,
 		password: config.app.database.password,
 		port: Number(config.app.database.port),
 		user: config.app.database.user,
