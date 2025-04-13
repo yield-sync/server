@@ -33,7 +33,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				);
 
 				res.status(HTTPStatus.OK).json({
-					portfolios, 
+					portfolios,
 				});
 
 				return;
@@ -73,7 +73,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				if (isNaN(portfolioId))
 				{
 					res.status(HTTPStatus.BAD_REQUEST).json({
-						message: "Invalid portfolio id", 
+						message: "Invalid portfolio id",
 					});
 					return;
 				}
@@ -94,20 +94,58 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				if (portfolios.length === 0)
 				{
 					res.status(HTTPStatus.NOT_FOUND).json({
-						message: "Portfolio not found", 
+						message: "Portfolio not found",
 					});
 					return;
 				}
 
+				const [
+					portfolioAssets,
+				]: [
+					IPortfolioAsset[],
+					FieldPacket[]
+				] = await mySQLPool.promise().query<IPortfolioAsset[]>(
+					`
+						SELECT
+							pa.id AS portfolio_asset_id,
+							pa.percent_allocation,
+							s.symbol,
+							s.name,
+							s.isin,
+							s.exchange
+						FROM
+							portfolio_asset pa
+						JOIN
+							stock s ON pa.stock_id = s.id
+						WHERE
+							pa.portfolio_id = ?
+						;
+					`,
+					[
+						portfolioId,
+					]
+				);
+
 				res.status(HTTPStatus.OK).json({
-					portfolio: portfolios[0], 
+					portfolio: portfolios[0],
+					portfolioAssets,
 				});
 			}
 			catch (error: Error | any)
 			{
+				if (error instanceof Error)
+				{
+					res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
+						message: INTERNAL_SERVER_ERROR,
+						error: error.message,
+					});
+
+					return;
+				}
+
 				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
 					message: INTERNAL_SERVER_ERROR,
-					error: error instanceof Error ? error.message : "Unknown Error",
+					error: "Unknown Error",
 				});
 			}
 		}
