@@ -109,14 +109,19 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 						SELECT
 							pa.id AS portfolio_asset_id,
 							pa.percent_allocation,
-							s.symbol,
-							s.name,
+							s.symbol AS stock_symbol,
+							s.name AS stock_name,
 							s.isin,
-							s.exchange
+							s.exchange,
+							c.symbol AS cryptocurrency_symbol,
+							c.name AS cryptocurrency_name,
+							c.coingecko_id
 						FROM
 							portfolio_asset pa
-						JOIN
+						LEFT JOIN
 							stock s ON pa.stock_id = s.id
+						LEFT JOIN
+							cryptocurrency c ON pa.cryptocurrency_id = c.id
 						WHERE
 							pa.portfolio_id = ?
 						;
