@@ -146,16 +146,14 @@ export default {
 				if (error instanceof Error)
 				{
 					res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
-						message: INTERNAL_SERVER_ERROR,
-						error: error.message,
+						message: `${INTERNAL_SERVER_ERROR}: ${error.message}`,
 					});
 
 					return;
 				}
 
 				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
-					message: INTERNAL_SERVER_ERROR,
-					error: "Unknown Error",
+					message: `${INTERNAL_SERVER_ERROR}: Unknown error`,
 				});
 			}
 
