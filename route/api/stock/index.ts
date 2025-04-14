@@ -146,69 +146,64 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					) >= ONE_WEEK_IN_MS;
 
 
-					if (!response.refreshRequired)
+					if (response.refreshRequired)
 					{
-						response.stocks = await DBHandlerStock.getStockBySymbol(mySQLPool, symbol);
+						const externalStockQueryResult = await externalSource.queryForStock(symbol);
 
-						res.status(HTTPStatus.ACCEPTED).json(response);
-
-						return;
-					}
-
-					const externalStockQueryResult = await externalSource.queryForStock(symbol);
-
-					if (!externalStockQueryResult)
-					{
-						res.status(HTTPStatus.BAD_REQUEST).send("Nothing returned from external source");
-
-						return;
-					}
-
-					if (response.stocks[0].isin != externalStockQueryResult.isin)
-					{
-						/**
-						* @notice If this happens then it means that the the symbol now belongs to a different company.
-						*/
-
-						await DBHandlerStock.makeStockSymbolUnknown(mySQLPool, response.stocks[0].id);
-
-						const stockInDBWithExternalISIN = await DBHandlerStock.getStockByIsin(
-							mySQLPool,
-							externalStockQueryResult.isin
-						);
-
-						if (stockInDBWithExternalISIN.length == 0)
+						if (!externalStockQueryResult)
 						{
-							await DBHandlerStock.createStock(mySQLPool, externalStockQueryResult);
+							res.status(HTTPStatus.BAD_REQUEST).send("Nothing returned from external source");
+
+							return;
 						}
-						else
+
+						if (response.stocks[0].isin != externalStockQueryResult.isin)
 						{
-							await DBHandlerStock.updateStockSymbolAndName(
+							/**
+							* @notice If this happens then it means that the the symbol now belongs to a different
+							* company.
+							*/
+
+							await DBHandlerStock.makeStockSymbolUnknown(mySQLPool, response.stocks[0].id);
+
+							const stockInDBWithExternalISIN = await DBHandlerStock.getStockByIsin(
 								mySQLPool,
-								externalStockQueryResult.symbol,
-								externalStockQueryResult.name,
-								stockInDBWithExternalISIN[0].id
+								externalStockQueryResult.isin
 							);
-						}
 
-						const externalStockQueryByIsinResult = await externalSource.queryForStockByIsin(
-							response.stocks[0].isin
-						);
+							if (stockInDBWithExternalISIN.length == 0)
+							{
+								await DBHandlerStock.createStock(mySQLPool, externalStockQueryResult);
+							}
+							else
+							{
+								await DBHandlerStock.updateStockSymbolAndName(
+									mySQLPool,
+									externalStockQueryResult.symbol,
+									externalStockQueryResult.name,
+									stockInDBWithExternalISIN[0].id
+								);
+							}
 
-						if (externalStockQueryByIsinResult)
-						{
-							await DBHandlerStock.updateStockSymbolAndName(
-								mySQLPool,
-								externalStockQueryByIsinResult.symbol,
-								externalStockQueryByIsinResult.name,
-								response.stocks[0].id
+							const externalStockQueryByIsinResult = await externalSource.queryForStockByIsin(
+								response.stocks[0].isin
 							);
-						}
-						else
-						{
-							// TODO write test to check that a stock has a symbol of 0 if it is no longer found from
-							// external source.
-							console.error(`Nothing was found for ${response.stocks[0].id}. Symbol will remain "0".`);
+
+							if (externalStockQueryByIsinResult)
+							{
+								await DBHandlerStock.updateStockSymbolAndName(
+									mySQLPool,
+									externalStockQueryByIsinResult.symbol,
+									externalStockQueryByIsinResult.name,
+									response.stocks[0].id
+								);
+							}
+							else
+							{
+								// TODO write test to check that a stock has a symbol of 0 if it is no longer found from
+								// external source.
+								console.error(`Nothing was found for ${response.stocks[0].id}. Symbol will remain "0".`);
+							}
 						}
 					}
 				}
