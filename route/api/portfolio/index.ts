@@ -185,6 +185,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					res.status(HTTPStatus.FORBIDDEN).json({
 						message: "You can only create up to 5 portfolios",
 					});
+
 					return;
 				}
 

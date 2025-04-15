@@ -78,6 +78,23 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
+				// Check how many portfolios the user already has
+				const [existing] = await mySQLPool.promise().query(
+					"SELECT COUNT(*) AS count FROM portfolio_asset WHERE portfolio_id = ?;",
+					[portfolio_id]
+				);
+
+				const userPortfolioAssetCount = existing[0]?.count ?? 0;
+
+				if (userPortfolioAssetCount >= 150)
+				{
+					res.status(HTTPStatus.FORBIDDEN).json({
+						message: "You can only create up to 150 portfolio assets per portfolio",
+					});
+
+					return;
+				}
+
 				// Insert into portfolio_asset
 				await mySQLPool.promise().query(
 					"INSERT INTO portfolio_asset (portfolio_id, stock_id, percent_allocation) VALUES (?, ?, ?);",
