@@ -15,34 +15,12 @@ const sQLStockExchanges: string = stockExchanges.map((n) =>
 
 const queries: string[] = [
 	/*
-	* **********
-	* * TABLES *
-	* **********
+	* ************************
+	* * TABLES NON-DEPENDANT *
+	* ************************
 	*/
 
-	// user
-	`
-		CREATE TABLE user (
-			id INT NOT NULL AUTO_INCREMENT,
-			email VARCHAR(255) NOT NULL,
-			password VARCHAR(255) NOT NULL,
-			admin BIT(1) DEFAULT 0,
-			verified BIT(1) DEFAULT 0,
-			created DATETIME DEFAULT CURRENT_TIMESTAMP,
-			PRIMARY KEY (id),
-			UNIQUE(email)
-		)
-	`,
-	// stock
-	`
-		CREATE TABLE stock (
-			id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-			isin VARCHAR(12) NOT NULL UNIQUE,
-			exchange VARCHAR(10) NOT NULL CHECK (exchange IN (${sQLStockExchanges})),
-			name VARCHAR(255) NOT NULL,
-			symbol VARCHAR(255) NOT NULL UNIQUE
-		);
-	`,
+
 	// cryptocurrency
 	`
 		CREATE TABLE cryptocurrency (
@@ -52,14 +30,12 @@ const queries: string[] = [
 			name VARCHAR(100) NOT NULL
 		);
 	`,
-	// cryptocurrency_platform
+	// industry
 	`
-		CREATE TABLE cryptocurrency_platform (
-			id INT PRIMARY KEY AUTO_INCREMENT,
-			cryptocurrency_id INT NOT NULL,
-			platform VARCHAR(50) NOT NULL,
-			address VARCHAR(100) NOT NULL,
-			FOREIGN KEY (cryptocurrency_id) REFERENCES cryptocurrency(id)
+		CREATE TABLE industry (
+			id INT NOT NULL AUTO_INCREMENT,
+			name VARCHAR(255),
+			PRIMARY KEY (id)
 		);
 	`,
 	// query_cryptocurrency
@@ -81,24 +57,52 @@ const queries: string[] = [
 			CONSTRAINT check_query_format CHECK (query REGEXP '^[A-Za-z]{1,10}$')
 		);
 	`,
-	// stock_industry
+	// sector
 	`
-		CREATE TABLE stock_industry (
+		CREATE TABLE sector (
 			id INT NOT NULL AUTO_INCREMENT,
-			stock_id INT NOT NULL,
-			industry VARCHAR(255),
-			PRIMARY KEY (id),
-			FOREIGN KEY (stock_id) REFERENCES stock(id) ON DELETE CASCADE
+			name VARCHAR(255),
+			PRIMARY KEY (id)
 		);
 	`,
-	// stock_sector
+	// stock
 	`
-		CREATE TABLE stock_sector (
+		CREATE TABLE stock (
+			id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+			isin VARCHAR(12) NOT NULL UNIQUE,
+			exchange VARCHAR(10) NOT NULL CHECK (exchange IN (${sQLStockExchanges})),
+			name VARCHAR(255) NOT NULL,
+			symbol VARCHAR(255) NOT NULL UNIQUE
+		);
+	`,
+	// user
+	`
+		CREATE TABLE user (
 			id INT NOT NULL AUTO_INCREMENT,
-			stock_id INT NOT NULL,
-			sector VARCHAR(255),
+			email VARCHAR(255) NOT NULL,
+			password VARCHAR(255) NOT NULL,
+			admin BIT(1) DEFAULT 0,
+			verified BIT(1) DEFAULT 0,
+			created DATETIME DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
-			FOREIGN KEY (stock_id) REFERENCES stock(id) ON DELETE CASCADE
+			UNIQUE(email)
+		)
+	`,
+
+	/*
+	* ********************
+	* * TABLES DEPENDANT *
+	* ********************
+	*/
+
+	// cryptocurrency_platform
+	`
+		CREATE TABLE cryptocurrency_platform (
+			id INT PRIMARY KEY AUTO_INCREMENT,
+			cryptocurrency_id INT NOT NULL,
+			platform VARCHAR(50) NOT NULL,
+			address VARCHAR(100) NOT NULL,
+			FOREIGN KEY (cryptocurrency_id) REFERENCES cryptocurrency(id)
 		);
 	`,
 	// portfolio

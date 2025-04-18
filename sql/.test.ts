@@ -48,8 +48,8 @@ describe("Database Initialization", () =>
 
 		expect(tables).toEqual(
 			expect.arrayContaining([
-				"stock_industry",
-				"stock_sector",
+				"industry",
+				"sector",
 				"cryptocurrency",
 				"cryptocurrency_platform",
 				"portfolio",
