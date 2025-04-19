@@ -275,18 +275,18 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				});
 			}
 		}
-	).post(
+	).delete(
 		/**
-		* @route POST /api/portfolio/delete
+		* @route DELETE /api/portfolio/delete
 		* @desc Delete portfolio
 		* @access User
 		*/
-		"/delete",
+		"/delete/:portfolio_id",
 		userToken.userTokenDecode(mySQLPool),
-		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const { portfolio_id, }: any = req.body.load;
+			const { portfolio_id, }: any = req.params;
+
 			try
 			{
 				if (!portfolio_id)

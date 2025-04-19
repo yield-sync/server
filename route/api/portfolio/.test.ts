@@ -355,7 +355,10 @@ describe("Request: POST (2/2)", () =>
 			});
 		});
 	});
+});
 
+describe("Request: DELETE", () =>
+{
 	describe("Route: /api/portfolio/delete", () =>
 	{
 		describe("Expected Success", () =>
@@ -402,14 +405,10 @@ describe("Request: POST (2/2)", () =>
 				expect(results[0].name).toBe(PORTFOLIO_NAME);
 
 
-				const RES_PORTFOLIO_DELETE = await request(app).post("/api/portfolio/delete").set(
+				const RES_PORTFOLIO_DELETE = await request(app).delete(`/api/portfolio/delete/${portfolio[0].id}`).set(
 					'authorization',
 					`Bearer ${token}`
-				).send({
-					load: {
-						portfolio_id: portfolio[0].id
-					}
-				});
+				).send();
 
 				expect(RES_PORTFOLIO_DELETE.statusCode).toBe(201);
 
