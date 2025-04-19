@@ -274,6 +274,10 @@ describe("Request: GET", () => {
 				expect(updatedStock[0].name).toBe(CONSTANTS.STOCKS.APPLE.NAME);
 
 				expect(updatedStock[0].isin).toBe(CONSTANTS.STOCKS.APPLE.ISIN);
+
+				expect(updatedStock[0].sector).toBe(CONSTANTS.STOCKS.APPLE.SECTOR);
+
+				expect(updatedStock[0].industry).toBe(CONSTANTS.STOCKS.APPLE.INDUSTRY);
 			});
 
 			it("Should create a new stock under the symbol that belonged to a previous stock..", async () => {
