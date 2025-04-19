@@ -117,7 +117,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 						FROM
 							portfolio_asset pa
 						LEFT JOIN
-							stock s ON pa.stock_id = s.id
+							stock s ON pa.stock_isin = s.isin
 						LEFT JOIN
 							cryptocurrency c ON pa.cryptocurrency_id = c.id
 						WHERE

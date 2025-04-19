@@ -1,7 +1,7 @@
 import mysql from "mysql2";
 
 
-export const updateQueryStockTimestamp = async (
+export const updateQueryForStockTimestamp = async (
 	mySQLPool: mysql.Pool,
 	query: string,
 	last_refresh_timestamp: Date
@@ -10,7 +10,7 @@ export const updateQueryStockTimestamp = async (
 	await mySQLPool.promise().query(
 		`
 			INSERT INTO
-				query_stock (query, last_refresh_timestamp)
+				query_for_stock (query, last_refresh_timestamp)
 			VALUES
 				(?, ?)
 			ON DUPLICATE KEY UPDATE
@@ -25,7 +25,7 @@ export const updateQueryStockTimestamp = async (
 	);
 };
 
-export const getQueryStockByQuery = async (
+export const getQueryForStock = async (
 	mySQLPool: mysql.Pool,
 	query: string
 ): Promise<any[]> =>
@@ -36,7 +36,7 @@ export const getQueryStockByQuery = async (
 		any[],
 		FieldPacket[]
 	] = await mySQLPool.promise().query(
-		"SELECT * FROM query_stock WHERE query = ?;",
+		"SELECT * FROM query_for_stock WHERE query = ?;",
 		[
 			query,
 		]
@@ -47,6 +47,6 @@ export const getQueryStockByQuery = async (
 
 
 export default {
-	updateQueryStockTimestamp,
-	getQueryStockByQuery,
+	updateQueryForStockTimestamp,
+	getQueryForStock,
 };

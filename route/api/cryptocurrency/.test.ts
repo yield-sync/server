@@ -133,7 +133,7 @@ describe("Request: GET", () =>
 					await mySQLPool.promise().query(
 						`
 							INSERT INTO
-								query_cryptocurrency (query, last_refresh_timestamp)
+								query_for_cryptocurrency (query, last_refresh_timestamp)
 							VALUES
 								(?, ?)
 							ON DUPLICATE KEY UPDATE

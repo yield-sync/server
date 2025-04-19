@@ -33,23 +33,21 @@ const queries: string[] = [
 	// industry
 	`
 		CREATE TABLE industry (
-			id INT NOT NULL AUTO_INCREMENT,
-			name VARCHAR(255),
-			PRIMARY KEY (id)
+			industry VARCHAR(255) NOT NULL UNIQUE PRIMARY KEY
 		);
 	`,
-	// query_cryptocurrency
+	// query_for_cryptocurrency
 	`
-		CREATE TABLE query_cryptocurrency (
+		CREATE TABLE query_for_cryptocurrency (
 			id INT AUTO_INCREMENT PRIMARY KEY,
 			query VARCHAR(50) NOT NULL,
 			last_refresh_timestamp DATETIME NOT NULL,
 			UNIQUE KEY unique_query (query)
 		);
 	`,
-	// query_stock
+	// query_for_stock
 	`
-		CREATE TABLE query_stock (
+		CREATE TABLE query_for_stock (
 			id INT AUTO_INCREMENT PRIMARY KEY,
 			query VARCHAR(10) NOT NULL,
 			last_refresh_timestamp DATETIME NOT NULL,
@@ -60,19 +58,7 @@ const queries: string[] = [
 	// sector
 	`
 		CREATE TABLE sector (
-			id INT NOT NULL AUTO_INCREMENT,
-			name VARCHAR(255),
-			PRIMARY KEY (id)
-		);
-	`,
-	// stock
-	`
-		CREATE TABLE stock (
-			id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-			isin VARCHAR(12) NOT NULL UNIQUE,
-			exchange VARCHAR(10) NOT NULL CHECK (exchange IN (${sQLStockExchanges})),
-			name VARCHAR(255) NOT NULL,
-			symbol VARCHAR(255) NOT NULL UNIQUE
+			sector VARCHAR(255) NOT NULL UNIQUE PRIMARY KEY
 		);
 	`,
 	// user
@@ -94,7 +80,20 @@ const queries: string[] = [
 	* * TABLES DEPENDANT *
 	* ********************
 	*/
+	// stock
+	`
+		CREATE TABLE stock (
+			isin VARCHAR(12) NOT NULL UNIQUE PRIMARY KEY,
+			sector VARCHAR(255) NOT NULL,
+			industry VARCHAR(255) NOT NULL,
+			exchange VARCHAR(10) NOT NULL CHECK (exchange IN (${sQLStockExchanges})),
+			name VARCHAR(255) NOT NULL,
+			symbol VARCHAR(255) NOT NULL UNIQUE,
 
+			FOREIGN KEY (sector) REFERENCES sector(sector) ON DELETE CASCADE,
+			FOREIGN KEY (industry) REFERENCES industry(industry) ON DELETE CASCADE
+		);
+	`,
 	// cryptocurrency_platform
 	`
 		CREATE TABLE cryptocurrency_platform (
@@ -122,7 +121,7 @@ const queries: string[] = [
 			id INT NOT NULL AUTO_INCREMENT,
 			portfolio_id INT NOT NULL,
 			cryptocurrency_id INT,
-			stock_id INT,
+			stock_isin VARCHAR(12),
 			percent_allocation INT NOT NULL DEFAULT 0 CHECK (percent_allocation BETWEEN 0 AND 10000),
 			created DATETIME DEFAULT CURRENT_TIMESTAMP,
 
@@ -130,15 +129,15 @@ const queries: string[] = [
 
 			FOREIGN KEY (portfolio_id) REFERENCES portfolio(id) ON DELETE CASCADE,
 			FOREIGN KEY (cryptocurrency_id) REFERENCES cryptocurrency(id) ON DELETE CASCADE,
-			FOREIGN KEY (stock_id) REFERENCES stock(id) ON DELETE CASCADE,
+			FOREIGN KEY (stock_isin) REFERENCES stock(isin) ON DELETE CASCADE,
 
 			UNIQUE KEY unique_portfolio_cryptocurrency (portfolio_id, cryptocurrency_id),
-			UNIQUE KEY unique_portfolio_stock (portfolio_id, stock_id)
+			UNIQUE KEY unique_portfolio_stock (portfolio_id, stock_isin)
 		);
 	`,
-	// verification
+	// recovery
 	`
-		CREATE TABLE verification (
+		CREATE TABLE recovery (
 			id INT NOT NULL AUTO_INCREMENT,
 			user_id INT NOT NULL UNIQUE,
 			pin CHAR(6) NOT NULL CHECK (CHAR_LENGTH(pin) = 6),
@@ -148,9 +147,9 @@ const queries: string[] = [
 			FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
 		);
 	`,
-	// recovery
+	// verification
 	`
-		CREATE TABLE recovery (
+		CREATE TABLE verification (
 			id INT NOT NULL AUTO_INCREMENT,
 			user_id INT NOT NULL UNIQUE,
 			pin CHAR(6) NOT NULL CHECK (CHAR_LENGTH(pin) = 6),
@@ -204,6 +203,200 @@ const queries: string[] = [
 				SET MESSAGE_TEXT = '[before update] Total percent allocation for the portfolio exceeds 10000';
 			END IF;
 		END;
+	`,
+
+
+	/**
+	* ****************
+	* * INITIAL DATA *
+	* ****************
+	*/
+	`
+		INSERT INTO sector
+			(sector)
+		VALUES
+			('Basic Materials'),
+			('Cash'),
+			('Communication Services'),
+			('Consumer Cyclical'),
+			('Consumer Defensive'),
+			('Decentralized Protocol'),
+			('Energy'),
+			('Financial Services'),
+			('Healthcare'),
+			('Industrials'),
+			('Macro'),
+			('Other'),
+			('Real Estate'),
+			('Technology'),
+			('Utilities')
+		;
+	`,
+
+	`
+		INSERT INTO industry
+			(industry)
+		VALUES
+			('Steel'),
+			('Silver'),
+			('Other Precious Metals'),
+			('Gold'),
+			('Copper'),
+			('Aluminum'),
+			('Paper, Lumber & Forest Products'),
+			('Industrial Materials'),
+			('Construction Materials'),
+			('Chemicals - Specialty'),
+			('Chemicals'),
+			('Agricultural Inputs'),
+			('Telecommunications Services'),
+			('Internet Content & Information'),
+			('Publishing'),
+			('Broadcasting'),
+			('Advertising Agencies'),
+			('Entertainment'),
+			('Travel Lodging'),
+			('Travel Services'),
+			('Specialty Retail'),
+			('Luxury Goods'),
+			('Home Improvement'),
+			('Residential Construction'),
+			('Department Stores'),
+			('Personal Products & Services'),
+			('Leisure'),
+			('Gambling, Resorts & Casinos'),
+			('Furnishings, Fixtures & Appliances'),
+			('Restaurants'),
+			('Auto - Parts'),
+			('Auto - Manufacturers'),
+			('Auto - Recreational Vehicles'),
+			('Auto - Dealerships'),
+			('Apparel - Retail'),
+			('Apparel - Manufacturers'),
+			('Apparel - Footwear & Accessories'),
+			('Packaging & Containers'),
+			('Tobacco'),
+			('Grocery Stores'),
+			('Discount Stores'),
+			('Household & Personal Products'),
+			('Packaged Foods'),
+			('Food Distribution'),
+			('Food Confectioners'),
+			('Agricultural Farm Products'),
+			('Education & Training Services'),
+			('Beverages - Wineries & Distilleries'),
+			('Beverages - Non-Alcoholic'),
+			('Beverages - Alcoholic'),
+			('Uranium'),
+			('Solar'),
+			('Oil & Gas Refining & Marketing'),
+			('Oil & Gas Midstream'),
+			('Oil & Gas Integrated'),
+			('Oil & Gas Exploration & Production'),
+			('Oil & Gas Equipment & Services'),
+			('Oil & Gas Energy'),
+			('Oil & Gas Drilling'),
+			('Coal'),
+			('Shell Companies'),
+			('Investment - Banking & Investment Services'),
+			('Insurance - Specialty'),
+			('Insurance - Reinsurance'),
+			('Insurance - Property & Casualty'),
+			('Insurance - Life'),
+			('Insurance - Diversified'),
+			('Insurance - Brokers'),
+			('Financial - Mortgages'),
+			('Financial - Diversified'),
+			('Financial - Data & Stock Exchanges'),
+			('Financial - Credit Services'),
+			('Financial - Conglomerates'),
+			('Financial - Capital Markets'),
+			('Banks - Regional'),
+			('Banks - Diversified'),
+			('Banks'),
+			('Asset Management'),
+			('Asset Management - Bonds'),
+			('Asset Management - Income'),
+			('Asset Management - Leveraged'),
+			('Asset Management - Cryptocurrency'),
+			('Asset Management - Global'),
+			('Medical - Specialties'),
+			('Medical - Pharmaceuticals'),
+			('Medical - Instruments & Supplies'),
+			('Medical - Healthcare Plans'),
+			('Medical - Healthcare Information Services'),
+			('Medical - Equipment & Services'),
+			('Medical - Distribution'),
+			('Medical - Diagnostics & Research'),
+			('Medical - Devices'),
+			('Medical - Care Facilities'),
+			('Drug Manufacturers - Specialty & Generic'),
+			('Drug Manufacturers - General'),
+			('Biotechnology'),
+			('Waste Management'),
+			('Trucking'),
+			('Railroads'),
+			('Aerospace & Defense'),
+			('Marine Shipping'),
+			('Integrated Freight & Logistics'),
+			('Airlines, Airports & Air Services'),
+			('General Transportation'),
+			('Manufacturing - Tools & Accessories'),
+			('Manufacturing - Textiles'),
+			('Manufacturing - Miscellaneous'),
+			('Manufacturing - Metal Fabrication'),
+			('Industrial - Distribution'),
+			('Industrial - Specialties'),
+			('Industrial - Pollution & Treatment Controls'),
+			('Environmental Services'),
+			('Industrial - Machinery'),
+			('Industrial - Infrastructure Operations'),
+			('Industrial - Capital Goods'),
+			('Consulting Services'),
+			('Business Equipment & Supplies'),
+			('Staffing & Employment Services'),
+			('Rental & Leasing Services'),
+			('Engineering & Construction'),
+			('Security & Protection Services'),
+			('Specialty Business Services'),
+			('Construction'),
+			('Conglomerates'),
+			('Electrical Equipment & Parts'),
+			('Agricultural - Machinery'),
+			('Agricultural - Commodities/Milling'),
+			('REIT - Specialty'),
+			('REIT - Retail'),
+			('REIT - Residential'),
+			('REIT - Office'),
+			('REIT - Mortgage'),
+			('REIT - Industrial'),
+			('REIT - Hotel & Motel'),
+			('REIT - Healthcare Facilities'),
+			('REIT - Diversified'),
+			('Real Estate - Services'),
+			('Real Estate - Diversified'),
+			('Real Estate - Development'),
+			('Real Estate - General'),
+			('Information Technology Services'),
+			('Hardware, Equipment & Parts'),
+			('Computer Hardware'),
+			('Electronic Gaming & Multimedia'),
+			('Software - Services'),
+			('Software - Infrastructure'),
+			('Software - Application'),
+			('Semiconductors'),
+			('Media & Entertainment'),
+			('Communication Equipment'),
+			('Technology Distributors'),
+			('Consumer Electronics'),
+			('Renewable Utilities'),
+			('Regulated Water'),
+			('Regulated Gas'),
+			('Regulated Electric'),
+			('Independent Power Producers'),
+			('Diversified Utilities'),
+			('General Utilitie')
+		;
 	`,
 ];
 
