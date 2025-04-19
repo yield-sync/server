@@ -21,7 +21,7 @@ const PASSWORD: string = "testpassword!";
 const PORTFOLIO_NAME: string = "my-portfolio";
 
 let token: string;
-let stock_id: string;
+let stock_isin: string;
 let portfolio_id: string;
 let app: express.Express;
 let mySQLPool: mysql.Pool;
@@ -108,20 +108,22 @@ beforeEach(async () =>
 	portfolio_id = portfolios[0].id;
 
 	await mySQLPool.promise().query(
-		"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
+		"INSERT INTO stock (symbol, name, exchange, isin, sector, industry) VALUES (?, ?, ?, ?, ?, ?);",
 		[
 			ASSET_SYMBOL,
 			ASSET_NAME,
 			"nasdaq",
 			"123",
+			"Technology",
+			"Consumer Electronics",
 		]
 	);
 
 	const [assets]: MySQLQueryResult = await mySQLPool.promise().query(
-		"SELECT id FROM stock WHERE name = ?;", [ASSET_NAME]
+		"SELECT isin FROM stock WHERE name = ?;", [ASSET_NAME]
 	);
 
-	stock_id = assets[0].id;
+	stock_isin = assets[0].isin;
 });
 
 
@@ -132,7 +134,7 @@ describe("Request: GET", () => {
 				await request(app).post("/api/portfolio-asset/create").send({
 					load: {
 						portfolio_id,
-						stock_id,
+						stock_isin,
 					} as PortfolioAssetCreate
 				}).expect(401);
 
@@ -150,7 +152,7 @@ describe("Request: GET", () => {
 				const RES = await request(app).post("/api/portfolio-asset/create").set(
 					'authorization',
 					`Bearer ${token}`
-				).send({ load: { stock_id, } }).expect(400);
+				).send({ load: { stock_isin, } }).expect(400);
 
 				expect(RES.text).toBe("No portfolio_id received");
 
@@ -174,7 +176,7 @@ describe("Request: GET", () => {
 					}
 				}).expect(400);
 
-				expect(RES.text).toBe("No stock_id received");
+				expect(RES.text).toBe("No stock_isin received");
 
 				const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio_asset;");
 
@@ -193,7 +195,7 @@ describe("Request: GET", () => {
 				).send({
 					load: {
 						portfolio_id,
-						stock_id,
+						stock_isin,
 					}
 				}).expect(400);
 
@@ -218,7 +220,7 @@ describe("Request: GET", () => {
 				).send({
 					load: {
 						portfolio_id,
-						stock_id,
+						stock_isin,
 						percent_allocation: 10_000,
 					} as PortfolioAssetCreate
 				});
@@ -234,12 +236,12 @@ describe("Request: GET", () => {
 
 				expect(portfolioAssests.length).toBeGreaterThan(0);
 
-				if (!("stock_id" in portfolioAssests[0]))
+				if (!("stock_isin" in portfolioAssests[0]))
 				{
-					throw new Error("Key 'stock_id' not in portfolioAssets");
+					throw new Error("Key 'stock_isin' not in portfolioAssets");
 				}
 
-				expect(portfolioAssests[0].stock_id).toBe(stock_id);
+				expect(portfolioAssests[0].stock_isin).toBe(stock_isin);
 
 				if (!("portfolio_id" in portfolioAssests[0]))
 				{
@@ -258,7 +260,7 @@ describe("Request: GET", () => {
 				).send({
 					load: {
 						portfolio_id,
-						stock_id,
+						stock_isin,
 						percent_allocation: 10_001,
 					} as PortfolioAssetCreate
 				});
@@ -275,7 +277,7 @@ describe("Request: GET", () => {
 				).send({
 					load: {
 						portfolio_id,
-						stock_id,
+						stock_isin,
 						percent_allocation: -1,
 					} as PortfolioAssetCreate
 				});
@@ -304,7 +306,7 @@ describe("Request: GET", () => {
 					const RES = await request(app).put("/api/portfolio-asset/update/invalid-id").set(
 						'authorization',
 						`Bearer ${token}`
-					).send({ load: { stock_id, } }).expect(400);
+					).send({ load: { stock_isin, } }).expect(400);
 
 					expect(RES.text).toBe("No portfolio_id received");
 
@@ -328,7 +330,7 @@ describe("Request: GET", () => {
 						}
 					}).expect(400);
 
-					expect(RES.text).toBe("No stock_id received");
+					expect(RES.text).toBe("No stock_isin received");
 
 					const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio_asset;");
 
@@ -347,7 +349,7 @@ describe("Request: GET", () => {
 					).send({
 						load: {
 							portfolio_id,
-							stock_id,
+							stock_isin,
 						}
 					}).expect(400);
 
@@ -372,7 +374,7 @@ describe("Request: GET", () => {
 					).send({
 						load: {
 							portfolio_id,
-							stock_id,
+							stock_isin,
 							percent_allocation: 10_000,
 						} as PortfolioAssetCreate
 					});
@@ -383,7 +385,7 @@ describe("Request: GET", () => {
 					).send({
 						load: {
 							portfolio_id,
-							stock_id,
+							stock_isin,
 							percent_allocation: 10_000,
 						} as PortfolioAssetCreate
 					});
@@ -401,12 +403,12 @@ describe("Request: GET", () => {
 
 					expect(portfolioAssests.length).toBeGreaterThan(0);
 
-					if (!("stock_id" in portfolioAssests[0]))
+					if (!("stock_isin" in portfolioAssests[0]))
 					{
-						throw new Error("Key 'stock_id' not in portfolioAssets");
+						throw new Error("Key 'stock_isin' not in portfolioAssets");
 					}
 
-					expect(portfolioAssests[0].stock_id).toBe(stock_id);
+					expect(portfolioAssests[0].stock_isin).toBe(stock_isin);
 
 					if (!("portfolio_id" in portfolioAssests[0]))
 					{

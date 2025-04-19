@@ -4,7 +4,7 @@ import mysql from "mysql2";
 import { loadRequired } from "../../../middleware/load";
 import userToken from "../../../middleware/user-token";
 import { INTERNAL_SERVER_ERROR, HTTPStatus } from "../../../constants";
-import DBHandlerQueryStock from "../../../db-handler/query_stock";
+import DBHandlerQueryStock from "../../../db-handler/query_for_stock";
 import DBHandlerStock from "../../../db-handler/stock";
 import { sanitizeSymbolQuery } from "../../../util/sanitizer";
 import externalSource from "../../../external-api/FinancialModelingPrep";
@@ -18,36 +18,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 {
 	return express.Router().get(
 		/**
-		* @route GET /api/stock/
-		* @desc Get all stock ever..?
-		* @access User
-		*/
-		"/",
-		async (req: express.Request, res: express.Response) =>
-		{
-			try
-			{
-				res.status(HTTPStatus.OK).json(await DBHandlerStock.getStock(mySQLPool));
-			}
-			catch (error: Error | any)
-			{
-				if (error instanceof Error)
-				{
-					res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
-						message: `${INTERNAL_SERVER_ERROR}: ${error.message}`,
-					});
-
-					return;
-				}
-
-				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
-					message: `${INTERNAL_SERVER_ERROR}: Unknown error`,
-				});
-			}
-		}
-	).get(
-		/**
-		* @route GET /api/stock/search/:symbol
+		* @route GET /api/stock/search/:symbolresponse
 		* @desc Search for a stock and add it to DB if it doesnt exist
 		* @param query {string} to search for
 		* @access authorized:user
@@ -59,6 +30,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			const timestamp = new Date();
 
 			let response: StockSearchQuery = {
+				processedUnknownStock: false,
 				refreshRequired: false,
 				stocks: [
 				],
@@ -77,22 +49,84 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				response.stocks = await DBHandlerStock.getStockBySymbol(mySQLPool, symbol);
+				const dBStockQueryResult: IStock[] = await DBHandlerStock.getStockBySymbol(mySQLPool, symbol);
 
-				if (response.stocks.length == 0)
+				if (dBStockQueryResult.length > 0)
 				{
-					response.refreshRequired = true;
+					/**
+					* @dev If this part of the route is reached then the stock is already in the DB but may need
+					* refreshing
+					*/
 
-					const externalStockQueryResult = await externalSource.queryForStock(symbol);
+					const dBStock: IStock = dBStockQueryResult[0];
 
-					if (!externalStockQueryResult)
+					const queryForStock = await DBHandlerQueryStock.getQueryForStock(mySQLPool, symbol);
+
+					const lastRefresh: Date | null = queryForStock.length > 0 ? new Date(
+						queryForStock[0].last_refresh_timestamp
+					) : null;
+
+					response.refreshRequired = !lastRefresh || (
+						timestamp.getTime() - lastRefresh.getTime()
+					) >= ONE_WEEK_IN_MS;
+
+					if (response.refreshRequired)
 					{
-						res.status(HTTPStatus.BAD_REQUEST).send("Nothing found for query");
+						const externalStock: IStock = await externalSource.queryForStock(symbol);
+
+						if (!externalStock)
+						{
+							res.status(HTTPStatus.BAD_REQUEST).send("Nothing returned from external source");
+
+							return;
+						}
+
+						if (externalStock.isin != dBStock.isin)
+						{
+							/**
+							* @dev If this happens then it means that the the symbol now belongs to a different company.
+							*/
+
+							// Set the symbol of the dBStock to "0" (considered unknown)
+							await DBHandlerStock.markStockSymbolUnknown(mySQLPool, dBStock.isin);
+
+							if ((await DBHandlerStock.getStock(mySQLPool, externalStock.isin)).length > 0)
+							{
+								// Stock with ISIN provided from external source already exists -> Update it
+								await DBHandlerStock.updateStock(mySQLPool, externalStock);
+							}
+							else
+							{
+								await DBHandlerStock.createStock(mySQLPool, externalStock);
+							}
+
+							const externalSearchForDBStockISIN: IStock = await externalSource.queryForStockByIsin(
+								dBStock.isin
+							);
+
+							if (externalSearchForDBStockISIN)
+							{
+								await DBHandlerStock.updateStock(mySQLPool, externalSearchForDBStockISIN);
+							}
+							else
+							{
+								console.warn(`Nothing was found for ISIN "${dBStock.isin}". symbol will remain 0`);
+							}
+						}
+					}
+				}
+				else
+				{
+					response.processedUnknownStock = true;
+
+					const externalStock: IStock = await externalSource.queryForStock(symbol);
+
+					if (!externalStock)
+					{
+						res.status(HTTPStatus.BAD_REQUEST).send("Nothing found for query in DB and External");
 
 						return;
 					}
-
-					await DBHandlerQueryStock.updateQueryStockTimestamp(mySQLPool, symbol, timestamp);
 
 					/**
 					* @dev It could be possible that the symbol is new but the company is already in the DB under an old
@@ -100,16 +134,12 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					* with that isin to have the new symbol and company name received from external source.
 					*/
 
-					const stocksWithExternalIsinId = await DBHandlerStock.getStockByIsin(
+					const stocksWithExternalISIN: IStock[] = await DBHandlerStock.getStock(
 						mySQLPool,
-						externalStockQueryResult.isin
+						externalStock.isin
 					);
 
-					if (stocksWithExternalIsinId.length == 0)
-					{
-						await DBHandlerStock.createStock(mySQLPool, externalStockQueryResult);
-					}
-					else
+					if (stocksWithExternalISIN.length > 0)
 					{
 						/**
 						* @dev
@@ -117,93 +147,14 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 						* nothing was returned before we can safely assume that an update wont have constraint errors.
 						*/
 
-						await DBHandlerStock.updateStock(
-							mySQLPool,
-							externalStockQueryResult.symbol,
-							externalStockQueryResult.name,
-							externalStockQueryResult.exchange.toLowerCase(),
-							stocksWithExternalIsinId[0].id
-						);
+						await DBHandlerStock.updateStock(mySQLPool, externalStock);
 					}
-				}
-				else
-				{
-					/**
-					* @dev If this part of the route is reached then the stock is already in the DB but may need
-					* refreshing
-					*/
-
-					const queryStock = await DBHandlerQueryStock.getQueryStockByQuery(mySQLPool, symbol);
-
-					const lastRefresh: Date | null = queryStock.length > 0 ? new Date(
-						queryStock[0].last_refresh_timestamp
-					) : null;
-
-					response.refreshRequired = !lastRefresh || (
-						timestamp.getTime() - lastRefresh.getTime()
-					) >= ONE_WEEK_IN_MS;
-
-
-					if (response.refreshRequired)
+					else
 					{
-						const externalStockQueryResult = await externalSource.queryForStock(symbol);
-
-						if (!externalStockQueryResult)
-						{
-							res.status(HTTPStatus.BAD_REQUEST).send("Nothing returned from external source");
-
-							return;
-						}
-
-						if (response.stocks[0].isin != externalStockQueryResult.isin)
-						{
-							/**
-							* @notice If this happens then it means that the the symbol now belongs to a different
-							* company.
-							*/
-
-							await DBHandlerStock.makeStockSymbolUnknown(mySQLPool, response.stocks[0].id);
-
-							const stockInDBWithExternalISIN = await DBHandlerStock.getStockByIsin(
-								mySQLPool,
-								externalStockQueryResult.isin
-							);
-
-							if (stockInDBWithExternalISIN.length == 0)
-							{
-								await DBHandlerStock.createStock(mySQLPool, externalStockQueryResult);
-							}
-							else
-							{
-								await DBHandlerStock.updateStockSymbolAndName(
-									mySQLPool,
-									externalStockQueryResult.symbol,
-									externalStockQueryResult.name,
-									stockInDBWithExternalISIN[0].id
-								);
-							}
-
-							const externalStockQueryByIsinResult = await externalSource.queryForStockByIsin(
-								response.stocks[0].isin
-							);
-
-							if (externalStockQueryByIsinResult)
-							{
-								await DBHandlerStock.updateStockSymbolAndName(
-									mySQLPool,
-									externalStockQueryByIsinResult.symbol,
-									externalStockQueryByIsinResult.name,
-									response.stocks[0].id
-								);
-							}
-							else
-							{
-								// TODO write test to check that a stock has a symbol of 0 if it is no longer found from
-								// external source.
-								console.error(`Nothing was found for ${response.stocks[0].id}. Symbol will remain "0".`);
-							}
-						}
+						await DBHandlerStock.createStock(mySQLPool, externalStock);
 					}
+
+					await DBHandlerQueryStock.updateQueryForStockTimestamp(mySQLPool, symbol, timestamp);
 				}
 
 				response.stocks = await DBHandlerStock.getStockBySymbol(mySQLPool, symbol);
@@ -237,18 +188,18 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const { stock_id, }: StockDelete = req.body.load;
+			const { stock_isin, }: StockDelete = req.body.load;
 
 			try
 			{
-				if (!stock_id)
+				if (!stock_isin)
 				{
 					res.status(HTTPStatus.BAD_REQUEST).send("Stock ID is required");
 					return;
 				}
 
 				// Ensure stock exists
-				const existingStock = await DBHandlerStock.getStockById(mySQLPool, stock_id);
+				const existingStock = await DBHandlerStock.getStock(mySQLPool, stock_isin);
 
 				if ((existingStock as any[]).length === 0)
 				{
@@ -256,7 +207,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				await DBHandlerStock.deleteStock(mySQLPool, stock_id);
+				await DBHandlerStock.deleteStock(mySQLPool, stock_isin);
 
 				res.status(HTTPStatus.OK).send("Deleted stock");
 			}

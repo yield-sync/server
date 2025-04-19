@@ -55,8 +55,8 @@ describe("Database Initialization", () =>
 				"portfolio",
 				"portfolio_asset",
 				"user",
-				"query_cryptocurrency",
-				"query_stock",
+				"query_for_cryptocurrency",
+				"query_for_stock",
 				"stock",
 				"verification"
 			])
@@ -72,8 +72,8 @@ describe("table: stock", () =>
 		{
 			await expect(
 				testMySQLPool.promise().query(
-					"INSERT INTO stock (symbol, name, isin) VALUES (?, ?, ?);",
-					["AAPL", "Apple Inc.", "US0378331005"]
+					"INSERT INTO stock (symbol, name, isin, sector, industry) VALUES (?, ?, ?, ?, ?);",
+					["AAPL", "Apple Inc.", "US0378331005", "Technology", "Consumer Electronics"]
 				)
 			).rejects.toThrow("Field 'exchange' doesn't have a default value");
 		});
@@ -82,8 +82,8 @@ describe("table: stock", () =>
 		{
 			await expect(
 				testMySQLPool.promise().query(
-					"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
-					["AAPL", "Apple Inc.", "invalid", "US0378331005"]
+					"INSERT INTO stock (symbol, name, exchange, isin, sector, industry) VALUES (?, ?, ?, ?, ?, ?);",
+					["AAPL", "Apple Inc.", "invalid", "US0378331005", "Technology", "Consumer Electronics"]
 				)
 			).rejects.toThrow(/CONSTRAINT `stock.exchange` failed/);
 		});
@@ -92,8 +92,8 @@ describe("table: stock", () =>
 		{
 			await expect(
 				testMySQLPool.promise().query(
-					"INSERT INTO stock (symbol, name, exchange) VALUES (?, ?, ?);",
-					["AAPL", "Apple Inc.", "nasdaq"]
+					"INSERT INTO stock (symbol, name, exchange, sector, industry) VALUES (?, ?, ?, ?, ?);",
+					["AAPL", "Apple Inc.", "nasdaq", "Technology", "Consumer Electronics"]
 				)
 			).rejects.toThrow("Field 'isin' doesn't have a default value");
 		});
@@ -105,8 +105,8 @@ describe("table: stock", () =>
 		{
 			await expect(
 				testMySQLPool.promise().query(
-					"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
-					["AAPL", "Apple Inc.", "nasdaq", "US0378331005"]
+					"INSERT INTO stock (symbol, name, exchange, isin, sector, industry) VALUES (?, ?, ?, ?, ?, ?);",
+					["AAPL", "Apple Inc.", "nasdaq", "US0378331005", "Technology", "Consumer Electronics"]
 				)
 			).resolves.not.toThrow();
 		});
@@ -117,15 +117,15 @@ describe("table: stock", () =>
 		it("Should fail when inserting duplicate ISIN..", async () =>
 		{
 			await testMySQLPool.promise().query(
-				"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
-				["AAPL", "Apple Inc.", "nasdaq", "US0378331005"]
+				"INSERT INTO stock (symbol, name, exchange, isin, sector, industry) VALUES (?, ?, ?, ?, ?, ?);",
+				["AAPL", "Apple Inc.", "nasdaq", "US0378331005", "Technology", "Consumer Electronics"]
 			)
 
 			// Even though the name and symbol are different, the isin already in use
 			await expect(
 				testMySQLPool.promise().query(
-					"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
-					["MSFT", "Microsoft Corp.", "nasdaq", "US0378331005"]
+					"INSERT INTO stock (symbol, name, exchange, isin, sector, industry) VALUES (?, ?, ?, ?, ?, ?);",
+					["MSFT", "Microsoft Corp.", "nasdaq", "US0378331005", "Technology", "Consumer Electronics"]
 				)
 			).rejects.toThrow(/Duplicate entry/);
 		});
@@ -208,7 +208,7 @@ describe("Table: cryptocurrency", () =>
 	});
 });
 
-describe("Table: query_stock", () => {
+describe("Table: query_for_stock", () => {
 	// TODO: Add tests for checking length of query and compliance to constraints
 });
 
@@ -235,27 +235,39 @@ describe("Table: portfolio_asset", () => {
 
 		// Create a stock
 		await testMySQLPool.promise().query(
-			"INSERT INTO stock (isin, symbol, name, exchange) VALUES (1, 'AAPL', 'Apple Inc.', 'nasdaq');"
+			`
+				INSERT INTO stock
+					(isin, symbol, name, exchange, sector, industry)
+				VALUES
+					(1, 'AAPL', 'Apple Inc.', 'nasdaq', 'Technology', 'Consumer Electronics')
+				;
+			`
 		);
 
 		const [stockRows]: any = await testMySQLPool.promise().query(
-			"SELECT id FROM stock WHERE symbol = ?;",
+			"SELECT isin FROM stock WHERE symbol = ?;",
 			["AAPL"]
 		);
 
-		stockIdApple = stockRows[0].id;
+		stockIdApple = stockRows[0].isin;
 
 		// Create a stock
 		await testMySQLPool.promise().query(
-			"INSERT INTO stock (isin, symbol, name, exchange) VALUES (2, 'MSFT', 'Microsoft Inc.', 'nasdaq');"
+			`
+				INSERT INTO stock
+					(isin, symbol, name, exchange, sector, industry)
+				VALUES
+					(2, 'MSFT', 'Microsoft Inc.', 'nasdaq', 'Technology', 'Consumer Electronics')
+				;
+			`
 		);
 
 		const [stockRows2]: any = await testMySQLPool.promise().query(
-			"SELECT id FROM stock WHERE symbol = ?;",
+			"SELECT isin FROM stock WHERE symbol = ?;",
 			["MSFT"]
 		);
 
-		stockIdMicrosoft = stockRows2[0].id;
+		stockIdMicrosoft = stockRows2[0].isin;
 
 
 		// Create a cryptocurrency
@@ -293,7 +305,7 @@ describe("Table: portfolio_asset", () => {
 				testMySQLPool.promise().query(
 					`
 						INSERT INTO portfolio_asset
-							(portfolio_id, stock_id, percent_allocation)
+							(portfolio_id, stock_isin, percent_allocation)
 						VALUES
 							(?, ?, 5000)
 						;
@@ -306,7 +318,7 @@ describe("Table: portfolio_asset", () => {
 				testMySQLPool.promise().query(
 					`
 						INSERT INTO portfolio_asset
-							(portfolio_id, stock_id, percent_allocation)
+							(portfolio_id, stock_isin, percent_allocation)
 						VALUES
 							(?, ?, 5000)
 						;
@@ -324,7 +336,7 @@ describe("Table: portfolio_asset", () => {
 				testMySQLPool.promise().query(
 					`
 						INSERT INTO portfolio_asset
-							(portfolio_id, stock_id, percent_allocation)
+							(portfolio_id, stock_isin, percent_allocation)
 						VALUES
 							(?, ?, 5000)
 						;
@@ -337,7 +349,7 @@ describe("Table: portfolio_asset", () => {
 				testMySQLPool.promise().query(
 					`
 						INSERT INTO portfolio_asset
-							(portfolio_id, stock_id, percent_allocation)
+							(portfolio_id, stock_isin, percent_allocation)
 						VALUES
 							(?, ?, 5000)
 						;
@@ -382,7 +394,7 @@ describe("Table: portfolio_asset", () => {
 				testMySQLPool.promise().query(
 					`
 						INSERT INTO portfolio_asset
-							(portfolio_id, stock_id, percent_allocation)
+							(portfolio_id, stock_isin, percent_allocation)
 						VALUES
 							(?, ?, ?)
 						;
@@ -397,7 +409,7 @@ describe("Table: portfolio_asset", () => {
 				testMySQLPool.promise().query(
 					`
 						INSERT INTO portfolio_asset
-							(portfolio_id, stock_id, percent_allocation)
+							(portfolio_id, stock_isin, percent_allocation)
 						VALUES
 							(?, ?, ?)
 						;
@@ -411,7 +423,7 @@ describe("Table: portfolio_asset", () => {
 			// Insert portfolio assets up to 50%
 			await expect(
 				testMySQLPool.promise().query(
-					"INSERT INTO portfolio_asset (portfolio_id, stock_id, percent_allocation) VALUES (?, ?, ?);",
+					"INSERT INTO portfolio_asset (portfolio_id, stock_isin, percent_allocation) VALUES (?, ?, ?);",
 					[portfolioId, stockIdApple, 10000]
 				)
 			).resolves.not.toThrow();

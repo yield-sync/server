@@ -19,13 +19,13 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const { portfolio_id, stock_id, percent_allocation, }: PortfolioAssetCreate = req.body.load;
+			const { portfolio_id, stock_isin, percent_allocation, }: PortfolioAssetCreate = req.body.load;
 
 			try
 			{
-				if (!stock_id)
+				if (!stock_isin)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send("No stock_id received");
+					res.status(HTTPStatus.BAD_REQUEST).send("No stock_isin received");
 
 					return;
 				}
@@ -97,10 +97,10 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				// Insert into portfolio_asset
 				await mySQLPool.promise().query(
-					"INSERT INTO portfolio_asset (portfolio_id, stock_id, percent_allocation) VALUES (?, ?, ?);",
+					"INSERT INTO portfolio_asset (portfolio_id, stock_isin, percent_allocation) VALUES (?, ?, ?);",
 					[
 						portfolio_id,
-						stock_id,
+						stock_isin,
 						percent_allocation,
 					]
 				);
@@ -139,13 +139,13 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		{
 			const { id, } = req.params;
 
-			const { portfolio_id, stock_id, percent_allocation, }: PortfolioAssetUpdate = req.body.load;
+			const { portfolio_id, stock_isin, percent_allocation, }: PortfolioAssetUpdate = req.body.load;
 
 			try
 			{
-				if (!stock_id)
+				if (!stock_isin)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send("No stock_id received");
+					res.status(HTTPStatus.BAD_REQUEST).send("No stock_isin received");
 
 					return;
 				}
@@ -200,10 +200,10 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				// Insert into portfolio_asset
 				await mySQLPool.promise().query(
-					"UPDATE portfolio_asset SET portfolio_id = ?, stock_id = ?, percent_allocation = ? WHERE id = ?;",
+					"UPDATE portfolio_asset SET portfolio_id = ?, stock_isin = ?, percent_allocation = ? WHERE id = ?;",
 					[
 						portfolio_id,
-						stock_id,
+						stock_isin,
 						percent_allocation,
 						id,
 					]

@@ -41,17 +41,18 @@ declare global
 	};
 
 	type StockSearchQuery = {
+		processedUnknownStock: boolean,
 		refreshRequired: boolean,
 		stocks: IStock[],
 	}
 
 	type StockDelete = Load & {
-		stock_id: number,
+		stock_isin: string,
 	};
 
 	type PortfolioAssetCreate = Load & {
 		portfolio_id: string,
-		stock_id: string,
+		stock_isin: string,
 		percent_allocation: number,
 	};
 
@@ -63,7 +64,7 @@ declare global
 
 	type PortfolioAssetUpdate = Load & {
 		id: string;
-		stock_id: string;
+		stock_isin: string;
 		portfolio_id: string;
 		percent_allocation: number;
 	};
@@ -147,7 +148,7 @@ declare global
 		id: number;
 		portfolio_id: number;
 		cryptocurrency_id: number;
-		stock_id: number;
+		stock_isin: string;
 		percent_allocation: number;
 		created: number;
 	}
@@ -156,11 +157,12 @@ declare global
 		RowDataPacket,
 		OkPacket
 	{
-		id: number;
+		isin: string;
 		name: string;
 		symbol: string;
 		exchange: string;
-		isin: string;
+		sector: string;
+		industry: string;
 	}
 
 	interface IUser extends

@@ -39,28 +39,32 @@ const CONSTANTS = {
 			NAME: "Apple Inc.",
 			EXCHANGE: "nasdaq",
 			ISIN: "US0378331005",
+			SECTOR: "Technology",
+			INDUSTRY: "Consumer Electronics",
 		},
 		BANANA: {
 			SYMBOL: "BANANA",
 			NAME: "Banana Inc.",
 			EXCHANGE: "nasdaq",
 			ISIN: "abcdef123456",
+			SECTOR: "Technology",
+			INDUSTRY: "Consumer Electronics",
 		},
 	}
 };
 
 
-const insertStock = async (symbol: string, name: string, exchange: string, isin: string) => {
+const insertStock = async (symbol: string, name: string, exchange: string, isin: string, sector: string, industry: string) => {
 	await mySQLPool.promise().query(
-		"INSERT INTO stock (symbol, name, exchange, isin) VALUES (?, ?, ?, ?);",
-		[symbol, name, exchange, isin]
+		"INSERT INTO stock (symbol, name, exchange, isin, sector, industry) VALUES (?, ?, ?, ?, ?, ?);",
+		[symbol, name, exchange, isin, sector, industry]
 	);
 };
 
 const setQueryTimestamp = async (query: string, timestamp: Date) => {
 	await mySQLPool.promise().query(
 		`
-			INSERT INTO query_stock (query, last_refresh_timestamp)
+			INSERT INTO query_for_stock (query, last_refresh_timestamp)
 			VALUES (?, ?)
 			ON DUPLICATE KEY UPDATE last_refresh_timestamp = ?;
 		`,
@@ -136,7 +140,9 @@ describe("Request: GET", () => {
 					CONSTANTS.STOCKS.APPLE.SYMBOL,
 					CONSTANTS.STOCKS.APPLE.NAME,
 					CONSTANTS.STOCKS.APPLE.EXCHANGE,
-					CONSTANTS.STOCKS.APPLE.ISIN
+					CONSTANTS.STOCKS.APPLE.ISIN,
+					CONSTANTS.STOCKS.APPLE.SECTOR,
+					CONSTANTS.STOCKS.APPLE.INDUSTRY,
 				);
 
 				const res = await request(app).get(`/api/stock/search/${CONSTANTS.STOCKS.APPLE.SYMBOL}`).set(
@@ -147,14 +153,16 @@ describe("Request: GET", () => {
 				expect(res.statusCode).toBe(202);
 
 				expect(res.body).toEqual({
+					processedUnknownStock: false,
 					refreshRequired: false,
 					stocks: [{
-						id: 1,
 						symbol: CONSTANTS.STOCKS.APPLE.SYMBOL,
 						name: CONSTANTS.STOCKS.APPLE.NAME,
 						exchange: CONSTANTS.STOCKS.APPLE.EXCHANGE,
-						isin: CONSTANTS.STOCKS.APPLE.ISIN
-					}]
+						isin: CONSTANTS.STOCKS.APPLE.ISIN,
+						sector: CONSTANTS.STOCKS.APPLE.SECTOR,
+						industry: CONSTANTS.STOCKS.APPLE.INDUSTRY,
+				}]
 				});
 
 				expect(externalAPI.queryForStock).not.toHaveBeenCalled();
@@ -165,7 +173,9 @@ describe("Request: GET", () => {
 					symbol: CONSTANTS.STOCKS.APPLE.SYMBOL,
 					name: CONSTANTS.STOCKS.APPLE.NAME,
 					exchange: CONSTANTS.STOCKS.APPLE.EXCHANGE,
-					isin: CONSTANTS.STOCKS.APPLE.ISIN
+					isin: CONSTANTS.STOCKS.APPLE.ISIN,
+					sector: CONSTANTS.STOCKS.APPLE.SECTOR,
+					industry: CONSTANTS.STOCKS.APPLE.INDUSTRY,
 				});
 
 				const res = await request(app).get(`/api/stock/search/${CONSTANTS.STOCKS.APPLE.SYMBOL}`).set(
@@ -177,7 +187,7 @@ describe("Request: GET", () => {
 
 				expect(externalAPI.queryForStock).toHaveBeenCalledTimes(1);
 
-				expect(res.body.refreshRequired).toBeTruthy();
+				expect(res.body.processedUnknownStock).toBeTruthy();
 			});
 		});
 
@@ -187,18 +197,20 @@ describe("Request: GET", () => {
 					CONSTANTS.STOCKS.APPLE.SYMBOL,
 					CONSTANTS.STOCKS.APPLE.NAME,
 					CONSTANTS.STOCKS.APPLE.EXCHANGE,
-					CONSTANTS.STOCKS.APPLE.ISIN
+					CONSTANTS.STOCKS.APPLE.ISIN,
+					CONSTANTS.STOCKS.APPLE.SECTOR,
+					CONSTANTS.STOCKS.APPLE.INDUSTRY,
 				);
 			});
 
-			it("Should refresh a stock when the query_stock timestamp is old..", async () => {
+			it("Should refresh a stock when the query_for_stock timestamp is old..", async () => {
 				const pastDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
 
 				// Add a last_refresh_timestamp so far in the future that the external request cannot trigger
 				await mySQLPool.promise().query(
 					`
 						INSERT INTO
-							query_stock (query, last_refresh_timestamp)
+							query_for_stock (query, last_refresh_timestamp)
 						VALUES
 							(?, ?)
 						ON DUPLICATE KEY UPDATE
@@ -213,7 +225,9 @@ describe("Request: GET", () => {
 					symbol: CONSTANTS.STOCKS.APPLE.SYMBOL,
 					name: CONSTANTS.STOCKS.APPLE.NAME,
 					exchange: CONSTANTS.STOCKS.APPLE.EXCHANGE,
-					isin: CONSTANTS.STOCKS.APPLE.ISIN
+					isin: CONSTANTS.STOCKS.APPLE.ISIN,
+					sector: CONSTANTS.STOCKS.APPLE.SECTOR,
+					industry: CONSTANTS.STOCKS.APPLE.INDUSTRY,
 				});
 
 				const res = await request(app).get(`/api/stock/search/${CONSTANTS.STOCKS.APPLE.SYMBOL}`).set(
@@ -242,11 +256,11 @@ describe("Request: GET", () => {
 					name: CONSTANTS.STOCKS.APPLE.NAME,
 					exchange: CONSTANTS.STOCKS.APPLE.EXCHANGE,
 					isin: CONSTANTS.STOCKS.APPLE.ISIN,
+					sector: CONSTANTS.STOCKS.APPLE.SECTOR,
+					industry: CONSTANTS.STOCKS.APPLE.INDUSTRY,
 				});
 
-				const res = await request(app).get("/api/stock/search/AAPL").set("authorization", `Bearer ${token}`);
-
-				expect(res.statusCode).toBe(202);
+				await request(app).get("/api/stock/search/AAPL").set("authorization", `Bearer ${token}`).expect(202);
 
 				expect(externalAPI.queryForStock).toHaveBeenCalledTimes(1);
 
@@ -259,7 +273,7 @@ describe("Request: GET", () => {
 
 				expect(updatedStock[0].name).toBe(CONSTANTS.STOCKS.APPLE.NAME);
 
-				expect(updatedStock[0].isin).toBe(CONSTANTS.STOCKS.APPLE.ISIN,);
+				expect(updatedStock[0].isin).toBe(CONSTANTS.STOCKS.APPLE.ISIN);
 			});
 
 			it("Should create a new stock under the symbol that belonged to a previous stock..", async () => {
@@ -275,6 +289,8 @@ describe("Request: GET", () => {
 					symbol: CONSTANTS.STOCKS.APPLE.SYMBOL,
 					name: CONSTANTS.STOCKS.APPLE.NAME,
 					exchange: CONSTANTS.STOCKS.APPLE.EXCHANGE,
+					sector: CONSTANTS.STOCKS.APPLE.SECTOR,
+					industry: CONSTANTS.STOCKS.APPLE.INDUSTRY,
 				});
 
 				// Mock external API response
@@ -283,9 +299,13 @@ describe("Request: GET", () => {
 					symbol: CONSTANTS.STOCKS.BANANA.SYMBOL,
 					name: CONSTANTS.STOCKS.BANANA.NAME,
 					exchange: CONSTANTS.STOCKS.APPLE.EXCHANGE,
+					sector: CONSTANTS.STOCKS.APPLE.SECTOR,
+					industry: CONSTANTS.STOCKS.APPLE.INDUSTRY,
 				});
 
-				await request(app).get(`/api/stock/search/${CONSTANTS.STOCKS.APPLE.SYMBOL}`).set("authorization", `Bearer ${token}`);
+				await request(app).get(
+					`/api/stock/search/${CONSTANTS.STOCKS.APPLE.SYMBOL}`
+				).set("authorization", `Bearer ${token}`).expect(202);
 
 				expect(externalAPI.queryForStock).toHaveBeenCalledTimes(1);
 
@@ -301,6 +321,10 @@ describe("Request: GET", () => {
 				expect(formallyBananaIncStock[0].symbol).toBe(CONSTANTS.STOCKS.APPLE.SYMBOL);
 
 				expect(formallyBananaIncStock[0].name).toBe(CONSTANTS.STOCKS.APPLE.NAME);
+
+				expect(formallyBananaIncStock[0].sector).toBe(CONSTANTS.STOCKS.APPLE.SECTOR);
+
+				expect(formallyBananaIncStock[0].industry).toBe(CONSTANTS.STOCKS.APPLE.INDUSTRY);
 
 				const [formallyAppleIncStock] = await mySQLPool.promise().query<IStock>(
 					"SELECT * FROM stock WHERE isin = ?;",
@@ -327,6 +351,8 @@ describe("Request: GET", () => {
 					CONSTANTS.STOCKS.BANANA.NAME,
 					CONSTANTS.STOCKS.BANANA.EXCHANGE,
 					CONSTANTS.STOCKS.BANANA.ISIN,
+					CONSTANTS.STOCKS.BANANA.SECTOR,
+					CONSTANTS.STOCKS.BANANA.INDUSTRY,
 				);
 
 				// Mock the external API response
@@ -335,10 +361,14 @@ describe("Request: GET", () => {
 					symbol: CONSTANTS.STOCKS.BANANA.SYMBOL,
 					name: CONSTANTS.STOCKS.BANANA.NAME,
 					exchange: CONSTANTS.STOCKS.BANANA.EXCHANGE,
+					sector: CONSTANTS.STOCKS.BANANA.SECTOR,
+					industry: CONSTANTS.STOCKS.BANANA.INDUSTRY,
 				});
 
 				const oranceIncName = "Orange Inc.";
 				const oranceIncSymbol = "ORANGE";
+				const oranceIncSector = "Technology";
+				const oranceIncIndustry = "Consumer Electronics";
 
 				// Mock external API response
 				(externalAPI.queryForStockByIsin as jest.Mock).mockResolvedValue({
@@ -346,9 +376,16 @@ describe("Request: GET", () => {
 					symbol: oranceIncSymbol,
 					name: oranceIncName,
 					exchange: CONSTANTS.STOCKS.APPLE.EXCHANGE,
+					sector: CONSTANTS.STOCKS.BANANA.SECTOR,
+					industry: CONSTANTS.STOCKS.BANANA.INDUSTRY,
 				});
 
-				await request(app).get(`/api/stock/search/${CONSTANTS.STOCKS.BANANA.SYMBOL}`).set("authorization", `Bearer ${token}`);
+				await request(app).get(`/api/stock/search/${CONSTANTS.STOCKS.BANANA.SYMBOL}`).set(
+					"authorization",
+					`Bearer ${token}`
+				).expect(
+					202
+				);
 
 				expect(externalAPI.queryForStock).toHaveBeenCalledTimes(1);
 
@@ -365,6 +402,10 @@ describe("Request: GET", () => {
 
 				expect(formallyAppleIncStock[0].name).toBe(CONSTANTS.STOCKS.BANANA.NAME);
 
+				expect(formallyAppleIncStock[0].sector).toBe(CONSTANTS.STOCKS.BANANA.SECTOR);
+
+				expect(formallyAppleIncStock[0].industry).toBe(CONSTANTS.STOCKS.BANANA.INDUSTRY);
+
 				const [formallyBananaIncStock] = await mySQLPool.promise().query<IStock>(
 					"SELECT * FROM stock WHERE isin = ?;",
 					[CONSTANTS.STOCKS.BANANA.ISIN]
@@ -375,6 +416,10 @@ describe("Request: GET", () => {
 				expect(formallyBananaIncStock[0].symbol).toBe(oranceIncSymbol);
 
 				expect(formallyBananaIncStock[0].name).toBe(oranceIncName);
+
+				expect(formallyBananaIncStock[0].sector).toBe(oranceIncSector);
+
+				expect(formallyBananaIncStock[0].industry).toBe(oranceIncIndustry);
 			});
 		});
 	});
@@ -385,7 +430,9 @@ describe("Request: GET", () => {
 				CONSTANTS.STOCKS.APPLE.SYMBOL,
 				CONSTANTS.STOCKS.APPLE.NAME,
 				CONSTANTS.STOCKS.APPLE.EXCHANGE,
-				CONSTANTS.STOCKS.APPLE.ISIN
+				CONSTANTS.STOCKS.APPLE.ISIN,
+				CONSTANTS.STOCKS.APPLE.SECTOR,
+				CONSTANTS.STOCKS.APPLE.INDUSTRY,
 			);
 		});
 
@@ -394,7 +441,7 @@ describe("Request: GET", () => {
 				await request(app).post("/api/stock/delete").send().expect(401);
 			});
 
-			it("fails without stock_id", async () => {
+			it("fails without stock_isin", async () => {
 				const res = await request(app).post("/api/stock/delete").set("authorization", `Bearer ${token}`).send({
 					load: {}
 				});
@@ -416,7 +463,7 @@ describe("Request: GET", () => {
 					`Bearer ${token}`
 				).send({
 					load: {
-						stock_id: assets[0].id
+						stock_isin: assets[0].isin
 					}
 				});
 

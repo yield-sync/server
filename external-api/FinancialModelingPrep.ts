@@ -21,7 +21,7 @@ export default {
 		try
 		{
 			const response = await axios.get(
-				`${uRL}/api/v3/profile/${ticker}?apikey=${key}`
+				`${uRL}/stable/profile?symbol=${ticker}&apikey=${key}`
 			);
 
 			if (response.data.length == 0)
@@ -30,10 +30,12 @@ export default {
 			}
 
 			return {
+				isin: response.data[0].isin,
 				symbol: response.data[0].symbol,
 				name: response.data[0].companyName,
-				exchange: response.data[0].exchangeShortName.toLowerCase(),
-				isin: response.data[0].isin,
+				exchange: response.data[0].exchange.toLowerCase(),
+				sector: response.data[0].sector,
+				industry: response.data[0].industry,
 			} as IStock;
 		}
 		catch (error)
