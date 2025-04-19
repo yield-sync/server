@@ -395,7 +395,8 @@ const queries: string[] = [
 			('Regulated Electric'),
 			('Independent Power Producers'),
 			('Diversified Utilities'),
-			('General Utilitie')
+			('General Utilitie'),
+			('Decentralized Exchange')
 		;
 	`,
 ];
