@@ -111,6 +111,8 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 							s.name AS stock_name,
 							s.isin,
 							s.exchange,
+							s.sector,
+							s.industry,
 							c.symbol AS cryptocurrency_symbol,
 							c.name AS cryptocurrency_name,
 							c.coingecko_id
