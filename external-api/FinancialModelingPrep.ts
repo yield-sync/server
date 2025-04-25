@@ -29,9 +29,6 @@ export default {
 				return null;
 			}
 
-			console.log(response.data);
-
-
 			return {
 				isin: response.data[0].isin,
 				symbol: response.data[0].symbol,
