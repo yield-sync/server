@@ -43,7 +43,7 @@ declare global
 	type StockSearchQuery = {
 		processedUnknownStock: boolean,
 		refreshRequired: boolean,
-		stocks: IStock[],
+		stocks: IStock,
 	}
 
 	type StockDelete = Load & {
