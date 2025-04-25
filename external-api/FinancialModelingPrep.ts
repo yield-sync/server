@@ -16,7 +16,7 @@ export class ExternalRequestError extends
 
 
 export default {
-	queryForStock: async (ticker: string): Promise<IStock | null> =>
+	getStockProfile: async (ticker: string): Promise<IStock | null> =>
 	{
 		try
 		{
@@ -28,6 +28,9 @@ export default {
 			{
 				return null;
 			}
+
+			console.log(response.data);
+
 
 			return {
 				isin: response.data[0].isin,
@@ -43,6 +46,40 @@ export default {
 			throw new ExternalRequestError("Error fetching external API: " + error);
 		}
 	},
+
+	queryForStock: async (ticker: string): Promise<any[] | null> =>
+		{
+			try
+			{
+				const response = await axios.get(
+					`${uRL}/stable/search-symbol?query=${ticker}&apikey=${key}`
+				);
+
+				if (response.data.length == 0)
+				{
+					return null;
+				}
+
+				let stocks: any[] = [];
+
+				for (let i = 0; i < response.data.length; i++)
+				{
+					stocks.push(
+						{
+							name: response.data[i].name,
+							symbol: response.data[i].symbol,
+							exchange: response.data[i].exchange,
+						} as any
+					);
+				}
+
+				return stocks;
+			}
+			catch (error)
+			{
+				throw new ExternalRequestError("Error fetching external API: " + error);
+			}
+		},
 
 	queryForStockByIsin: async (isin: string): Promise<IStock | null> =>
 	{

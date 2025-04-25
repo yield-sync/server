@@ -55,8 +55,8 @@ describe("Database Initialization", () =>
 				"portfolio",
 				"portfolio_asset",
 				"user",
-				"query_for_cryptocurrency",
-				"query_for_stock",
+				"profile_cryptocurrency",
+				"profile_stock",
 				"stock",
 				"verification"
 			])
@@ -208,7 +208,7 @@ describe("Table: cryptocurrency", () =>
 	});
 });
 
-describe("Table: query_for_stock", () => {
+describe("Table: profile_stock", () => {
 	// TODO: Add tests for checking length of query and compliance to constraints
 });
 

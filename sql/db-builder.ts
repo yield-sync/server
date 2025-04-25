@@ -36,21 +36,21 @@ const queries: string[] = [
 			industry VARCHAR(255) NOT NULL UNIQUE PRIMARY KEY
 		);
 	`,
-	// query_for_cryptocurrency
+	// profile_cryptocurrency
 	`
-		CREATE TABLE query_for_cryptocurrency (
+		CREATE TABLE profile_cryptocurrency (
 			id INT AUTO_INCREMENT PRIMARY KEY,
 			query VARCHAR(50) NOT NULL,
-			last_refresh_timestamp DATETIME NOT NULL,
+			last_updated DATETIME NOT NULL,
 			UNIQUE KEY unique_query (query)
 		);
 	`,
-	// query_for_stock
+	// profile_stock
 	`
-		CREATE TABLE query_for_stock (
+		CREATE TABLE profile_stock (
 			id INT AUTO_INCREMENT PRIMARY KEY,
 			query VARCHAR(10) NOT NULL,
-			last_refresh_timestamp DATETIME NOT NULL,
+			last_updated DATETIME NOT NULL,
 			UNIQUE KEY unique_query (query),
 			CONSTRAINT check_query_format CHECK (query REGEXP '^[A-Za-z]{1,10}$')
 		);
@@ -88,7 +88,7 @@ const queries: string[] = [
 			industry VARCHAR(255) NOT NULL,
 			exchange VARCHAR(10) NOT NULL CHECK (exchange IN (${sQLStockExchanges})),
 			name VARCHAR(255) NOT NULL,
-			symbol VARCHAR(255) NOT NULL UNIQUE,
+			symbol VARCHAR(12) NOT NULL UNIQUE,
 
 			FOREIGN KEY (sector) REFERENCES sector(sector) ON DELETE CASCADE,
 			FOREIGN KEY (industry) REFERENCES industry(industry) ON DELETE CASCADE

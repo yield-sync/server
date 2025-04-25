@@ -129,15 +129,15 @@ describe("Request: GET", () =>
 
 					const fiveDaysAfter = new Date((new Date()).getTime() + 5 * 24 * 60 * 60 * 1000);
 
-					// Add a last_refresh_timestamp so far in the future that the external request cannot trigger
+					// Add a last_updated so far in the future that the external request cannot trigger
 					await mySQLPool.promise().query(
 						`
 							INSERT INTO
-								query_for_cryptocurrency (query, last_refresh_timestamp)
+								profile_cryptocurrency (query, last_updated)
 							VALUES
 								(?, ?)
 							ON DUPLICATE KEY UPDATE
-								last_refresh_timestamp = ?
+								last_updated = ?
 							;
 						`,
 						[cryptoSymbol, fiveDaysAfter, fiveDaysAfter]

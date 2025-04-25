@@ -4,7 +4,7 @@ import mysql from "mysql2";
 import { loadRequired } from "../../../middleware/load";
 import userToken from "../../../middleware/user-token";
 import { INTERNAL_SERVER_ERROR, HTTPStatus } from "../../../constants";
-import DBHandlerQueryStock from "../../../db-handler/query_for_stock";
+import DBHandlerProfileStock from "../../../db-handler/profile_stock";
 import DBHandlerStock from "../../../db-handler/stock";
 import { sanitizeSymbolQuery } from "../../../util/sanitizer";
 import externalSource from "../../../external-api/FinancialModelingPrep";
@@ -18,12 +18,11 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 {
 	return express.Router().get(
 		/**
-		* @route GET /api/stock/search/:symbolresponse
-		* @desc Search for a stock and add it to DB if it doesnt exist
-		* @param query {string} to search for
+		* @desc Get stock profile if it exists and add it to DB if not found
+		* @param symbol {string} of stock
 		* @access authorized:user
 		*/
-		"/search/:query",
+		"/profile/:symbol",
 		userToken.userTokenDecode(mySQLPool),
 		async (req: express.Request, res: express.Response) =>
 		{
@@ -38,11 +37,11 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 			try
 			{
-				const { query, } = req.params;
+				const { symbol, } = req.params;
 
-				const symbol = sanitizeSymbolQuery(query);
+				const cleanedSymbol = sanitizeSymbolQuery(symbol);
 
-				if (symbol == "QUERY")
+				if (cleanedSymbol == "SYMBOL")
 				{
 					res.status(HTTPStatus.BAD_REQUEST).send("❌ Invalid query passed");
 
@@ -60,19 +59,19 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 					const dBStock: IStock = dBStockQueryResult[0];
 
-					const queryForStock = await DBHandlerQueryStock.getQueryForStock(mySQLPool, symbol);
+					const profileStock = await DBHandlerProfileStock.getProfileStock(mySQLPool, symbol);
 
-					const lastRefresh: Date | null = queryForStock.length > 0 ? new Date(
-						queryForStock[0].last_refresh_timestamp
+					const lastUpdated: Date | null = profileStock.length > 0 ? new Date(
+						profileStock[0].last_updated
 					) : null;
 
-					response.refreshRequired = !lastRefresh || (
-						timestamp.getTime() - lastRefresh.getTime()
+					response.refreshRequired = !lastUpdated || (
+						timestamp.getTime() - lastUpdated.getTime()
 					) >= ONE_WEEK_IN_MS;
 
 					if (response.refreshRequired)
 					{
-						const externalStock: IStock = await externalSource.queryForStock(symbol);
+						const externalStock: IStock = await externalSource.getStockProfile(symbol);
 
 						if (!externalStock)
 						{
@@ -119,7 +118,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				{
 					response.processedUnknownStock = true;
 
-					const externalStock: IStock = await externalSource.queryForStock(symbol);
+					const externalStock: IStock = await externalSource.getStockProfile(symbol);
 
 					if (!externalStock)
 					{
@@ -154,10 +153,119 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 						await DBHandlerStock.createStock(mySQLPool, externalStock);
 					}
 
-					await DBHandlerQueryStock.updateQueryForStockTimestamp(mySQLPool, symbol, timestamp);
+					await DBHandlerProfileStock.updateProfileStockLastUpdated(mySQLPool, symbol, timestamp);
 				}
 
 				response.stocks = await DBHandlerStock.getStockBySymbol(mySQLPool, symbol);
+
+				res.status(HTTPStatus.ACCEPTED).json(response);
+			}
+			catch (error: Error | any)
+			{
+				if (error instanceof Error)
+				{
+					res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
+						message: `${INTERNAL_SERVER_ERROR}: ${error.message}`,
+					});
+
+					return;
+				}
+
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
+					message: `${INTERNAL_SERVER_ERROR}: Unknown error`,
+				});
+			}
+		}
+	).get(
+		/**
+		* @desc Search for a stock in the internal DB
+		* @param query {string} to search for
+		* @access authorized:user
+		*/
+		"/search/:query",
+		userToken.userTokenDecode(mySQLPool),
+		async (req: express.Request, res: express.Response) =>
+		{
+			const timestamp = new Date();
+
+			let response: {
+				stocks: IStock[]
+			} = {
+				stocks: [
+				],
+			};
+
+			try
+			{
+				const { query, } = req.params;
+
+				const symbol = sanitizeSymbolQuery(query);
+
+				if (symbol == "QUERY")
+				{
+					res.status(HTTPStatus.BAD_REQUEST).send("❌ Invalid query passed");
+
+					return;
+				}
+
+				response.stocks = await DBHandlerStock.getStockByLikeSymbol(mySQLPool, symbol);
+
+				res.status(HTTPStatus.ACCEPTED).json(response);
+			}
+			catch (error: Error | any)
+			{
+				if (error instanceof Error)
+				{
+					res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
+						message: `${INTERNAL_SERVER_ERROR}: ${error.message}`,
+					});
+
+					return;
+				}
+
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
+					message: `${INTERNAL_SERVER_ERROR}: Unknown error`,
+				});
+			}
+		}
+	).get(
+		/**
+		* @desc Search for a stock from the external source
+		* @param query {string} to search for
+		* @access authorized:user
+		*/
+		"/search-external/:query",
+		userToken.userTokenDecode(mySQLPool),
+		async (req: express.Request, res: express.Response) =>
+		{
+			let response: {
+				stocks: any[]
+			} = {
+				stocks: [
+				],
+			};
+
+			try
+			{
+				const { query, } = req.params;
+
+				const symbol = sanitizeSymbolQuery(query);
+
+				if (symbol == "QUERY")
+				{
+					res.status(HTTPStatus.BAD_REQUEST).send("❌ Invalid query passed");
+
+					return;
+				}
+
+				response.stocks = await externalSource.queryForStock(symbol);
+
+				if (!response.stocks)
+				{
+					res.status(HTTPStatus.BAD_REQUEST).send("Nothing found for query in DB and External");
+
+					return;
+				}
 
 				res.status(HTTPStatus.ACCEPTED).json(response);
 			}

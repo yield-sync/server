@@ -57,6 +57,20 @@ export default {
 		return stocks;
 	},
 
+	getStockByLikeSymbol: async (mySQLPool: mysql.Pool, symbol: string): Promise<IStock[]> =>
+	{
+		let [
+			stocks,
+		] = await mySQLPool.promise().query<IStock[]>(
+			"SELECT * FROM stock WHERE symbol LIKE ?;",
+			[
+				`%${symbol}%`,
+			]
+		);
+
+		return stocks;
+	},
+
 	updateStock: async (mySQLPool: mysql.Pool, stock: IStock) =>
 	{
 		await mySQLPool.promise().query(
@@ -75,8 +89,9 @@ export default {
 	markStockSymbolUnknown: async (mySQLPool: mysql.Pool, isin: string) =>
 	{
 		await mySQLPool.promise().query(
-			"UPDATE stock SET symbol = 0 WHERE isin = ?;",
+			"UPDATE stock SET symbol = ? WHERE isin = ?;",
 			[
+				isin,
 				isin,
 			]
 		);
