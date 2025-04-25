@@ -131,14 +131,14 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					any[],
 					FieldPacket[]
 				] = await mySQLPool.promise().query(
-					"SELECT last_refresh_timestamp FROM query_for_cryptocurrency WHERE query = ?;",
+					"SELECT last_updated FROM profile_cryptocurrency WHERE query = ?;",
 					[
 						query,
 					]
 				);
 
 				const lastExternalReqTimestamp = queryCryptocurrency.length > 0 ? new Date(
-					queryCryptocurrency[0].last_refresh_timestamp
+					queryCryptocurrency[0].last_updated
 				) : null;
 
 				resJSON.externalRequestRequired = !lastExternalReqTimestamp || (
@@ -150,11 +150,11 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					await mySQLPool.promise().query(
 						`
 							INSERT INTO
-								query_for_cryptocurrency (query, last_refresh_timestamp)
+								profile_cryptocurrency (query, last_updated)
 							VALUES
 								(?, ?)
 							ON DUPLICATE KEY UPDATE
-								last_refresh_timestamp = ?
+								last_updated = ?
 							;
 						`,
 						[
