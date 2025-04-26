@@ -30,7 +30,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			let response: StockSearchQuery = {
 				processedUnknownStock: false,
 				refreshRequired: false,
-				stocks: null,
+				stock: null,
 			};
 
 			try
@@ -154,7 +154,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					await DBHandlerProfileStock.updateProfileStockLastUpdated(mySQLPool, symbol, timestamp);
 				}
 
-				response.stocks = (await DBHandlerStock.getStockBySymbol(mySQLPool, symbol))[0];
+				response.stock = (await DBHandlerStock.getStockBySymbol(mySQLPool, symbol))[0];
 
 				res.status(HTTPStatus.ACCEPTED).json(response);
 			}
