@@ -154,7 +154,7 @@ describe("Request: GET", () => {
 					`Bearer ${token}`
 				).send({ load: { stock_isin, } }).expect(400);
 
-				expect(RES.text).toBe("No portfolio_id received");
+				expect(RES.text).toBe("{\"message\":\"No portfolio_id received\"}");
 
 				const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio_asset;");
 
@@ -176,7 +176,7 @@ describe("Request: GET", () => {
 					}
 				}).expect(400);
 
-				expect(RES.text).toBe("No stock_isin received");
+				expect(RES.body.message).toBe("No stock_isin received");
 
 				const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio_asset;");
 
@@ -199,7 +199,7 @@ describe("Request: GET", () => {
 					}
 				}).expect(400);
 
-				expect(RES.text).toBe("No percent_allocation received");
+				expect(RES.body.message).toBe("No percent_allocation received");
 
 				const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio_asset;");
 
@@ -267,7 +267,7 @@ describe("Request: GET", () => {
 
 				expect(response.statusCode).toBe(400);
 
-				expect(response.text).toBe("❌ Invalid percent_allocation");
+				expect(response.body.message).toBe("❌ Invalid percent_allocation");
 			});
 
 			it("Should fail if to insert percent_allocation < 0..", async () => {
@@ -284,7 +284,7 @@ describe("Request: GET", () => {
 
 				expect(response.statusCode).toBe(400);
 
-				expect(response.text).toBe("❌ Invalid percent_allocation");
+				expect(response.body.message).toBe("❌ Invalid percent_allocation");
 			});
 		});
 		describe("Route: /api/portfolio-asset/update", () => {
@@ -308,7 +308,7 @@ describe("Request: GET", () => {
 						`Bearer ${token}`
 					).send({ load: { stock_isin, } }).expect(400);
 
-					expect(RES.text).toBe("No portfolio_id received");
+					expect(RES.text).toBe("{\"message\":\"No portfolio_id received\"}");
 
 					const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio_asset;");
 
@@ -330,7 +330,7 @@ describe("Request: GET", () => {
 						}
 					}).expect(400);
 
-					expect(RES.text).toBe("No stock_isin received");
+					expect(RES.body.message).toBe("No stock_isin received");
 
 					const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio_asset;");
 
@@ -353,7 +353,7 @@ describe("Request: GET", () => {
 						}
 					}).expect(400);
 
-					expect(RES.text).toBe("No percent_allocation received");
+					expect(RES.body.message).toBe("No percent_allocation received");
 
 					const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio_asset;");
 
@@ -421,6 +421,11 @@ describe("Request: GET", () => {
 		});
 	});
 });
+
+describe("Request: PUT", () => {});
+
+describe("Request: DELETE", () => {});
+
 
 afterAll(async () => {
 	await dBDrop(DB_NAME, mySQLPool);

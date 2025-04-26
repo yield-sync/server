@@ -25,28 +25,28 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				if (!stock_isin)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send("No stock_isin received");
+					res.status(HTTPStatus.BAD_REQUEST).send({ message: "No stock_isin received" });
 
 					return;
 				}
 
 				if (!portfolio_id)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send("No portfolio_id received");
+					res.status(HTTPStatus.BAD_REQUEST).send({ message: "No portfolio_id received" });
 
 					return;
 				}
 
 				if (!percent_allocation)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send("No percent_allocation received");
+					res.status(HTTPStatus.BAD_REQUEST).send({ message: "No percent_allocation received" });
 
 					return;
 				}
 
 				if (percent_allocation < 0 || percent_allocation > 10_000)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send("❌ Invalid percent_allocation");
+					res.status(HTTPStatus.BAD_REQUEST).send({ message: "❌ Invalid percent_allocation" });
 
 					return;
 				}
@@ -66,14 +66,14 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				if (!Array.isArray(portfolios))
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send("Expected result is not Array");
+					res.status(HTTPStatus.BAD_REQUEST).send({ message: "Expected result is not Array" });
 
 					return;
 				}
 
 				if (portfolios.length == 0)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send("❌ Invalid portfolio_id");
+					res.status(HTTPStatus.BAD_REQUEST).send({ message: "❌ Invalid portfolio_id" });
 
 					return;
 				}
@@ -105,7 +105,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					]
 				);
 
-				res.status(HTTPStatus.CREATED).send("Portfolio asset created");
+				res.status(HTTPStatus.CREATED).send({ message: "Portfolio asset created" });
 
 				return;
 
@@ -128,7 +128,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		}
 	).put(
 		/**
-		* @route POST /api/portfolio-asset/create
+		* @route PUT /api/portfolio-asset/update/:id
 		* @desc Create portofolio asset
 		* @access User
 		*/
@@ -145,28 +145,28 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				if (!stock_isin)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send("No stock_isin received");
+					res.status(HTTPStatus.BAD_REQUEST).send({ message: "No stock_isin received" });
 
 					return;
 				}
 
 				if (!portfolio_id)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send("No portfolio_id received");
+					res.status(HTTPStatus.BAD_REQUEST).send({ message: "No portfolio_id received" });
 
 					return;
 				}
 
 				if (!percent_allocation)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send("No percent_allocation received");
+					res.status(HTTPStatus.BAD_REQUEST).send({ message: "No percent_allocation received" });
 
 					return;
 				}
 
 				if (percent_allocation < 0 || percent_allocation > 10_000)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send("❌ Invalid percent_allocation");
+					res.status(HTTPStatus.BAD_REQUEST).send({ message: "❌ Invalid percent_allocation" });
 
 					return;
 				}
@@ -186,14 +186,14 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				if (!Array.isArray(portfolios))
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send("Expected result is not Array");
+					res.status(HTTPStatus.BAD_REQUEST).send({ message: "Expected result is not Array" });
 
 					return;
 				}
 
 				if (portfolios.length == 0)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send("❌ Invalid portfolio_id");
+					res.status(HTTPStatus.BAD_REQUEST).send({ message: "❌ Invalid portfolio_asset id" });
 
 					return;
 				}
@@ -209,10 +209,103 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					]
 				);
 
-				res.status(HTTPStatus.CREATED).send("Portfolio asset updated");
+				res.status(HTTPStatus.CREATED).send({ message: "Portfolio asset updated" });
 
 				return;
 
+			}
+			catch (error: Error | any)
+			{
+				if (error instanceof Error)
+				{
+					res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
+						message: `${INTERNAL_SERVER_ERROR}: ${error.message}`,
+					});
+
+					return;
+				}
+
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
+					message: `${INTERNAL_SERVER_ERROR}: Unknown error`,
+				});
+			}
+		}
+	).delete(
+		/**
+		* @route DELETE /api/portfolio-asset/:id
+		* @dev Make sure that the portfolio_asset belongs to the portfolio's owner
+		*/
+		"/:id",
+		userToken.userTokenDecode(mySQLPool),
+		async (req: express.Request, res: express.Response) =>
+		{
+			const { id } = req.params;
+
+			try
+			{
+				const [
+					portfolio_assets,
+				]: [
+					IPortfolioAsset[],
+					FieldPacket[]
+				] = await mySQLPool.promise().query(
+					"SELECT * FROM portfolio_asset WHERE id = ?;",
+					[
+						id
+					]
+				);
+
+				if (!Array.isArray(portfolio_assets))
+				{
+					res.status(HTTPStatus.BAD_REQUEST).send({ message: "Expected result is not Array" });
+
+					return;
+				}
+
+				if (portfolio_assets.length == 0)
+				{
+					res.status(HTTPStatus.BAD_REQUEST).send({ message: "❌ Invalid portfolio_asset id" });
+
+					return;
+				}
+
+				const [
+					portfolios,
+				]: [
+					IPortfolio[],
+					FieldPacket[]
+				] = await mySQLPool.promise().query(
+					"SELECT * FROM portfolio WHERE id = ? AND user_id = ?;",
+					[
+						portfolio_assets[0].portfolio_id,
+						req.userDecoded.id,
+					]
+				);
+
+				if (!Array.isArray(portfolios))
+				{
+					res.status(HTTPStatus.BAD_REQUEST).send({ message: "Expected result is not Array" });
+
+					return;
+				}
+
+				if (portfolios.length == 0)
+				{
+					res.status(HTTPStatus.BAD_REQUEST).send({
+						message: "❌ No portfolio found for portfolio_asset id (Possibly not your portfolio_asset)"
+					});
+
+					return;
+				}
+
+				await mySQLPool.promise().query(
+					"DELETE FROM portfolio_asset WHERE id = ?;",
+					[
+						id,
+					]
+				);
+
+				res.status(HTTPStatus.OK).send({ message: "Deleted portfolio_asset" });
 			}
 			catch (error: Error | any)
 			{

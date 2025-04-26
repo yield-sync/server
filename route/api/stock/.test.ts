@@ -156,14 +156,14 @@ describe("Request: GET", () => {
 				expect(res.body).toEqual({
 					processedUnknownStock: false,
 					refreshRequired: false,
-					stocks: [{
+					stock: {
 						symbol: CONSTANTS.STOCKS.APPLE.SYMBOL,
 						name: CONSTANTS.STOCKS.APPLE.NAME,
 						exchange: CONSTANTS.STOCKS.APPLE.EXCHANGE,
 						isin: CONSTANTS.STOCKS.APPLE.ISIN,
 						sector: CONSTANTS.STOCKS.APPLE.SECTOR,
 						industry: CONSTANTS.STOCKS.APPLE.INDUSTRY,
-					}]
+					}
 				});
 
 				expect(externalAPI.queryForStock).not.toHaveBeenCalled();
