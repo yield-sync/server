@@ -3,7 +3,7 @@ import mysql from "mysql2";
 
 import { loadRequired } from "../../../middleware/load";
 import userToken from "../../../middleware/user-token";
-import { INTERNAL_SERVER_ERROR, HTTPStatus } from "../../../constants";
+import { INTERNAL_SERVER_ERROR, HTTPStatus, stockExchanges } from "../../../constants";
 import DBHandlerProfileStock from "../../../db-handler/profile_stock";
 import DBHandlerStock from "../../../db-handler/stock";
 import { sanitizeSymbolQuery } from "../../../util/sanitizer";
@@ -254,7 +254,19 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				response.stocks = await externalSource.queryForStock(symbol);
+				let externalSearchResults = await externalSource.queryForStock(symbol);
+
+				let filteredList = [];
+
+				for (let i = 0; i < externalSearchResults.length; i++)
+				{
+					if (stockExchanges.includes(externalSearchResults[i].exchange.toLowerCase()))
+					{
+						filteredList.push(externalSearchResults[i]);
+					}
+				}
+
+				response.stocks = filteredList;
 
 				if (!response.stocks)
 				{

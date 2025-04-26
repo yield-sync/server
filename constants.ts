@@ -3,7 +3,6 @@ export const INTERNAL_SERVER_ERROR: string = "🔥 Internal server error";
 export const stockExchanges: string[] = [
 	"nasdaq",
 	"nyse",
-	"amex",
 ];
 
 export const HTTPStatus = {
