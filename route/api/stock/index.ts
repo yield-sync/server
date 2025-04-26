@@ -232,7 +232,6 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		* @access authorized:user
 		*/
 		"/search-external/:query",
-		userToken.userTokenDecode(mySQLPool),
 		async (req: express.Request, res: express.Response) =>
 		{
 			let response: {
