@@ -178,7 +178,6 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		/**
 		* @desc Search for a stock in the internal DB
 		* @param query {string} to search for
-		* @access authorized:user
 		*/
 		"/search/:query",
 		async (req: express.Request, res: express.Response) =>
@@ -229,7 +228,6 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		/**
 		* @desc Search for a stock from the external source
 		* @param query {string} to search for
-		* @access authorized:user
 		*/
 		"/search-external/:query",
 		async (req: express.Request, res: express.Response) =>
