@@ -23,7 +23,6 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		* @access authorized:user
 		*/
 		"/profile/:symbol",
-		userToken.userTokenDecode(mySQLPool),
 		async (req: express.Request, res: express.Response) =>
 		{
 			const timestamp = new Date();
@@ -182,7 +181,6 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		* @access authorized:user
 		*/
 		"/search/:query",
-		userToken.userTokenDecode(mySQLPool),
 		async (req: express.Request, res: express.Response) =>
 		{
 			const timestamp = new Date();
