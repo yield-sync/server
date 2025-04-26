@@ -254,15 +254,28 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				let externalSearchResults = await externalSource.queryForStock(symbol);
+				const externalSearchResults = await externalSource.queryForStock(symbol);
 
 				let filteredList = [];
 
 				for (let i = 0; i < externalSearchResults.length; i++)
 				{
-					if (stockExchanges.includes(externalSearchResults[i].exchange.toLowerCase()))
+					/**
+					* @dev Using a try-catch because the API might return something weird
+					*/
+
+					try
 					{
-						filteredList.push(externalSearchResults[i]);
+						if (stockExchanges.includes(externalSearchResults[i].exchange.toLowerCase()))
+						{
+							filteredList.push(externalSearchResults[i]);
+						}
+					}
+					catch (error)
+					{
+						console.warn("Invalid element:", externalSearchResults[i]);
+
+						continue;
 					}
 				}
 

@@ -52,11 +52,6 @@ export default {
 					`${uRL}/stable/search-symbol?query=${ticker}&apikey=${key}`
 				);
 
-				if (response.data.length == 0)
-				{
-					return null;
-				}
-
 				let stocks: any[] = [];
 
 				for (let i = 0; i < response.data.length; i++)
