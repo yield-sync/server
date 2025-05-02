@@ -327,6 +327,8 @@ describe("Table: portfolio_asset", () => {
 				)
 			).resolves.not.toThrow();
 		});
+
+		it("Should allow inserting portfolio_assets with balance of greater than 0..", async () => {});
 	});
 
 	describe("Expected Failure", () => {
@@ -444,5 +446,7 @@ describe("Table: portfolio_asset", () => {
 				)
 			).rejects.toThrow("[before update] Total percent allocation for the portfolio exceeds 10000");
 		});
+
+		it("Should allow inserting portfolio_assets with balance of less than 0..", async () => {});
 	});
 });

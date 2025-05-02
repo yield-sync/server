@@ -106,6 +106,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					`
 						SELECT
 							pa.id AS portfolio_asset_id,
+							pa.balance,
 							pa.percent_allocation,
 							s.symbol AS stock_symbol,
 							s.name AS stock_name,
