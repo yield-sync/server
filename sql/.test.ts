@@ -299,7 +299,7 @@ describe("Table: portfolio_asset", () => {
 
 
 	describe("Expected Success", () => {
-		it("Should allow inserting portfolio assets within allocation limits..", async () => {
+		it("Should allow inserting portfolio_assets within allocation limits..", async () => {
 			// Insert portfolio assets within 100% allocation (10,000 basis points)
 			await expect(
 				testMySQLPool.promise().query(
@@ -330,7 +330,7 @@ describe("Table: portfolio_asset", () => {
 	});
 
 	describe("Expected Failure", () => {
-		it("Should fail to enter multiple entries of the same cryptocurrency within the same portfolio..", async () => {
+		it("Should fail to enter multiple entries of the same stock_isin within the same portfolio..", async () => {
 			// Insert portfolio assets within 100% allocation (10,000 basis points)
 			await expect(
 				testMySQLPool.promise().query(
@@ -359,7 +359,7 @@ describe("Table: portfolio_asset", () => {
 			).rejects.toThrow("Duplicate entry '1-1' for key 'unique_portfolio_stock'");
 		});
 
-		it("Should fail to enter multiple entries of the same cryptocurrency within the same portfolio..", async () => {
+		it("Should fail to enter multiple entries of the same cryptocurrency_id within the same portfolio..", async () => {
 			// Insert portfolio assets within 100% allocation (10,000 basis points)
 			await expect(
 				testMySQLPool.promise().query(
@@ -386,6 +386,10 @@ describe("Table: portfolio_asset", () => {
 					[portfolioId, cryptocurrencyIdEthereum]
 				)
 			).rejects.toThrow("Duplicate entry '1-1' for key 'unique_portfolio_cryptocurrency'");
+		});
+
+		it("Should fail to update an existing stock_isin to another stock_isin that is already within the portfolio..",async () => {
+			// TODO Complete the test
 		});
 
 		it("Should fail when inserting portfolio asset exceeding allocation limit..", async () => {

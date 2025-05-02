@@ -123,6 +123,7 @@ const queries: string[] = [
 			cryptocurrency_id INT,
 			stock_isin VARCHAR(12),
 			percent_allocation INT NOT NULL DEFAULT 0 CHECK (percent_allocation BETWEEN 0 AND 10000),
+			balance INT NOT NULL DEFAULT 0 CHECK (balance >= 0),
 			created DATETIME DEFAULT CURRENT_TIMESTAMP,
 
 			PRIMARY KEY (id),
