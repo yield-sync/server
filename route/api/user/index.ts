@@ -365,7 +365,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 						},
 						config.app.secretKey,
 						{
-							expiresIn: config.nodeENV == "production" ? 7200 : 10000000,
+							expiresIn: config.nodeENV == "production" ? "7d" : "100d",
 						}
 					),
 				});
