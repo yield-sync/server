@@ -279,7 +279,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				response.stocks = filteredList;
 
-				if (!response.stocks)
+				if (response.stocks.length == 0)
 				{
 					res.status(HTTPStatus.BAD_REQUEST).send("Nothing found for query in DB and External");
 

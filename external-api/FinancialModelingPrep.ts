@@ -44,7 +44,7 @@ export default {
 		}
 	},
 
-	queryForStock: async (ticker: string): Promise<any[] | null> =>
+	queryForStock: async (ticker: string): Promise<any[]> =>
 		{
 			try
 			{

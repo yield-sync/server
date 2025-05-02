@@ -527,8 +527,8 @@ describe("Request: GET", () => {
 				expect(externalAPI.queryForStock).toHaveBeenCalledWith(CONSTANTS.STOCKS.APPLE.SYMBOL);
 			});
 
-			it("Should return 400 if external source returns null or empty..", async () => {
-				mocked(externalAPI.queryForStock as jest.Mock).mockResolvedValueOnce(null);
+			it("Should return 400 if external source returns empty array..", async () => {
+				mocked(externalAPI.queryForStock as jest.Mock).mockResolvedValueOnce([]);
 
 				const res = await request(app).get(`/api/stock/search-external/${CONSTANTS.STOCKS.BANANA.SYMBOL}`).set(
 					"authorization",
