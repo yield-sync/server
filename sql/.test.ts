@@ -299,6 +299,21 @@ describe("Table: portfolio_asset", () => {
 
 
 	describe("Expected Success", () => {
+		it("Should allow inserting portfolio_assets with balance of 0..", async () => {
+			await expect(
+				testMySQLPool.promise().query(
+					`
+						INSERT INTO portfolio_asset
+							(portfolio_id, stock_isin, percent_allocation, balance)
+						VALUES
+							(?, ?, 50, 0)
+						;
+					`,
+					[portfolioId, stockIdMicrosoft]
+				)
+			).rejects.not.toThrow();
+		});
+
 		it("Should allow inserting portfolio_assets within allocation limits..", async () => {
 			// Insert portfolio assets within 100% allocation
 			await expect(
@@ -503,10 +518,6 @@ describe("Table: portfolio_asset", () => {
 					[95, portfolioId, stockIdApple]
 				)
 			).rejects.toThrow("[before update] Total percent allocation for the portfolio exceeds 100");
-		});
-
-		it("Should allow inserting portfolio_assets with balance of less than 0..", async () => {
-			// TODO Complete the test
 		});
 
 		it("Should fail to update portfolio_id to a portfolio that does not belong to the user_id tied to it..", async () => {
