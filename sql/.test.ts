@@ -300,7 +300,7 @@ describe("Table: portfolio_asset", () => {
 
 	describe("Expected Success", () => {
 		it("Should allow inserting portfolio_assets within allocation limits..", async () => {
-			// Insert portfolio assets within 100% allocation (10,000 basis points)
+			// Insert portfolio assets within 100% allocation
 			await expect(
 				testMySQLPool.promise().query(
 					`
@@ -328,14 +328,25 @@ describe("Table: portfolio_asset", () => {
 			).resolves.not.toThrow();
 		});
 
-		it("Should allow inserting portfolio_assets with balance of greater than 0..", async () => {
-			// TODO Complete the test
+		it("Should allow inserting portfolio_assets with balance of less than 0", async () => {
+			await expect(
+				testMySQLPool.promise().query(
+					`
+						INSERT INTO portfolio_asset
+							(portfolio_id, stock_isin, percent_allocation, balance)
+						VALUES
+							(?, ?, 50, -1)
+						;
+					`,
+					[portfolioId, stockIdMicrosoft]
+				)
+			).rejects.toThrow("CONSTRAINT `portfolio_asset.balance` failed for `test_db`.`portfolio_asset`");
 		});
 	});
 
 	describe("Expected Failure", () => {
 		it("Should fail to enter multiple entries of the same stock_isin within the same portfolio..", async () => {
-			// Insert portfolio assets within 100% allocation (10,000 basis points)
+			// Insert portfolio assets within 100% allocation
 			await expect(
 				testMySQLPool.promise().query(
 					`
@@ -364,7 +375,7 @@ describe("Table: portfolio_asset", () => {
 		});
 
 		it("Should fail to enter multiple entries of the same cryptocurrency_id within the same portfolio..", async () => {
-			// Insert portfolio assets within 100% allocation (10,000 basis points)
+			// Insert portfolio assets within 100% allocation
 			await expect(
 				testMySQLPool.promise().query(
 					`
@@ -393,7 +404,38 @@ describe("Table: portfolio_asset", () => {
 		});
 
 		it("Should fail to update an existing stock_isin to another stock_isin that is already within the portfolio..",async () => {
-			// TODO Complete the test
+			// Insert Apple and Microsoft as separate assets
+			await testMySQLPool.promise().query(
+				`
+					INSERT INTO portfolio_asset
+						(portfolio_id, stock_isin, percent_allocation)
+					VALUES
+						(?, ?, ?);
+				`,
+				[portfolioId, stockIdApple, 50]
+			);
+
+			await testMySQLPool.promise().query(
+				`
+					INSERT INTO portfolio_asset
+						(portfolio_id, stock_isin, percent_allocation)
+					VALUES
+						(?, ?, ?);
+				`,
+				[portfolioId, stockIdMicrosoft, 50]
+			);
+
+			// Attempt to update MSFT to AAPL (already exists)
+			await expect(
+				testMySQLPool.promise().query(
+					`
+						UPDATE portfolio_asset
+						SET stock_isin = ?
+						WHERE portfolio_id = ? AND stock_isin = ?;
+					`,
+					[stockIdApple, portfolioId, stockIdMicrosoft]
+				)
+			).rejects.toThrow("Duplicate entry '1-1' for key 'unique_portfolio_stock'");
 		});
 
 		it("Should fail when inserting portfolio asset exceeding allocation limit..", async () => {
@@ -428,23 +470,37 @@ describe("Table: portfolio_asset", () => {
 		});
 
 		it("Should fail when updating a portfolio asset to exceed allocation limit..", async () => {
-			// Insert portfolio assets up to 50%
-			await expect(
-				testMySQLPool.promise().query(
-					"INSERT INTO portfolio_asset (portfolio_id, stock_isin, percent_allocation) VALUES (?, ?, ?);",
-					[portfolioId, stockIdApple, 100]
-				)
-			).resolves.not.toThrow();
-
-			const [portfolioAssetRows]: any = await testMySQLPool.promise().query(
-				"SELECT * FROM portfolio_asset WHERE portfolio_id = ? AND percent_allocation = 100;",
-				[portfolioId]
+			// Insert one with 90%
+			await testMySQLPool.promise().query(
+				`
+					INSERT INTO portfolio_asset
+						(portfolio_id, stock_isin, percent_allocation)
+					VALUES
+						(?, ?, ?);
+				`,
+				[portfolioId, stockIdApple, 90]
 			);
 
+			// Insert second with 10%
+			await testMySQLPool.promise().query(
+				`
+					INSERT INTO portfolio_asset
+						(portfolio_id, stock_isin, percent_allocation)
+					VALUES
+						(?, ?, ?);
+				`,
+				[portfolioId, stockIdMicrosoft, 10]
+			);
+
+			// Try to update Apple to 95% (would make total 105%)
 			await expect(
 				testMySQLPool.promise().query(
-					"UPDATE portfolio_asset SET percent_allocation = ? WHERE id = ?;",
-					[101, portfolioAssetRows[0].id]
+					`
+						UPDATE portfolio_asset
+						SET percent_allocation = ?
+						WHERE portfolio_id = ? AND stock_isin = ?;
+					`,
+					[95, portfolioId, stockIdApple]
 				)
 			).rejects.toThrow("[before update] Total percent allocation for the portfolio exceeds 100");
 		});
