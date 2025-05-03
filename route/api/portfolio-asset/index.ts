@@ -19,7 +19,6 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{
-			// TODO add balance parameter
 			const { balance, percent_allocation, portfolio_id, stock_isin, }: PortfolioAssetCreate = req.body.load;
 
 			try
