@@ -148,7 +148,7 @@ describe("Request: GET", () => {
 				expect(results.length).toBe(0);
 			});
 
-			it("Should fail if no portfolio asset_id passed..", async () => {
+			it("Should fail if no portfolio stock_isin or cryptocurrency_id provided..", async () => {
 				const RES = await request(app).post("/api/portfolio-asset/create").set(
 					'authorization',
 					`Bearer ${token}`
@@ -158,7 +158,7 @@ describe("Request: GET", () => {
 					}
 				}).expect(400);
 
-				expect(RES.body.message).toBe("No stock_isin received");
+				expect(RES.body.message).toBe("❓ No stock_isin received");
 
 				const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio_asset;");
 
@@ -181,7 +181,31 @@ describe("Request: GET", () => {
 					}
 				}).expect(400);
 
-				expect(RES.body.message).toBe("No percent_allocation received");
+				expect(RES.body.message).toBe("❓ No percent_allocation received");
+
+				const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio_asset;");
+
+				if (!Array.isArray(results))
+				{
+					throw new Error("Expected result is not Array");
+				}
+
+				expect(results.length).toBe(0);
+			});
+
+			it("Should fail if no balance passed..", async () => {
+				const RES = await request(app).post("/api/portfolio-asset/create").set(
+					'authorization',
+					`Bearer ${token}`
+				).send({
+					load: {
+						portfolio_id,
+						stock_isin,
+						percent_allocation: 0,
+					}
+				}).expect(400);
+
+				expect(RES.body.message).toBe("❓ No balance received");
 
 				const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio_asset;");
 
@@ -204,6 +228,7 @@ describe("Request: GET", () => {
 						portfolio_id,
 						stock_isin,
 						percent_allocation: 0,
+						balance: 0,
 					} as PortfolioAssetCreate
 				});
 
@@ -244,6 +269,7 @@ describe("Request: GET", () => {
 						portfolio_id,
 						stock_isin,
 						percent_allocation: 10_001,
+						balance: 0,
 					} as PortfolioAssetCreate
 				});
 
@@ -261,6 +287,7 @@ describe("Request: GET", () => {
 						portfolio_id,
 						stock_isin,
 						percent_allocation: -1,
+						balance: 0,
 					} as PortfolioAssetCreate
 				});
 
@@ -335,6 +362,7 @@ describe("Request: GET", () => {
 							portfolio_id,
 							stock_isin,
 							percent_allocation: 10_000,
+							balance: 0,
 						} as PortfolioAssetCreate
 					});
 

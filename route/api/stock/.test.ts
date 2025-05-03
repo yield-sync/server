@@ -29,7 +29,7 @@ jest.mock("../../../external-api/FinancialModelingPrep", () => ({
 
 
 const CONSTANTS = {
-	DB_NAME: "mock_db_stock",
+	DB_NAME: "test_db_stock",
 	USER: {
 		EMAIL: "testemail@example.com",
 		PASSWORD: "testpassword!"

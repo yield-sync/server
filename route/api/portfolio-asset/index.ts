@@ -20,27 +20,27 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		async (req: express.Request, res: express.Response) =>
 		{
 			// TODO add balance parameter
-			const { portfolio_id, stock_isin, percent_allocation, }: PortfolioAssetCreate = req.body.load;
+			const { balance, percent_allocation, portfolio_id, stock_isin, }: PortfolioAssetCreate = req.body.load;
 
 			try
 			{
 				if (!stock_isin)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send({ message: "No stock_isin received" });
+					res.status(HTTPStatus.BAD_REQUEST).send({ message: "❓ No stock_isin received" });
 
 					return;
 				}
 
 				if (!portfolio_id)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send({ message: "No portfolio_id received" });
+					res.status(HTTPStatus.BAD_REQUEST).send({ message: "❓ No portfolio_id received" });
 
 					return;
 				}
 
 				if (!percent_allocation && percent_allocation != 0)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send({ message: "No percent_allocation received" });
+					res.status(HTTPStatus.BAD_REQUEST).send({ message: "❓ No percent_allocation received" });
 
 					return;
 				}
@@ -48,6 +48,13 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				if (percent_allocation < 0 || percent_allocation > 10_000)
 				{
 					res.status(HTTPStatus.BAD_REQUEST).send({ message: "❌ Invalid percent_allocation" });
+
+					return;
+				}
+
+				if (!balance && balance != 0)
+				{
+					res.status(HTTPStatus.BAD_REQUEST).send({ message: "❓ No balance received" });
 
 					return;
 				}
@@ -98,11 +105,18 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				// Insert into portfolio_asset
 				await mySQLPool.promise().query(
-					"INSERT INTO portfolio_asset (portfolio_id, stock_isin, percent_allocation) VALUES (?, ?, ?);",
+					`
+						INSERT INTO portfolio_asset
+							(portfolio_id, stock_isin, percent_allocation, balance)
+						VALUES
+							(?, ?, ?, ?)
+						;
+					`,
 					[
 						portfolio_id,
 						stock_isin,
 						percent_allocation,
+						balance,
 					]
 				);
 
