@@ -361,7 +361,7 @@ describe("Request: GET", () => {
 						load: {
 							portfolio_id,
 							stock_isin,
-							percent_allocation: 10_000,
+							percent_allocation: 100,
 							balance: 0,
 						} as PortfolioAssetCreate
 					});
@@ -372,7 +372,7 @@ describe("Request: GET", () => {
 					).send({
 						load: {
 							balance: 100,
-							percent_allocation: 10_000,
+							percent_allocation: 100,
 						} as PortfolioAssetUpdate
 					});
 
@@ -408,14 +408,14 @@ describe("Request: GET", () => {
 						throw new Error("Key 'balance' not in portfolioAssets");
 					}
 
-					expect(portfolioAssests[0].balance).toBe(100);
+					expect(Number(portfolioAssests[0].balance)).toBe(100);
 
 					if (!("percent_allocation" in portfolioAssests[0]))
 					{
 						throw new Error("Key 'percent_allocation' not in portfolioAssets");
 					}
 
-					expect(portfolioAssests[0].percent_allocation).toBe(10_000);
+					expect(Number(portfolioAssests[0].percent_allocation)).toBe(100);
 				});
 			});
 		});

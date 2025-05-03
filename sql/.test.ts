@@ -307,7 +307,7 @@ describe("Table: portfolio_asset", () => {
 						INSERT INTO portfolio_asset
 							(portfolio_id, stock_isin, percent_allocation)
 						VALUES
-							(?, ?, 5000)
+							(?, ?, 50)
 						;
 					`,
 					[portfolioId, stockIdApple]
@@ -320,7 +320,7 @@ describe("Table: portfolio_asset", () => {
 						INSERT INTO portfolio_asset
 							(portfolio_id, stock_isin, percent_allocation)
 						VALUES
-							(?, ?, 5000)
+							(?, ?, 50)
 						;
 					`,
 					[portfolioId, stockIdMicrosoft]
@@ -342,7 +342,7 @@ describe("Table: portfolio_asset", () => {
 						INSERT INTO portfolio_asset
 							(portfolio_id, stock_isin, percent_allocation)
 						VALUES
-							(?, ?, 5000)
+							(?, ?, 50)
 						;
 					`,
 					[portfolioId, stockIdApple]
@@ -355,7 +355,7 @@ describe("Table: portfolio_asset", () => {
 						INSERT INTO portfolio_asset
 							(portfolio_id, stock_isin, percent_allocation)
 						VALUES
-							(?, ?, 5000)
+							(?, ?, 50)
 						;
 					`,
 					[portfolioId, stockIdApple]
@@ -371,7 +371,7 @@ describe("Table: portfolio_asset", () => {
 						INSERT INTO portfolio_asset
 							(portfolio_id, cryptocurrency_id, percent_allocation)
 						VALUES
-							(?, ?, 5000)
+							(?, ?, 50)
 						;
 					`,
 					[portfolioId, cryptocurrencyIdEthereum]
@@ -384,7 +384,7 @@ describe("Table: portfolio_asset", () => {
 						INSERT INTO portfolio_asset
 							(portfolio_id, cryptocurrency_id, percent_allocation)
 						VALUES
-							(?, ?, 5000)
+							(?, ?, 50)
 						;
 					`,
 					[portfolioId, cryptocurrencyIdEthereum]
@@ -407,7 +407,7 @@ describe("Table: portfolio_asset", () => {
 							(?, ?, ?)
 						;
 					`,
-					[portfolioId, stockIdApple, 9000]
+					[portfolioId, stockIdApple, 90]
 				)
 			).resolves.not.toThrow();
 
@@ -422,9 +422,9 @@ describe("Table: portfolio_asset", () => {
 							(?, ?, ?)
 						;
 					`,
-					[portfolioId, stockIdMicrosoft, 2000] // 20% more (total 110%)
+					[portfolioId, stockIdMicrosoft, 20] // 20% more (total 110%)
 				)
-			).rejects.toThrow("[before insert] Total percent allocation for the portfolio exceeds 10000");
+			).rejects.toThrow("[before insert] Total percent allocation for the portfolio exceeds 100");
 		});
 
 		it("Should fail when updating a portfolio asset to exceed allocation limit..", async () => {
@@ -432,21 +432,21 @@ describe("Table: portfolio_asset", () => {
 			await expect(
 				testMySQLPool.promise().query(
 					"INSERT INTO portfolio_asset (portfolio_id, stock_isin, percent_allocation) VALUES (?, ?, ?);",
-					[portfolioId, stockIdApple, 10000]
+					[portfolioId, stockIdApple, 100]
 				)
 			).resolves.not.toThrow();
 
 			const [portfolioAssetRows]: any = await testMySQLPool.promise().query(
-				"SELECT * FROM portfolio_asset WHERE portfolio_id = ? AND percent_allocation = 10000;",
+				"SELECT * FROM portfolio_asset WHERE portfolio_id = ? AND percent_allocation = 100;",
 				[portfolioId]
 			);
 
 			await expect(
 				testMySQLPool.promise().query(
 					"UPDATE portfolio_asset SET percent_allocation = ? WHERE id = ?;",
-					[10001, portfolioAssetRows[0].id]
+					[101, portfolioAssetRows[0].id]
 				)
-			).rejects.toThrow("[before update] Total percent allocation for the portfolio exceeds 10000");
+			).rejects.toThrow("[before update] Total percent allocation for the portfolio exceeds 100");
 		});
 
 		it("Should allow inserting portfolio_assets with balance of less than 0..", async () => {

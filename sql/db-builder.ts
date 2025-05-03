@@ -122,8 +122,8 @@ const queries: string[] = [
 			portfolio_id INT NOT NULL,
 			cryptocurrency_id INT,
 			stock_isin VARCHAR(12),
-			percent_allocation INT NOT NULL DEFAULT 0 CHECK (percent_allocation BETWEEN 0 AND 10000),
-			balance INT NOT NULL DEFAULT 0 CHECK (balance >= 0),
+			percent_allocation DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (percent_allocation BETWEEN 0.00 AND 100.00),
+			balance DECIMAL(20,8) NOT NULL DEFAULT 0 CHECK (balance >= 0),
 			created DATETIME DEFAULT CURRENT_TIMESTAMP,
 
 			PRIMARY KEY (id),
@@ -180,9 +180,9 @@ const queries: string[] = [
 			FROM portfolio_asset
 			WHERE portfolio_id = NEW.portfolio_id;
 
-			IF total_allocation + NEW.percent_allocation > 10000 THEN
+			IF total_allocation + NEW.percent_allocation > 100 THEN
 				SIGNAL SQLSTATE '45000'
-				SET MESSAGE_TEXT = '[before insert] Total percent allocation for the portfolio exceeds 10000';
+				SET MESSAGE_TEXT = '[before insert] Total percent allocation for the portfolio exceeds 100';
 			END IF;
 		END;
 	`,
@@ -199,9 +199,9 @@ const queries: string[] = [
 			FROM portfolio_asset
 			WHERE portfolio_id = NEW.portfolio_id AND id != OLD.id;
 
-			IF total_allocation + NEW.percent_allocation > 10000 THEN
+			IF total_allocation + NEW.percent_allocation > 100 THEN
 				SIGNAL SQLSTATE '45000'
-				SET MESSAGE_TEXT = '[before update] Total percent allocation for the portfolio exceeds 10000';
+				SET MESSAGE_TEXT = '[before update] Total percent allocation for the portfolio exceeds 100';
 			END IF;
 		END;
 	`,
