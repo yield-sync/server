@@ -54,6 +54,7 @@ declare global
 		portfolio_id: string,
 		stock_isin: string,
 		percent_allocation: number,
+		//balance: number;
 	};
 
 	type PortfolioAssetCreateByQuery = Load & {
@@ -64,8 +65,7 @@ declare global
 
 	type PortfolioAssetUpdate = Load & {
 		id: string;
-		stock_isin: string;
-		portfolio_id: string;
+		balance: number;
 		percent_allocation: number;
 	};
 

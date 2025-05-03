@@ -148,24 +148,6 @@ describe("Request: GET", () => {
 				expect(results.length).toBe(0);
 			});
 
-			it("Should fail if no portfolio_id passed..", async () => {
-				const RES = await request(app).post("/api/portfolio-asset/create").set(
-					'authorization',
-					`Bearer ${token}`
-				).send({ load: { stock_isin, } }).expect(400);
-
-				expect(RES.text).toBe("{\"message\":\"No portfolio_id received\"}");
-
-				const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio_asset;");
-
-				if (!Array.isArray(results))
-				{
-					throw new Error("Expected result is not Array");
-				}
-
-				expect(results.length).toBe(0);
-			});
-
 			it("Should fail if no portfolio asset_id passed..", async () => {
 				const RES = await request(app).post("/api/portfolio-asset/create").set(
 					'authorization',
@@ -221,7 +203,7 @@ describe("Request: GET", () => {
 					load: {
 						portfolio_id,
 						stock_isin,
-						percent_allocation: 10_000,
+						percent_allocation: 0,
 					} as PortfolioAssetCreate
 				});
 
@@ -302,35 +284,13 @@ describe("Request: GET", () => {
 					expect(results.length).toBe(0);
 				});
 
-				it("Should fail if no portfolio_id passed..", async () => {
+				it("Should fail if no balance passed..", async () => {
 					const RES = await request(app).put("/api/portfolio-asset/update/invalid-id").set(
 						'authorization',
 						`Bearer ${token}`
-					).send({ load: { stock_isin, } }).expect(400);
+					).send({ load: { } }).expect(400);
 
-					expect(RES.text).toBe("{\"message\":\"No portfolio_id received\"}");
-
-					const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio_asset;");
-
-					if (!Array.isArray(results))
-					{
-						throw new Error("Expected result is not Array");
-					}
-
-					expect(results.length).toBe(0);
-				});
-
-				it("Should fail if no portfolio asset_id passed..", async () => {
-					const RES = await request(app).put("/api/portfolio-asset/update/invalid-id").set(
-						'authorization',
-						`Bearer ${token}`
-					).send({
-						load: {
-							portfolio_id: portfolio_id,
-						}
-					}).expect(400);
-
-					expect(RES.body.message).toBe("No stock_isin received");
+					expect(RES.body.message).toBe("❓ No balance received");
 
 					const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio_asset;");
 
@@ -348,12 +308,11 @@ describe("Request: GET", () => {
 						`Bearer ${token}`
 					).send({
 						load: {
-							portfolio_id,
-							stock_isin,
+							balance: 0,
 						}
 					}).expect(400);
 
-					expect(RES.body.message).toBe("No percent_allocation received");
+					expect(RES.body.message).toBe("❓ No percent_allocation received");
 
 					const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio_asset;");
 
@@ -384,10 +343,9 @@ describe("Request: GET", () => {
 						`Bearer ${token}`
 					).send({
 						load: {
-							portfolio_id,
-							stock_isin,
+							balance: 100,
 							percent_allocation: 10_000,
-						} as PortfolioAssetCreate
+						} as PortfolioAssetUpdate
 					});
 
 					expect(RES_PORTFOLIO_ASSET.statusCode).toBe(201);
@@ -416,6 +374,20 @@ describe("Request: GET", () => {
 					}
 
 					expect(portfolioAssests[0].portfolio_id).toBe(portfolio_id);
+
+					if (!("balance" in portfolioAssests[0]))
+					{
+						throw new Error("Key 'balance' not in portfolioAssets");
+					}
+
+					expect(portfolioAssests[0].balance).toBe(100);
+
+					if (!("percent_allocation" in portfolioAssests[0]))
+					{
+						throw new Error("Key 'percent_allocation' not in portfolioAssets");
+					}
+
+					expect(portfolioAssests[0].percent_allocation).toBe(10_000);
 				});
 			});
 		});

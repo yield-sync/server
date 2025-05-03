@@ -452,5 +452,9 @@ describe("Table: portfolio_asset", () => {
 		it("Should allow inserting portfolio_assets with balance of less than 0..", async () => {
 			// TODO Complete the test
 		});
+
+		it("Should fail to update portfolio_id to a portfolio that does not belong to the user_id tied to it..", async () => {
+			// TODO Complete the test
+		});
 	});
 });

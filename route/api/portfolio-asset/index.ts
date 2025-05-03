@@ -19,6 +19,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{
+			// TODO add balance parameter
 			const { portfolio_id, stock_isin, percent_allocation, }: PortfolioAssetCreate = req.body.load;
 
 			try
@@ -37,7 +38,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				if (!percent_allocation)
+				if (!percent_allocation && percent_allocation != 0)
 				{
 					res.status(HTTPStatus.BAD_REQUEST).send({ message: "No percent_allocation received" });
 
@@ -139,27 +140,20 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		{
 			const { id, } = req.params;
 
-			const { portfolio_id, stock_isin, percent_allocation, }: PortfolioAssetUpdate = req.body.load;
+			const { balance, percent_allocation }: PortfolioAssetUpdate = req.body.load;
 
 			try
 			{
-				if (!stock_isin)
+				if (!balance && balance != 0)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send({ message: "No stock_isin received" });
+					res.status(HTTPStatus.BAD_REQUEST).send({ message: "❓ No balance received" });
 
 					return;
 				}
 
-				if (!portfolio_id)
+				if (!percent_allocation && percent_allocation != 0)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send({ message: "No portfolio_id received" });
-
-					return;
-				}
-
-				if (!percent_allocation)
-				{
-					res.status(HTTPStatus.BAD_REQUEST).send({ message: "No percent_allocation received" });
+					res.status(HTTPStatus.BAD_REQUEST).send({ message: "❓ No percent_allocation received" });
 
 					return;
 				}
@@ -171,39 +165,11 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				const [
-					portfolios,
-				]: [
-					IPortfolio[],
-					FieldPacket[]
-				] = await mySQLPool.promise().query(
-					"SELECT * FROM portfolio WHERE id = ? AND user_id = ?;",
-					[
-						portfolio_id,
-						req.userDecoded.id,
-					]
-				);
-
-				if (!Array.isArray(portfolios))
-				{
-					res.status(HTTPStatus.BAD_REQUEST).send({ message: "Expected result is not Array" });
-
-					return;
-				}
-
-				if (portfolios.length == 0)
-				{
-					res.status(HTTPStatus.BAD_REQUEST).send({ message: "❌ Invalid portfolio_asset id" });
-
-					return;
-				}
-
 				// Insert into portfolio_asset
 				await mySQLPool.promise().query(
-					"UPDATE portfolio_asset SET portfolio_id = ?, stock_isin = ?, percent_allocation = ? WHERE id = ?;",
+					"UPDATE portfolio_asset SET balance = ?, percent_allocation = ? WHERE id = ?;",
 					[
-						portfolio_id,
-						stock_isin,
+						balance,
 						percent_allocation,
 						id,
 					]
