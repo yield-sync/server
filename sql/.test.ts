@@ -311,7 +311,7 @@ describe("Table: portfolio_asset", () => {
 					`,
 					[portfolioId, stockIdMicrosoft]
 				)
-			).rejects.not.toThrow();
+			).resolves.not.toThrow();
 		});
 
 		it("Should allow inserting portfolio_assets within allocation limits..", async () => {
