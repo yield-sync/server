@@ -52,9 +52,9 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		}
 	).delete(
 		/**
-		* @route DELETE /api/cryptocurrency/delete/:cryptoid
+		* @route DELETE /api/cryptocurrency/:cryptoid
 		*/
-		"/delete/:cryptoid",
+		"/:cryptoid",
 		userToken.userTokenDecodeAdmin(mySQLPool),
 		async (req: express.Request, res: express.Response) =>
 		{
