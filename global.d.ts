@@ -40,10 +40,10 @@ declare global
 		symbol?: string;
 	};
 
-	type StockSearchQuery = {
-		processedUnknownStock: boolean,
-		refreshRequired: boolean,
-		stock: IStock,
+	type AssetSearchQuery = {
+		processedUnknownAsset: boolean,
+		refreshAssetRequired: boolean,
+		asset: IAsset | null,
 	}
 
 	type StockDelete = Load & {
@@ -110,17 +110,6 @@ declare global
 	type MySQLQueryResult = [QueryResult, FieldPacket[]];
 
 	// Interfaces
-	interface ICrypto extends
-		RowDataPacket,
-		OkPacket
-	{
-		id: number;
-		name: string;
-		symbol: string;
-		network: string;
-		isin?: string;
-	}
-
 	interface ICryptocurrency extends
 		RowDataPacket,
 		OkPacket
@@ -153,16 +142,18 @@ declare global
 		created: number;
 	}
 
-	interface IStock extends
+	interface IAsset extends
 		RowDataPacket,
 		OkPacket
 	{
-		isin: string;
+		id: string;
 		name: string;
 		symbol: string;
-		exchange: string;
+		type: string;
+		platform: string;
 		sector: string;
 		industry: string;
+		refreshed: number;
 	}
 
 	interface IUser extends

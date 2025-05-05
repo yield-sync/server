@@ -13,6 +13,10 @@ export class ExternalRequestError extends
 
 
 export default {
+	getCryptocurrencyProfile: async (id: string): Promise<IAsset | null> => {
+		return null;
+	},
+
 	queryForCryptocurrency: async (query: string): Promise<CoingeckoCoin[]> =>
 	{
 		try

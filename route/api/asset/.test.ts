@@ -11,7 +11,7 @@ import routeApiUser from "../user/index";
 
 // Config and Utilities
 import config from "../../../config";
-import externalAPI from "../../../external-api/FinancialModelingPrep";
+import externalAPI from "../../../external-api/data-provider-stock";
 import DBBuilder, { dBDrop } from "../../../sql/db-builder";
 
 
@@ -65,9 +65,9 @@ const insertStock = async (symbol: string, name: string, exchange: string, isin:
 const setQueryTimestamp = async (query: string, timestamp: Date) => {
 	await mySQLPool.promise().query(
 		`
-			INSERT INTO profile_stock (query, last_updated)
+			INSERT INTO profile_stock (query, refreshed)
 			VALUES (?, ?)
-			ON DUPLICATE KEY UPDATE last_updated = ?;
+			ON DUPLICATE KEY UPDATE refreshed = ?;
 		`,
 		[query, timestamp, timestamp]
 	);
@@ -155,7 +155,7 @@ describe("Request: GET", () => {
 
 				expect(res.body).toEqual({
 					processedUnknownStock: false,
-					refreshRequired: false,
+					refreshAssetRequired: false,
 					stock: {
 						symbol: CONSTANTS.STOCKS.APPLE.SYMBOL,
 						name: CONSTANTS.STOCKS.APPLE.NAME,
@@ -207,15 +207,15 @@ describe("Request: GET", () => {
 			it("Should refresh a stock when the profile_stock timestamp is old..", async () => {
 				const pastDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
 
-				// Add a last_updated so far in the future that the external request cannot trigger
+				// Add a refreshed so far in the future that the external request cannot trigger
 				await mySQLPool.promise().query(
 					`
 						INSERT INTO
-							profile_stock (query, last_updated)
+							profile_stock (query, refreshed)
 						VALUES
 							(?, ?)
 						ON DUPLICATE KEY UPDATE
-							last_updated = ?
+							refreshed = ?
 						;
 					`,
 					[CONSTANTS.STOCKS.APPLE.SYMBOL, pastDate, pastDate]
@@ -238,7 +238,7 @@ describe("Request: GET", () => {
 
 				expect(externalAPI.getStockProfile).toHaveBeenCalledTimes(1);
 
-				expect(res.body.refreshRequired).toBeTruthy();
+				expect(res.body.refreshAssetRequired).toBeTruthy();
 			});
 
 			it("Should update stock name and symbol if ISIN found already in DB..", async () => {
@@ -265,7 +265,7 @@ describe("Request: GET", () => {
 
 				expect(externalAPI.getStockProfile).toHaveBeenCalledTimes(1);
 
-				const [updatedStock] = await mySQLPool.promise().query<IStock>(
+				const [updatedStock] = await mySQLPool.promise().query<IAsset>(
 					"SELECT * FROM stock WHERE isin = ?;",
 					[CONSTANTS.STOCKS.APPLE.ISIN,]
 				);
@@ -316,7 +316,7 @@ describe("Request: GET", () => {
 
 				expect(externalAPI.queryForStockByIsin).toHaveBeenCalledTimes(1);
 
-				const [formallyBananaIncStock] = await mySQLPool.promise().query<IStock>(
+				const [formallyBananaIncStock] = await mySQLPool.promise().query<IAsset>(
 					"SELECT * FROM stock WHERE symbol = ?;",
 					[CONSTANTS.STOCKS.APPLE.SYMBOL]
 				);
@@ -331,7 +331,7 @@ describe("Request: GET", () => {
 
 				expect(formallyBananaIncStock[0].industry).toBe(CONSTANTS.STOCKS.APPLE.INDUSTRY);
 
-				const [formallyAppleIncStock] = await mySQLPool.promise().query<IStock>(
+				const [formallyAppleIncStock] = await mySQLPool.promise().query<IAsset>(
 					"SELECT * FROM stock WHERE isin = ?;",
 					[CONSTANTS.STOCKS.APPLE.ISIN,]
 				);
@@ -396,7 +396,7 @@ describe("Request: GET", () => {
 
 				expect(externalAPI.queryForStockByIsin).toHaveBeenCalledTimes(1);
 
-				const [formallyAppleIncStock] = await mySQLPool.promise().query<IStock>(
+				const [formallyAppleIncStock] = await mySQLPool.promise().query<IAsset>(
 					"SELECT * FROM stock WHERE symbol = ?;",
 					[CONSTANTS.STOCKS.BANANA.SYMBOL]
 				);
@@ -411,7 +411,7 @@ describe("Request: GET", () => {
 
 				expect(formallyAppleIncStock[0].industry).toBe(CONSTANTS.STOCKS.BANANA.INDUSTRY);
 
-				const [formallyBananaIncStock] = await mySQLPool.promise().query<IStock>(
+				const [formallyBananaIncStock] = await mySQLPool.promise().query<IAsset>(
 					"SELECT * FROM stock WHERE isin = ?;",
 					[CONSTANTS.STOCKS.BANANA.ISIN]
 				);

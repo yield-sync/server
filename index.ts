@@ -15,10 +15,9 @@ import config from "./config";
 import { INTERNAL_SERVER_ERROR, HTTPStatus } from "./constants";
 import rateLimiter from "./rate-limiter";
 import routeApi from "./route/api";
-import routeApiCryptocurrency from "./route/api/cryptocurrency";
+import routeApiAsset from "./route/api/asset";
 import routeApiPortfolio from "./route/api/portfolio";
 import routeApiPortfolioAsset from "./route/api/portfolio-asset";
-import routeApiStock from "./route/api/stock";
 import routeApiUser from "./route/api/user";
 
 
@@ -80,17 +79,14 @@ http.createServer(
 		"/api",
 		routeApi()
 	).use(
-		"/api/cryptocurrency",
-		routeApiCryptocurrency(MYSQL_POOL)
-	).use(
 		"/api/portfolio",
 		routeApiPortfolio(MYSQL_POOL)
 	).use(
 		"/api/portfolio-asset",
 		routeApiPortfolioAsset(MYSQL_POOL)
 	).use(
-		"/api/stock",
-		routeApiStock(MYSQL_POOL)
+		"/api/asset",
+		routeApiAsset(MYSQL_POOL)
 	).use(
 		"/api/user",
 		routeApiUser(MYSQL_POOL)

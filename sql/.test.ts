@@ -50,14 +50,11 @@ describe("Database Initialization", () =>
 			expect.arrayContaining([
 				"industry",
 				"sector",
-				"cryptocurrency",
-				"cryptocurrency_platform",
+				"platform",
 				"portfolio",
-				"portfolio_asset",
+				"query_asset",
 				"user",
-				"profile_cryptocurrency",
-				"profile_stock",
-				"stock",
+				"asset",
 				"verification"
 			])
 		);

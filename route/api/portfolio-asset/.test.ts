@@ -3,7 +3,7 @@ import mysql from "mysql2";
 
 import routeApiPortfolioAsset from "./index";
 import routeApi from "../index";
-import routeApiAsset from "../stock/index";
+import routeApiAsset from "../asset/index";
 import routeApiPortfolio from "../portfolio/index";
 import routeApiUser from "../user/index";
 import config from "../../../config";

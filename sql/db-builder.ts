@@ -5,13 +5,7 @@ class DBBuilderError extends
 import mysql from "mysql2";
 
 import config from "../config";
-import { stockExchanges } from "../constants";
 
-
-const sQLStockExchanges: string = stockExchanges.map((n) =>
-{
-	return `'${n}'`;
-}).join(", ");
 
 const queries: string[] = [
 	/*
@@ -20,37 +14,24 @@ const queries: string[] = [
 	* ************************
 	*/
 
-
-	// cryptocurrency
-	`
-		CREATE TABLE cryptocurrency (
-			id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-			coingecko_id VARCHAR(50) NOT NULL UNIQUE,
-			symbol VARCHAR(50) NOT NULL,
-			name VARCHAR(100) NOT NULL
-		);
-	`,
 	// industry
 	`
 		CREATE TABLE industry (
 			industry VARCHAR(255) NOT NULL UNIQUE PRIMARY KEY
 		);
 	`,
-	// profile_cryptocurrency
+	// platform
 	`
-		CREATE TABLE profile_cryptocurrency (
-			id INT AUTO_INCREMENT PRIMARY KEY,
-			query VARCHAR(50) NOT NULL,
-			last_updated DATETIME NOT NULL,
-			UNIQUE KEY unique_query (query)
+		CREATE TABLE platform (
+			platform VARCHAR(255) NOT NULL UNIQUE PRIMARY KEY
 		);
 	`,
-	// profile_stock
+	// query_asset
 	`
-		CREATE TABLE profile_stock (
+		CREATE TABLE query_asset (
 			id INT AUTO_INCREMENT PRIMARY KEY,
 			query VARCHAR(10) NOT NULL,
-			last_updated DATETIME NOT NULL,
+			refreshed DATETIME NOT NULL,
 			UNIQUE KEY unique_query (query),
 			CONSTRAINT check_query_format CHECK (query REGEXP '^[A-Za-z]{1,10}$')
 		);
@@ -80,28 +61,33 @@ const queries: string[] = [
 	* * TABLES DEPENDANT *
 	* ********************
 	*/
-	// stock
+	// asset
 	`
-		CREATE TABLE stock (
-			isin VARCHAR(12) NOT NULL UNIQUE PRIMARY KEY,
+		CREATE TABLE asset (
+			id VARCHAR(255) NOT NULL UNIQUE PRIMARY KEY,
 			sector VARCHAR(255) NOT NULL,
 			industry VARCHAR(255) NOT NULL,
-			exchange VARCHAR(10) NOT NULL CHECK (exchange IN (${sQLStockExchanges})),
+			platform VARCHAR(255) NOT NULL,
 			name VARCHAR(255) NOT NULL,
 			symbol VARCHAR(12) NOT NULL UNIQUE,
+			type VARCHAR(255) NOT NULL CHECK (exchange IN ('stock', 'cryptocurrency')),
+			refreshed DATETIME NOT NULL,
 
-			FOREIGN KEY (sector) REFERENCES sector(sector) ON DELETE CASCADE,
-			FOREIGN KEY (industry) REFERENCES industry(industry) ON DELETE CASCADE
+			FOREIGN KEY (industry) REFERENCES industry(industry) ON DELETE CASCADE,
+			FOREIGN KEY (platform) REFERENCES platform(platform) ON DELETE CASCADE,
+			FOREIGN KEY (sector) REFERENCES sector(sector) ON DELETE CASCADE
 		);
 	`,
-	// cryptocurrency_platform
+
+	// asset_platform
 	`
-		CREATE TABLE cryptocurrency_platform (
+		CREATE TABLE asset_platform (
 			id INT PRIMARY KEY AUTO_INCREMENT,
-			cryptocurrency_id INT NOT NULL,
-			platform VARCHAR(50) NOT NULL,
+			asset_id INT NOT NULL,
+			platform VARCHAR(255) NOT NULL,
 			address VARCHAR(100) NOT NULL,
-			FOREIGN KEY (cryptocurrency_id) REFERENCES cryptocurrency(id)
+
+			FOREIGN KEY (asset_id) REFERENCES asset(id)
 		);
 	`,
 	// portfolio
@@ -120,7 +106,7 @@ const queries: string[] = [
 		CREATE TABLE portfolio_asset (
 			id INT NOT NULL AUTO_INCREMENT,
 			portfolio_id INT NOT NULL,
-			cryptocurrency_id INT,
+			asset_id INT,
 			stock_isin VARCHAR(12),
 			percent_allocation DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (percent_allocation BETWEEN 0.00 AND 100.00),
 			balance DECIMAL(20,8) NOT NULL DEFAULT 0 CHECK (balance >= 0),
@@ -129,11 +115,9 @@ const queries: string[] = [
 			PRIMARY KEY (id),
 
 			FOREIGN KEY (portfolio_id) REFERENCES portfolio(id) ON DELETE CASCADE,
-			FOREIGN KEY (cryptocurrency_id) REFERENCES cryptocurrency(id) ON DELETE CASCADE,
-			FOREIGN KEY (stock_isin) REFERENCES stock(isin) ON DELETE CASCADE,
+			FOREIGN KEY (asset_id) REFERENCES asset_id(id) ON DELETE CASCADE,
 
-			UNIQUE KEY unique_portfolio_cryptocurrency (portfolio_id, cryptocurrency_id),
-			UNIQUE KEY unique_portfolio_stock (portfolio_id, stock_isin)
+			UNIQUE KEY unique_portfolio_stock (portfolio_id, asset_id)
 		);
 	`,
 	// recovery
@@ -212,28 +196,6 @@ const queries: string[] = [
 	* * INITIAL DATA *
 	* ****************
 	*/
-	`
-		INSERT INTO sector
-			(sector)
-		VALUES
-			('Basic Materials'),
-			('Cash'),
-			('Communication Services'),
-			('Consumer Cyclical'),
-			('Consumer Defensive'),
-			('Decentralized Protocol'),
-			('Energy'),
-			('Financial Services'),
-			('Healthcare'),
-			('Industrials'),
-			('Macro'),
-			('Other'),
-			('Real Estate'),
-			('Technology'),
-			('Utilities')
-		;
-	`,
-
 	`
 		INSERT INTO industry
 			(industry)
@@ -398,6 +360,41 @@ const queries: string[] = [
 			('Diversified Utilities'),
 			('General Utilitie'),
 			('Decentralized Exchange')
+		;
+	`,
+	`
+		INSERT INTO platform
+			(platform)
+		VALUES
+			('arbitrum-one'),
+			('arbitrum-nova'),
+			('base'),
+			('ethereum'),
+			('nasdaq'),
+			('nyse'),
+			('optimistic-ethereum'),
+			('solana')
+		;
+	`,
+	`
+		INSERT INTO sector
+			(sector)
+		VALUES
+			('Basic Materials'),
+			('Cash'),
+			('Communication Services'),
+			('Consumer Cyclical'),
+			('Consumer Defensive'),
+			('Decentralized Protocol'),
+			('Energy'),
+			('Financial Services'),
+			('Healthcare'),
+			('Industrials'),
+			('Macro'),
+			('Other'),
+			('Real Estate'),
+			('Technology'),
+			('Utilities')
 		;
 	`,
 ];

@@ -20,6 +20,10 @@ export default
 			uRL: "https://financialmodelingprep.com/",
 			key: process.env.API__FINANCIAL_MODELING_PREP__KEY,
 		},
+		openfigi: {
+			uRL: "https://api.openfigi.com/",
+			key: process.env.API__OPEN_FIGI__KEY,
+		},
 	},
 
 	app: {

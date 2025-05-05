@@ -2,27 +2,27 @@ import mysql from "mysql2";
 
 
 export default {
-	updateProfileStockLastUpdated: async (mySQLPool: mysql.Pool, query: string, last_updated: Date) =>
+	updateRefreshed: async (mySQLPool: mysql.Pool, query: string, refreshed: Date) =>
 	{
 		await mySQLPool.promise().query(
 			`
 				INSERT INTO
-					profile_stock (query, last_updated)
+					query_asset (query, refreshed)
 				VALUES
 					(?, ?)
 				ON DUPLICATE KEY UPDATE
-					last_updated = ?
+					refreshed = ?
 				;
 			`,
 			[
 				query,
-				last_updated,
-				last_updated,
+				refreshed,
+				refreshed,
 			]
 		);
 	},
 
-	getProfileStock: async (mySQLPool: mysql.Pool, query: string): Promise<any[]> =>
+	getQueryAsset: async (mySQLPool: mysql.Pool, query: string): Promise<any[]> =>
 	{
 		const [
 			queryStock,
@@ -30,7 +30,7 @@ export default {
 			any[],
 			FieldPacket[]
 		] = await mySQLPool.promise().query(
-			"SELECT * FROM profile_stock WHERE query = ?;",
+			"SELECT * FROM query_asset WHERE query = ?;",
 			[
 				query,
 			]
