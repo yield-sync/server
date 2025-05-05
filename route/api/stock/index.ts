@@ -7,7 +7,7 @@ import { INTERNAL_SERVER_ERROR, HTTPStatus, stockExchanges } from "../../../cons
 import DBHandlerProfileStock from "../../../db-handler/profile_stock";
 import DBHandlerStock from "../../../db-handler/stock";
 import { sanitizeSymbolQuery } from "../../../util/sanitizer";
-import externalSource from "../../../external-api/FinancialModelingPrep";
+import extAPIDataProviderStock from "../../../external-api/data-provider-stock";
 
 
 const ONE_WEEK_IN_MINUTES: number = 10080;
@@ -69,7 +69,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 					if (response.refreshRequired)
 					{
-						const externalStock: IStock = await externalSource.getStockProfile(symbol);
+						const externalStock: IStock = await extAPIDataProviderStock.getStockProfile(symbol);
 
 						if (!externalStock)
 						{
@@ -97,7 +97,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 								await DBHandlerStock.createStock(mySQLPool, externalStock);
 							}
 
-							const externalSearchForDBStockISIN: IStock = await externalSource.queryForStockByIsin(
+							const externalSearchForDBStockISIN: IStock = await extAPIDataProviderStock.queryForStockByIsin(
 								dBStock.isin
 							);
 
@@ -116,7 +116,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				{
 					response.processedUnknownStock = true;
 
-					const externalStock: IStock = await externalSource.getStockProfile(symbol);
+					const externalStock: IStock = await extAPIDataProviderStock.getStockProfile(symbol);
 
 					if (!externalStock)
 					{
@@ -252,7 +252,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				const externalSearchResults = await externalSource.queryForStock(symbol);
+				const externalSearchResults = await extAPIDataProviderStock.queryForStock(symbol);
 
 				let filteredList = [];
 

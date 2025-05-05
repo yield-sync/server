@@ -11,7 +11,7 @@ import routeApiUser from "../user/index";
 
 // Config and Utilities
 import config from "../../../config";
-import externalAPI from "../../../external-api/FinancialModelingPrep";
+import extAPIDataProviderStock from "../../../external-api/data-provider-stock";
 import DBBuilder, { dBDrop } from "../../../sql/db-builder";
 
 
@@ -166,11 +166,11 @@ describe("Request: GET", () => {
 					}
 				});
 
-				expect(externalAPI.queryForStock).not.toHaveBeenCalled();
+				expect(extAPIDataProviderStock.queryForStock).not.toHaveBeenCalled();
 			});
 
 			it("Should fetch from external API when stock not in DB..", async () => {
-				mocked(externalAPI.getStockProfile as jest.Mock).mockResolvedValueOnce({
+				mocked(extAPIDataProviderStock.getStockProfile as jest.Mock).mockResolvedValueOnce({
 					symbol: CONSTANTS.STOCKS.APPLE.SYMBOL,
 					name: CONSTANTS.STOCKS.APPLE.NAME,
 					exchange: CONSTANTS.STOCKS.APPLE.EXCHANGE,
@@ -186,7 +186,7 @@ describe("Request: GET", () => {
 
 				expect(res.statusCode).toBe(202);
 
-				expect(externalAPI.getStockProfile).toHaveBeenCalledTimes(1);
+				expect(extAPIDataProviderStock.getStockProfile).toHaveBeenCalledTimes(1);
 
 				expect(res.body.processedUnknownStock).toBeTruthy();
 			});
@@ -222,7 +222,7 @@ describe("Request: GET", () => {
 				);
 
 				// Mock the external API response
-				(externalAPI.getStockProfile as jest.Mock).mockResolvedValue({
+				(extAPIDataProviderStock.getStockProfile as jest.Mock).mockResolvedValue({
 					symbol: CONSTANTS.STOCKS.APPLE.SYMBOL,
 					name: CONSTANTS.STOCKS.APPLE.NAME,
 					exchange: CONSTANTS.STOCKS.APPLE.EXCHANGE,
@@ -236,7 +236,7 @@ describe("Request: GET", () => {
 					`Bearer ${token}`
 				);
 
-				expect(externalAPI.getStockProfile).toHaveBeenCalledTimes(1);
+				expect(extAPIDataProviderStock.getStockProfile).toHaveBeenCalledTimes(1);
 
 				expect(res.body.refreshRequired).toBeTruthy();
 			});
@@ -252,7 +252,7 @@ describe("Request: GET", () => {
 				);
 
 				// Mock the external API response
-				(externalAPI.getStockProfile as jest.Mock).mockResolvedValueOnce({
+				(extAPIDataProviderStock.getStockProfile as jest.Mock).mockResolvedValueOnce({
 					symbol: CONSTANTS.STOCKS.APPLE.SYMBOL,
 					name: CONSTANTS.STOCKS.APPLE.NAME,
 					exchange: CONSTANTS.STOCKS.APPLE.EXCHANGE,
@@ -263,7 +263,7 @@ describe("Request: GET", () => {
 
 				await request(app).get("/api/stock/profile/AAPL").set("authorization", `Bearer ${token}`).expect(202);
 
-				expect(externalAPI.getStockProfile).toHaveBeenCalledTimes(1);
+				expect(extAPIDataProviderStock.getStockProfile).toHaveBeenCalledTimes(1);
 
 				const [updatedStock] = await mySQLPool.promise().query<IStock>(
 					"SELECT * FROM stock WHERE isin = ?;",
@@ -289,7 +289,7 @@ describe("Request: GET", () => {
 				*/
 
 				// Mock the external API response
-				(externalAPI.getStockProfile as jest.Mock).mockResolvedValue({
+				(extAPIDataProviderStock.getStockProfile as jest.Mock).mockResolvedValue({
 					isin: CONSTANTS.STOCKS.BANANA.ISIN,
 					symbol: CONSTANTS.STOCKS.APPLE.SYMBOL,
 					name: CONSTANTS.STOCKS.APPLE.NAME,
@@ -299,7 +299,7 @@ describe("Request: GET", () => {
 				});
 
 				// Mock external API response
-				(externalAPI.queryForStockByIsin as jest.Mock).mockResolvedValue({
+				(extAPIDataProviderStock.queryForStockByIsin as jest.Mock).mockResolvedValue({
 					isin: CONSTANTS.STOCKS.APPLE.ISIN,
 					symbol: CONSTANTS.STOCKS.BANANA.SYMBOL,
 					name: CONSTANTS.STOCKS.BANANA.NAME,
@@ -312,9 +312,9 @@ describe("Request: GET", () => {
 					`/api/stock/profile/${CONSTANTS.STOCKS.APPLE.SYMBOL}`
 				).set("authorization", `Bearer ${token}`).expect(202);
 
-				expect(externalAPI.getStockProfile).toHaveBeenCalledTimes(1);
+				expect(extAPIDataProviderStock.getStockProfile).toHaveBeenCalledTimes(1);
 
-				expect(externalAPI.queryForStockByIsin).toHaveBeenCalledTimes(1);
+				expect(extAPIDataProviderStock.queryForStockByIsin).toHaveBeenCalledTimes(1);
 
 				const [formallyBananaIncStock] = await mySQLPool.promise().query<IStock>(
 					"SELECT * FROM stock WHERE symbol = ?;",
@@ -361,7 +361,7 @@ describe("Request: GET", () => {
 				);
 
 				// Mock the external API response
-				(externalAPI.getStockProfile as jest.Mock).mockResolvedValue({
+				(extAPIDataProviderStock.getStockProfile as jest.Mock).mockResolvedValue({
 					isin: CONSTANTS.STOCKS.APPLE.ISIN,
 					symbol: CONSTANTS.STOCKS.BANANA.SYMBOL,
 					name: CONSTANTS.STOCKS.BANANA.NAME,
@@ -376,7 +376,7 @@ describe("Request: GET", () => {
 				const oranceIncIndustry = "Consumer Electronics";
 
 				// Mock external API response
-				(externalAPI.queryForStockByIsin as jest.Mock).mockResolvedValue({
+				(extAPIDataProviderStock.queryForStockByIsin as jest.Mock).mockResolvedValue({
 					isin: CONSTANTS.STOCKS.BANANA.ISIN,
 					symbol: oranceIncSymbol,
 					name: oranceIncName,
@@ -392,9 +392,9 @@ describe("Request: GET", () => {
 					202
 				);
 
-				expect(externalAPI.getStockProfile).toHaveBeenCalledTimes(1);
+				expect(extAPIDataProviderStock.getStockProfile).toHaveBeenCalledTimes(1);
 
-				expect(externalAPI.queryForStockByIsin).toHaveBeenCalledTimes(1);
+				expect(extAPIDataProviderStock.queryForStockByIsin).toHaveBeenCalledTimes(1);
 
 				const [formallyAppleIncStock] = await mySQLPool.promise().query<IStock>(
 					"SELECT * FROM stock WHERE symbol = ?;",
@@ -479,7 +479,7 @@ describe("Request: GET", () => {
 				]
 			});
 
-			expect(externalAPI.queryForStock).not.toHaveBeenCalled();
+			expect(extAPIDataProviderStock.queryForStock).not.toHaveBeenCalled();
 		});
 	});
 
@@ -507,7 +507,7 @@ describe("Request: GET", () => {
 					}
 				];
 
-				mocked(externalAPI.queryForStock as jest.Mock).mockResolvedValueOnce(mockStockData);
+				mocked(extAPIDataProviderStock.queryForStock as jest.Mock).mockResolvedValueOnce(mockStockData);
 
 				const res = await request(app).get(`/api/stock/search-external/${CONSTANTS.STOCKS.APPLE.SYMBOL}`).set(
 					"authorization",
@@ -522,13 +522,13 @@ describe("Request: GET", () => {
 
 				expect(res.body.stocks[0].symbol).toBe(CONSTANTS.STOCKS.APPLE.SYMBOL);
 
-				expect(externalAPI.queryForStock).toHaveBeenCalledTimes(1);
+				expect(extAPIDataProviderStock.queryForStock).toHaveBeenCalledTimes(1);
 
-				expect(externalAPI.queryForStock).toHaveBeenCalledWith(CONSTANTS.STOCKS.APPLE.SYMBOL);
+				expect(extAPIDataProviderStock.queryForStock).toHaveBeenCalledWith(CONSTANTS.STOCKS.APPLE.SYMBOL);
 			});
 
 			it("Should return 400 if external source returns empty array..", async () => {
-				mocked(externalAPI.queryForStock as jest.Mock).mockResolvedValueOnce([]);
+				mocked(extAPIDataProviderStock.queryForStock as jest.Mock).mockResolvedValueOnce([]);
 
 				const res = await request(app).get(`/api/stock/search-external/${CONSTANTS.STOCKS.BANANA.SYMBOL}`).set(
 					"authorization",
