@@ -23,7 +23,7 @@ let app: express.Express;
 let mySQLPool: mysql.Pool;
 
 
-jest.mock("../../../external-api/coingecko", () => ({ queryForCryptocurrency: jest.fn(), }));
+jest.mock("../../../external-api/data-provider-cryptocurrency", () => ({ queryForCryptocurrency: jest.fn(), }));
 
 
 beforeAll(async () =>

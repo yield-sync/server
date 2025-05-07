@@ -89,9 +89,8 @@ export default {
 	markStockSymbolUnknown: async (mySQLPool: mysql.Pool, isin: string) =>
 	{
 		await mySQLPool.promise().query(
-			"UPDATE stock SET symbol = ? WHERE isin = ?;",
+			"UPDATE stock SET symbol = '0' WHERE isin = ?;",
 			[
-				isin,
 				isin,
 			]
 		);

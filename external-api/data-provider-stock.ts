@@ -16,33 +16,65 @@ export class ExternalRequestError extends
 
 
 export default {
-	getStockProfile: async (ticker: string): Promise<IStock | null> =>
-	{
-		try
+	getStockProfile: async (isin: string): Promise<IStock | null> =>
 		{
-			const response = await axios.get(
-				`${uRL}/stable/profile?symbol=${ticker}&apikey=${key}`
-			);
-
-			if (response.data.length == 0)
+			try
 			{
+				// First get the symbol by the isin
+				const openfigiResponse = await axios.post(
+					"https://api.openfigi.com/v3/mapping",
+					[
+						{
+							"idType": "ID_ISIN",
+							"idValue": isin,
+							"exchCode": "US"
+						}
+					],
+					{
+						headers: {
+						  "Content-Type": "application/json",
+						  "X-OPENFIGI-APIKEY": config.api.openfigi.key,
+						},
+					}
+				);
+
+				if ("error" in openfigiResponse.data)
+				{
+					return null;
+				}
+
+				if (!("ticker" in openfigiResponse.data))
+				{
+					return null;
+				}
+
+				const symbol = openfigiResponse.data.ticker;
+
+				const response = await axios.get(
+					`${uRL}/stable/profile?symbol=${symbol}&apikey=${key}`
+				);
+
+				if (response.data.length == 0)
+				{
+					return null;
+				}
+
+				return {
+					isin: response.data[0].isin,
+					symbol: response.data[0].symbol,
+					name: response.data[0].companyName,
+					exchange: response.data[0].exchange.toLowerCase(),
+					sector: response.data[0].sector,
+					industry: response.data[0].industry,
+				} as IStock;
+			}
+			catch (error)
+			{
+				console.warn("Error fetching external API: " + error);
+
 				return null;
 			}
-
-			return {
-				isin: response.data[0].isin,
-				symbol: response.data[0].symbol,
-				name: response.data[0].companyName,
-				exchange: response.data[0].exchange.toLowerCase(),
-				sector: response.data[0].sector,
-				industry: response.data[0].industry,
-			} as IStock;
-		}
-		catch (error)
-		{
-			throw new ExternalRequestError("Error fetching external API: " + error);
-		}
-	},
+		},
 
 	queryForStock: async (ticker: string): Promise<any[]> =>
 		{
@@ -87,7 +119,7 @@ export default {
 			}
 
 			const response1 = await axios.get(
-				`${uRL}/api/v3/profile/${response.data[0].symbol}?apikey=${key}`
+				`${uRL}/api/v3/read/${response.data[0].symbol}?apikey=${key}`
 			);
 
 			return {
