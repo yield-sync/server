@@ -15,40 +15,49 @@ export class ExternalRequestError extends
 {}
 
 
+const getStockTickerFromISIN = async (isin: string): Promise<string|null> => {
+	// First get the symbol by the isin
+	const openfigiResponse = await axios.post(
+		"https://api.openfigi.com/v3/mapping",
+		[
+			{
+				"idType": "ID_ISIN",
+				"idValue": isin,
+				"exchCode": "US"
+			}
+		],
+		{
+			headers: {
+			"Content-Type": "application/json",
+			"X-OPENFIGI-APIKEY": config.api.openfigi.key,
+			},
+		}
+	);
+
+	if ("error" in openfigiResponse.data)
+	{
+		return null;
+	}
+
+	if (!("ticker" in openfigiResponse.data))
+	{
+		return null;
+	}
+
+	return openfigiResponse.data.ticker;
+};
+
+
 export default {
+	getStockTickerFromISIN,
+
 	getStockProfile: async (isin: string): Promise<IStock | null> =>
 		{
 			try
 			{
-				// First get the symbol by the isin
-				const openfigiResponse = await axios.post(
-					"https://api.openfigi.com/v3/mapping",
-					[
-						{
-							"idType": "ID_ISIN",
-							"idValue": isin,
-							"exchCode": "US"
-						}
-					],
-					{
-						headers: {
-						  "Content-Type": "application/json",
-						  "X-OPENFIGI-APIKEY": config.api.openfigi.key,
-						},
-					}
-				);
+				const symbol = await getStockTickerFromISIN(isin)
 
-				if ("error" in openfigiResponse.data)
-				{
-					return null;
-				}
-
-				if (!("ticker" in openfigiResponse.data))
-				{
-					return null;
-				}
-
-				const symbol = openfigiResponse.data.ticker;
+				if (!symbol) return null
 
 				const response = await axios.get(
 					`${uRL}/stable/profile?symbol=${symbol}&apikey=${key}`

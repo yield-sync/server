@@ -2,6 +2,7 @@ import express, { Express } from "express";
 import request from "supertest";
 
 import routeApi from "./index";
+import { HTTPStatus } from "../../constants";
 
 
 let app: Express = express().use(express.json()).use("/api", routeApi());
@@ -15,7 +16,7 @@ describe("Request: GET", () =>
 		{
 			const response = await request(app).get("/api/");
 
-			expect(response.statusCode).toBe(200);
+			expect(response.statusCode).toBe(HTTPStatus.OK);
 		});
 	});
 });

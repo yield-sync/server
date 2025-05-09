@@ -93,7 +93,7 @@ describe("Request: GET", () =>
 						email: EMAIL,
 						password: PASSWORD
 					}
-				}).expect(201);
+				}).expect(HTTPStatus.CREATED);
 
 
 				const resLogin = await request(app).post("/api/user/login").send({
@@ -101,7 +101,7 @@ describe("Request: GET", () =>
 						email: EMAIL,
 						password: PASSWORD
 					}
-				}).expect(200);
+				}).expect(HTTPStatus.OK);
 
 				const token = (JSON.parse(resLogin.text)).token;
 
@@ -110,7 +110,7 @@ describe("Request: GET", () =>
 					`Bearer ${token}`
 				).send();
 
-				expect(response.statusCode).toBe(200);
+				expect(response.statusCode).toBe(HTTPStatus.OK);
 
 				const recievedJSON = JSON.parse(response.text)
 
@@ -134,7 +134,7 @@ describe("Request: GET", () =>
 						email: EMAIL,
 						password: PASSWORD
 					}
-				}).expect(201);
+				}).expect(HTTPStatus.CREATED);
 
 
 				const resLogin = await request(app).post("/api/user/login").send({
@@ -142,7 +142,7 @@ describe("Request: GET", () =>
 						email: EMAIL,
 						password: PASSWORD
 					}
-				}).expect(200);
+				}).expect(HTTPStatus.OK);
 
 				const token = (JSON.parse(resLogin.text)).token;
 
@@ -180,14 +180,14 @@ describe("Request: GET", () =>
 			it("Should revert if an invalid email is passed to the route..", async () => {
 				const res = await request(app).get("/api/user/password-recovery/send-email/not-an-email");
 
-				expect(res.statusCode).toBe(400);
+				expect(res.statusCode).toBe(HTTPStatus.BAD_REQUEST);
 				expect(res.body.message).toBe("❌ Invalid email format");
 			});
 
 			it("Should revert if a valid email is not found in the database..", async () => {
 				const res = await request(app).get("/api/user/password-recovery/send-email/missing@example.com");
 
-				expect(res.statusCode).toBe(400);
+				expect(res.statusCode).toBe(HTTPStatus.BAD_REQUEST);
 				expect(res.body.message).toBe("❌ Email not found");
 			});
 		});
@@ -202,7 +202,7 @@ describe("Request: GET", () =>
 
 				expect(mailUtil.sendRecoveryEmail).toHaveBeenCalled();
 
-				expect(res.statusCode).toBe(200);
+				expect(res.statusCode).toBe(HTTPStatus.OK);
 
 				expect(res.body.message).toBe("✅ Password recovery email sent");
 			});
@@ -216,14 +216,14 @@ describe("Request: GET", () =>
 						email,
 						password
 					}
-				}).expect(201);
+				}).expect(HTTPStatus.CREATED);
 
 				// Reset rate limit here
 				rateLimiter.emailRateLimiter.resetKey("::ffff:127.0.0.1");
 
 				for (let i = 0; i < 5; i++)
 				{
-					await request(app).get(`/api/user/password-recovery/send-email/${email}`).expect(200);
+					await request(app).get(`/api/user/password-recovery/send-email/${email}`).expect(HTTPStatus.OK);
 				}
 
 				expect(mailUtil.sendRecoveryEmail).toBeCalledTimes(5);
@@ -259,7 +259,7 @@ describe("Request: GET", () =>
 						email,
 						password
 					}
-				}).expect(200);
+				}).expect(HTTPStatus.OK);
 
 				const token = (JSON.parse(resLogin.text)).token;
 
@@ -268,7 +268,7 @@ describe("Request: GET", () =>
 					`Bearer ${token}`
 				).send();
 
-				expect(res.status).toBe(200);
+				expect(res.status).toBe(HTTPStatus.OK);
 
 				expect(mailUtil.sendVerificationEmail).toHaveBeenCalled();
 
@@ -297,7 +297,7 @@ describe("Request: GET", () =>
 						email,
 						password
 					}
-				}).expect(201);
+				}).expect(HTTPStatus.CREATED);
 
 				const [user] = await mySQLPool.promise().query<IUser>("SELECT * FROM user WHERE email = ?", [email]);
 
@@ -306,7 +306,7 @@ describe("Request: GET", () =>
 						email,
 						password
 					}
-				}).expect(200);
+				}).expect(HTTPStatus.OK);
 
 				const token = (JSON.parse(resLogin.text)).token;
 
@@ -316,7 +316,7 @@ describe("Request: GET", () =>
 					await request(app).get(`/api/user/verification/send-verification`).set(
 						"authorization",
 						`Bearer ${token}`
-					).expect(200);
+					).expect(HTTPStatus.OK);
 				}
 
 				expect(mailUtil.sendRecoveryEmail).toBeCalledTimes(5);
@@ -355,7 +355,7 @@ describe("Request: POST", () =>
 					}
 				});
 
-				expect(response.statusCode).toBe(400);
+				expect(response.statusCode).toBe(HTTPStatus.BAD_REQUEST);
 
 				expect(response.error.text).toBe("❌ Invalid email");
 
@@ -378,7 +378,7 @@ describe("Request: POST", () =>
 					}
 				});
 
-				expect(response.statusCode).toBe(400);
+				expect(response.statusCode).toBe(HTTPStatus.BAD_REQUEST);
 
 				expect(response.error.text).toBe(ERROR_PASSWORD);
 
@@ -400,7 +400,7 @@ describe("Request: POST", () =>
 					}
 				});
 
-				expect(response.statusCode).toBe(400);
+				expect(response.statusCode).toBe(HTTPStatus.BAD_REQUEST);
 
 				expect(response.error.text).toBe(ERROR_PASSWORD);
 
@@ -423,7 +423,7 @@ describe("Request: POST", () =>
 					}
 				});
 
-				expect(res.statusCode).toBe(400);
+				expect(res.statusCode).toBe(HTTPStatus.BAD_REQUEST);
 
 				expect(res.error.text).toBe(ERROR_PASSWORD);
 
@@ -451,7 +451,7 @@ describe("Request: POST", () =>
 					}
 				});
 
-				expect(response.statusCode).toBe(201);
+				expect(response.statusCode).toBe(HTTPStatus.CREATED);
 
 				[results] = await mySQLPool.promise().query("SELECT * FROM user;");
 			});
@@ -483,7 +483,7 @@ describe("Request: POST", () =>
 					}
 				});
 
-				expect(response.statusCode).toBe(400);
+				expect(response.statusCode).toBe(HTTPStatus.BAD_REQUEST);
 
 				expect(JSON.parse(response.text).message).toBe("❌ This email is already being used.");
 
@@ -523,7 +523,7 @@ describe("Request: POST", () =>
 				}
 			});
 
-			expect(response.statusCode).toBe(200);
+			expect(response.statusCode).toBe(HTTPStatus.OK);
 
 			const TOKEN = (JSON.parse(response.text)).token;
 
@@ -574,7 +574,7 @@ describe("Request: POST", () =>
 				}
 			});
 
-			expect(response.statusCode).toBe(200);
+			expect(response.statusCode).toBe(HTTPStatus.OK);
 
 			const TOKEN = (JSON.parse(response.text)).token;
 
@@ -612,7 +612,7 @@ describe("Request: POST", () =>
 				}
 			});
 
-			expect(response.statusCode).toBe(200);
+			expect(response.statusCode).toBe(HTTPStatus.OK);
 
 			const TOKEN = (JSON.parse(response.text)).token;
 
@@ -626,7 +626,7 @@ describe("Request: POST", () =>
 					password: password,
 					passwordNew: PASSWORD_NEW,
 				}
-			}).expect(200);
+			}).expect(HTTPStatus.OK);
 
 			const RESPONSE_LOGIN_NEW = await request(app).post("/api/user/login").send({
 				load: {
@@ -635,7 +635,7 @@ describe("Request: POST", () =>
 				}
 			});
 
-			expect(RESPONSE_LOGIN_NEW.statusCode).toBe(200);
+			expect(RESPONSE_LOGIN_NEW.statusCode).toBe(HTTPStatus.OK);
 
 			const TOKEN_NEW = (JSON.parse(RESPONSE_LOGIN_NEW.text)).token;
 
@@ -673,7 +673,7 @@ describe("Request: POST", () =>
 						email,
 						password
 					}
-				}).expect(200);
+				}).expect(HTTPStatus.OK);
 
 				const token = (JSON.parse(resLogin.text)).token;
 
@@ -685,7 +685,7 @@ describe("Request: POST", () =>
 						pin: "000000"
 					}
 				});
-				expect(res.statusCode).toBe(400);
+				expect(res.statusCode).toBe(HTTPStatus.BAD_REQUEST);
 
 				expect(res.body.message).toBe("❌ No verification found");
 			});
@@ -703,14 +703,14 @@ describe("Request: POST", () =>
 						email,
 						password
 					}
-				}).expect(200);
+				}).expect(HTTPStatus.OK);
 
 				const token = (JSON.parse(resLogin.text)).token;
 
 				await request(app).get(`/api/user/verification/send-verification`).set(
 					"authorization",
 					`Bearer ${token}`
-				).send().expect(200);
+				).send().expect(HTTPStatus.OK);
 
 				const res = await request(app).post("/api/user/verification/verify").set(
 					"authorization",
@@ -720,7 +720,7 @@ describe("Request: POST", () =>
 						pin: "000000"
 					}
 				});
-				expect(res.statusCode).toBe(400);
+				expect(res.statusCode).toBe(HTTPStatus.BAD_REQUEST);
 
 				expect(res.body.message).toBe("❌ Invalid pin");
 			});
@@ -738,14 +738,14 @@ describe("Request: POST", () =>
 						email,
 						password
 					}
-				}).expect(200);
+				}).expect(HTTPStatus.OK);
 
 				const token = (JSON.parse(resLogin.text)).token;
 
 				await request(app).get(`/api/user/verification/send-verification`).set(
 					"authorization",
 					`Bearer ${token}`
-				).send().expect(200);
+				).send().expect(HTTPStatus.OK);
 
 
 				for (let i = 0; i < 2; i++)
@@ -757,7 +757,7 @@ describe("Request: POST", () =>
 						load: {
 							pin: "000000"
 						}
-					}).expect(400);
+					}).expect(HTTPStatus.BAD_REQUEST);
 
 					expect(res.body.message).toBe("❌ Invalid pin");
 				}
@@ -771,7 +771,7 @@ describe("Request: POST", () =>
 					}
 				});
 
-				expect(res.statusCode).toBe(400);
+				expect(res.statusCode).toBe(HTTPStatus.BAD_REQUEST);
 
 				expect(res.body.message).toBe("❌ Invalid pin and attempts exceeded");
 
@@ -804,14 +804,14 @@ describe("Request: POST", () =>
 						email,
 						password
 					}
-				}).expect(200);
+				}).expect(HTTPStatus.OK);
 
 				const token = (JSON.parse(resLogin.text)).token;
 
 				await request(app).get(`/api/user/verification/send-verification`).set(
 					"authorization",
 					`Bearer ${token}`
-				).send().expect(200);
+				).send().expect(HTTPStatus.OK);
 
 				const [verification] = await mySQLPool.promise().query<IVerification>(
 					"SELECT * FROM verification WHERE user_id = ?",
@@ -827,7 +827,7 @@ describe("Request: POST", () =>
 					}
 				});
 
-				expect(res.statusCode).toBe(200);
+				expect(res.statusCode).toBe(HTTPStatus.OK);
 
 				expect(res.body.message).toBe("✅ Email verified");
 
@@ -856,7 +856,7 @@ describe("Request: POST", () =>
 						email,
 						password
 					}
-				}).expect(201);
+				}).expect(HTTPStatus.CREATED);
 
 				const res = await request(app).post(`/api/user/password-recovery/recover/${email}`).send({
 					load: {
@@ -881,9 +881,9 @@ describe("Request: POST", () =>
 						email,
 						password
 					}
-				}).expect(201);
+				}).expect(HTTPStatus.CREATED);
 
-				await request(app).get(`/api/user/password-recovery/send-email/${email}`).expect(200);
+				await request(app).get(`/api/user/password-recovery/send-email/${email}`).expect(HTTPStatus.OK);
 
 				const res = await request(app).post(`/api/user/password-recovery/recover/${email}`).send({
 					load: {
@@ -908,9 +908,9 @@ describe("Request: POST", () =>
 						email,
 						password
 					}
-				}).expect(201);
+				}).expect(HTTPStatus.CREATED);
 
-				await request(app).get(`/api/user/password-recovery/send-email/${email}`).expect(200);
+				await request(app).get(`/api/user/password-recovery/send-email/${email}`).expect(HTTPStatus.OK);
 
 				for (let i = 0; i < 2; i++)
 				{
@@ -948,9 +948,9 @@ describe("Request: POST", () =>
 						email,
 						password
 					}
-				}).expect(201);
+				}).expect(HTTPStatus.CREATED);
 
-				await request(app).get(`/api/user/password-recovery/send-email/${email}`).expect(200);
+				await request(app).get(`/api/user/password-recovery/send-email/${email}`).expect(HTTPStatus.OK);
 
 				const [user] = await mySQLPool.promise().query<IUser>("SELECT * FROM user WHERE email = ?", [email]);
 
@@ -978,7 +978,7 @@ describe("Request: POST", () =>
 						email,
 						password: "somenewpassword123!"
 					}
-				}).expect(200);
+				}).expect(HTTPStatus.OK);
 
 				const token = (JSON.parse(resLogin.text)).token;
 

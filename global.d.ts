@@ -43,6 +43,7 @@ declare global
 	type StockSearchQuery = {
 		UpdateStockPerformed: boolean,
 		stock: IStock,
+		dBStockWithExSymbolFound: boolean,
 	}
 
 	type StockDelete = Load & {

@@ -13,13 +13,15 @@ const ONE_WEEK_IN_MINUTES: number = 10080;
 const ONE_WEEK_IN_MS: number = ONE_WEEK_IN_MINUTES * 60 * 1000;
 
 
-const refreshAsset = async (mySQLPool: mysql.Pool, isin: string) => {
+const refreshAsset = async (mySQLPool: mysql.Pool, isin: string): Promise<{dBStockWithExSymbolFound: boolean}> => {
 	let externalStock: IStock = await extAPIDataProviderStock.getStockProfile(isin);
 
 	if (!externalStock)
 	{
 		throw new Error("Nothing returned from external source");
 	}
+
+	let dBStockWithExSymbolFound = false;
 
 	// Could be possible that the symbol used to belong to another stock that no longer owns it
 	let stockWithExternallyProvidedSymbol: IStock[] = await DBHandlerStock.getStockBySymbol(
@@ -29,6 +31,8 @@ const refreshAsset = async (mySQLPool: mysql.Pool, isin: string) => {
 
 	if (stockWithExternallyProvidedSymbol.length > 0)
 	{
+		dBStockWithExSymbolFound = true;
+
 		// Set the symbol of the stock that was provided from the external source (if it exists) to "0" (unknown)
 		await DBHandlerStock.markStockSymbolUnknown(mySQLPool, stockWithExternallyProvidedSymbol[0].isin);
 	}
@@ -49,11 +53,11 @@ const refreshAsset = async (mySQLPool: mysql.Pool, isin: string) => {
 		{
 			await DBHandlerStock.updateStock(mySQLPool, externalSearchForDBStockISIN);
 		}
-		else
-		{
-			console.warn(`Nothing was found for ISIN "${stockWithExternallyProvidedSymbol[0].isin}". symbol will remain 0`);
-		}
 	}
+
+	return {
+		dBStockWithExSymbolFound
+	};
 }
 
 const processNewAsset = async (mySQLPool: mysql.Pool, symbol: string): Promise<void> => {
@@ -83,6 +87,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			let response: StockSearchQuery = {
 				UpdateStockPerformed: false,
 				stock: null,
+				dBStockWithExSymbolFound: false,
 			};
 
 			try
@@ -102,7 +107,9 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				if (dBAsset.length > 0)
 				{
-					response.UpdateStockPerformed = (new Date()).getTime() - (new Date(dBAsset[0].updated_on)).getTime() >= ONE_WEEK_IN_MS
+					response.UpdateStockPerformed = (
+						new Date()).getTime() - (new Date(dBAsset[0].updated_on)
+					).getTime() >= ONE_WEEK_IN_MS
 
 					if (!response.UpdateStockPerformed)
 					{
@@ -116,7 +123,16 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 					try
 					{
-						await refreshAsset(mySQLPool, dBAsset[0].isin);
+						const { dBStockWithExSymbolFound } = await refreshAsset(mySQLPool, dBAsset[0].isin);
+
+						res.status(HTTPStatus.OK).json({
+							...response,
+							UpdateStockPerformed: true,
+							dBStockWithExSymbolFound,
+							stock: (await DBHandlerStock.getStock(mySQLPool, isin))[0]
+						});
+
+						return;
 					}
 					catch (error)
 					{
@@ -124,21 +140,9 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 						return
 					}
-
-					res.status(HTTPStatus.OK).json({
-						...response,
-						UpdateStockPerformed: true,
-						stock: (await DBHandlerStock.getStock(mySQLPool, isin))[0]
-					});
-
-					return;
 				}
 
-				res.status(HTTPStatus.OK).json({
-					...response,
-					processedUnknownAsset: true,
-					stock: dBAsset[0]
-				});
+				res.status(HTTPStatus.OK).json({ ...response, stock: dBAsset[0] });
 			}
 			catch (error: Error | any)
 			{
@@ -206,79 +210,6 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				});
 			}
 		}
-	).get(
-		/**
-		* @desc Search for a stock from the external source
-		* @param query {string} to search for
-		*/
-		"/search-external/:query",
-		async (req: express.Request, res: express.Response) =>
-		{
-			let response: {
-				stocks: any[]
-			} = {
-				stocks: [
-				],
-			};
-
-			try
-			{
-				const { query, } = req.params;
-
-				const symbol = sanitizeSymbolQuery(query);
-
-				if (symbol == "QUERY")
-				{
-					res.status(HTTPStatus.BAD_REQUEST).send("❌ Invalid query passed");
-
-					return;
-				}
-
-				const externalSearchResults = await extAPIDataProviderStock.queryForStock(symbol);
-
-				let filteredList = [];
-
-				for (let i = 0; i < externalSearchResults.length; i++)
-				{
-					/**
-					* @dev Using a try-catch because the API might return something weird
-					*/
-
-					try
-					{
-						if (stockExchanges.includes(externalSearchResults[i].exchange.toLowerCase()))
-						{
-							filteredList.push(externalSearchResults[i]);
-						}
-					}
-					catch (error)
-					{
-						console.warn("Invalid element:", externalSearchResults[i]);
-
-						continue;
-					}
-				}
-
-				response.stocks = filteredList;
-
-				res.status(HTTPStatus.ACCEPTED).json(response);
-			}
-			catch (error: Error | any)
-			{
-				if (error instanceof Error)
-				{
-					res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
-						message: `${INTERNAL_SERVER_ERROR}: ${error.message}`,
-					});
-
-					return;
-				}
-
-				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
-					message: `${INTERNAL_SERVER_ERROR}: Unknown error`,
-				});
-			}
-		}
 	).post(
 		/**
 		* @desc Create stock
@@ -290,27 +221,44 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		{
 			try
 			{
-				const { symbol, } = req.body;
+				const { isin, } = req.body.load;
+
+				const symbol = await extAPIDataProviderStock.getStockTickerFromISIN(isin);
+
+				if (!symbol)
+				{
+					res.status(HTTPStatus.BAD_REQUEST).json({
+						message: "❌ Invalid ISIN"
+					});
+
+					return;
+				}
 
 				const dBAsset: IStock[] = await DBHandlerStock.getStockBySymbol(mySQLPool, symbol);
 
-				if (dBAsset.length == 0)
+				if (dBAsset.length > 0)
 				{
-					try
-					{
-						await processNewAsset(mySQLPool, symbol);
-					}
-					catch (error)
-					{
-						res.status(HTTPStatus.BAD_REQUEST).json({ message: error });
-
-						return;
-					}
-
-					res.status(HTTPStatus.CREATED).json({
-						message: "✅ Created stock"
+					res.status(HTTPStatus.BAD_REQUEST).json({
+						message: "Stock already exists"
 					});
+
+					return;
 				}
+
+				try
+				{
+					await processNewAsset(mySQLPool, symbol);
+				}
+				catch (error)
+				{
+					res.status(HTTPStatus.BAD_REQUEST).json({ message: error });
+
+					return;
+				}
+
+				res.status(HTTPStatus.CREATED).json({
+					message: "✅ Created stock"
+				});
 			}
 			catch (error: Error | any)
 			{

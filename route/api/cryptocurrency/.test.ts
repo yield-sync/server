@@ -6,6 +6,7 @@ import routeAPICryptocurrency from "./index";
 import routeApi from "../index";
 import routeApiUser from "../user/index";
 import config from "../../../config";
+import { HTTPStatus } from "../../../constants";
 import extAPIDataProviderCryptocurrency from "../../../external-api/data-provider-cryptocurrency";
 import DBBuilder, { dBDrop } from "../../../sql/db-builder";
 
@@ -60,7 +61,7 @@ beforeEach(async () =>
 			email: EMAIL,
 			password: PASSWORD
 		} as UserCreate
-	}).expect(201);
+	}).expect(HTTPStatus.CREATED);
 
 	// Promote user to admin
 	await mySQLPool.promise().query("UPDATE user SET admin = b'1' WHERE email = ?;", [EMAIL]);
@@ -70,7 +71,7 @@ beforeEach(async () =>
 			email: EMAIL,
 			password: PASSWORD
 		} as UserLogin
-	}).expect(200);
+	}).expect(HTTPStatus.OK);
 
 	token = JSON.parse(resLogin.text).token;
 
@@ -148,7 +149,7 @@ describe("Request: GET", () =>
 					const res = await request(app).get(`/api/cryptocurrency/search/${cryptoSymbol}`).set(
 						"authorization",
 						`Bearer ${token}`
-					).expect(200);
+					).expect(HTTPStatus.OK);
 
 					// Verify that the external request was NOT made
 					expect(res.body.externalRequestRequired).toBeFalsy();
@@ -187,7 +188,7 @@ describe("Request: GET", () =>
 						const res = await request(app).get(`/api/cryptocurrency/search/${cryptoSymbol}`).set(
 							"authorization",
 							`Bearer ${token}`
-						).expect(200);
+						).expect(HTTPStatus.OK);
 
 						expect(res.body.externalRequestRequired).toBeTruthy();
 
@@ -219,7 +220,7 @@ describe("Request: GET", () =>
 						const res = await request(app).get(`/api/cryptocurrency/search/${cryptoSymbol}`).set(
 							"authorization",
 							`Bearer ${token}`
-						).expect(200);
+						).expect(HTTPStatus.OK);
 
 						expect(res.body.externalRequestRequired).toBeTruthy();
 
@@ -229,7 +230,7 @@ describe("Request: GET", () =>
 						const res2 = await request(app).get(`/api/cryptocurrency/search/${cryptoSymbol}`).set(
 							"authorization",
 							`Bearer ${token}`
-						).expect(200);
+						).expect(HTTPStatus.OK);
 
 						expect(res2.body.externalRequestRequired).toBeFalsy();
 
@@ -252,7 +253,7 @@ describe("Request: GET", () =>
 						const res = await request(app).get(`/api/cryptocurrency/search/${cryptoSymbol}`).set(
 							"authorization",
 							`Bearer ${token}`
-						).expect(200);
+						).expect(HTTPStatus.OK);
 
 						expect(res.body.externalRequestRequired).toBeTruthy();
 
@@ -304,7 +305,7 @@ describe("Request: PUT", () =>
 					load: { name: newName } as CryptocurrencyUpdate
 				});
 
-				expect(res.statusCode).toBe(200);
+				expect(res.statusCode).toBe(HTTPStatus.OK);
 
 				[cryptos] = await mySQLPool.promise().query(
 					"SELECT * FROM cryptocurrency WHERE coingecko_id = ?;",

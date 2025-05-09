@@ -7,6 +7,7 @@ import routeApiAsset from "../stock/index";
 import routeApiPortfolio from "../portfolio/index";
 import routeApiUser from "../user/index";
 import config from "../../../config";
+import { HTTPStatus } from "../../../constants";
 import DBBuilder, { dBDrop } from "../../../sql/db-builder";
 
 
@@ -73,7 +74,7 @@ beforeEach(async () =>
 			email: EMAIL,
 			password: PASSWORD
 		}
-	}).expect(201);
+	}).expect(HTTPStatus.CREATED);
 
 	// Promote user to admin
 	await mySQLPool.promise().query("UPDATE user SET admin = b'1' WHERE email = ?;", [EMAIL]);
@@ -83,7 +84,7 @@ beforeEach(async () =>
 			email: EMAIL,
 			password: PASSWORD
 		}
-	}).expect(200);
+	}).expect(HTTPStatus.OK);
 
 	token = (JSON.parse(resLogin.text)).token;
 
@@ -99,7 +100,7 @@ beforeEach(async () =>
 		} as PortfolioCreate
 	});
 
-	expect(resPortfolioCreate.statusCode).toBe(201);
+	expect(resPortfolioCreate.statusCode).toBe(HTTPStatus.CREATED);
 
 	const [portfolios]: MySQLQueryResult = await mySQLPool.promise().query(
 		"SELECT id FROM portfolio WHERE name = ?;", [PORTFOLIO_NAME]
@@ -156,7 +157,7 @@ describe("Request: GET", () => {
 					load: {
 						portfolio_id: portfolio_id,
 					}
-				}).expect(400);
+				}).expect(HTTPStatus.BAD_REQUEST);
 
 				expect(RES.body.message).toBe("❓ No stock_isin received");
 
@@ -179,7 +180,7 @@ describe("Request: GET", () => {
 						portfolio_id,
 						stock_isin,
 					}
-				}).expect(400);
+				}).expect(HTTPStatus.BAD_REQUEST);
 
 				expect(RES.body.message).toBe("❓ No percent_allocation received");
 
@@ -203,7 +204,7 @@ describe("Request: GET", () => {
 						stock_isin,
 						percent_allocation: 0,
 					}
-				}).expect(400);
+				}).expect(HTTPStatus.BAD_REQUEST);
 
 				expect(RES.body.message).toBe("❓ No balance received");
 
@@ -232,7 +233,7 @@ describe("Request: GET", () => {
 					} as PortfolioAssetCreate
 				});
 
-				expect(RES_PORTFOLIO_ASSET.statusCode).toBe(201);
+				expect(RES_PORTFOLIO_ASSET.statusCode).toBe(HTTPStatus.CREATED);
 
 				const [portfolioAssests]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio_asset;");
 
@@ -273,7 +274,7 @@ describe("Request: GET", () => {
 					} as PortfolioAssetCreate
 				});
 
-				expect(response.statusCode).toBe(400);
+				expect(response.statusCode).toBe(HTTPStatus.BAD_REQUEST);
 
 				expect(response.body.message).toBe("❌ Invalid percent_allocation");
 			});
@@ -291,7 +292,7 @@ describe("Request: GET", () => {
 					} as PortfolioAssetCreate
 				});
 
-				expect(response.statusCode).toBe(400);
+				expect(response.statusCode).toBe(HTTPStatus.BAD_REQUEST);
 
 				expect(response.body.message).toBe("❌ Invalid percent_allocation");
 			});
@@ -315,7 +316,7 @@ describe("Request: GET", () => {
 					const RES = await request(app).put("/api/portfolio-asset/update/invalid-id").set(
 						'authorization',
 						`Bearer ${token}`
-					).send({ load: { } }).expect(400);
+					).send({ load: { } }).expect(HTTPStatus.BAD_REQUEST);
 
 					expect(RES.body.message).toBe("❓ No balance received");
 
@@ -337,7 +338,7 @@ describe("Request: GET", () => {
 						load: {
 							balance: 0,
 						}
-					}).expect(400);
+					}).expect(HTTPStatus.BAD_REQUEST);
 
 					expect(RES.body.message).toBe("❓ No percent_allocation received");
 
@@ -376,7 +377,7 @@ describe("Request: GET", () => {
 						} as PortfolioAssetUpdate
 					});
 
-					expect(RES_PORTFOLIO_ASSET.statusCode).toBe(201);
+					expect(RES_PORTFOLIO_ASSET.statusCode).toBe(HTTPStatus.CREATED);
 
 					const [portfolioAssests]: MySQLQueryResult = await mySQLPool.promise().query(
 						"SELECT * FROM portfolio_asset;"
