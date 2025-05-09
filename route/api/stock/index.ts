@@ -1,9 +1,10 @@
 import express from "express";
 import mysql from "mysql2";
 
+import { createNewAsset, refreshAsset } from "./common";
 import { loadRequired } from "../../../middleware/load";
 import userToken from "../../../middleware/user-token";
-import { INTERNAL_SERVER_ERROR, HTTPStatus, stockExchanges } from "../../../constants";
+import { INTERNAL_SERVER_ERROR, HTTPStatus } from "../../../constants";
 import DBHandlerStock from "../../../db-handler/stock";
 import { sanitizeSymbolQuery } from "../../../util/sanitizer";
 import extAPIDataProviderStock from "../../../external-api/data-provider-stock";
@@ -11,67 +12,6 @@ import extAPIDataProviderStock from "../../../external-api/data-provider-stock";
 
 const ONE_WEEK_IN_MINUTES: number = 10080;
 const ONE_WEEK_IN_MS: number = ONE_WEEK_IN_MINUTES * 60 * 1000;
-
-
-const refreshAsset = async (mySQLPool: mysql.Pool, isin: string): Promise<{dBStockWithExSymbolFound: boolean}> => {
-	let externalStock: IStock = await extAPIDataProviderStock.getStockProfile(isin);
-
-	if (!externalStock)
-	{
-		throw new Error("Nothing returned from external source");
-	}
-
-	let dBStockWithExSymbolFound = false;
-
-	// Could be possible that the symbol used to belong to another stock that no longer owns it
-	let stockWithExternallyProvidedSymbol: IStock[] = await DBHandlerStock.getStockBySymbol(
-		mySQLPool,
-		externalStock.symbol
-	);
-
-	if (stockWithExternallyProvidedSymbol.length > 0)
-	{
-		dBStockWithExSymbolFound = true;
-
-		// Set the symbol of the stock that was provided from the external source (if it exists) to "0" (unknown)
-		await DBHandlerStock.markStockSymbolUnknown(mySQLPool, stockWithExternallyProvidedSymbol[0].isin);
-	}
-
-	// Stock with ISIN provided from external source already exists -> Update it
-	await DBHandlerStock.updateStock(mySQLPool, externalStock);
-
-	if (stockWithExternallyProvidedSymbol.length > 0)
-	{
-		// Set the symbol of the stock that was provided from the external source (if it exists) to "0" (unknown)
-		await DBHandlerStock.markStockSymbolUnknown(mySQLPool, stockWithExternallyProvidedSymbol[0].isin);
-
-		const externalSearchForDBStockISIN: IStock = await extAPIDataProviderStock.queryForStockByIsin(
-			stockWithExternallyProvidedSymbol[0].isin
-		);
-
-		if (externalSearchForDBStockISIN)
-		{
-			await DBHandlerStock.updateStock(mySQLPool, externalSearchForDBStockISIN);
-		}
-	}
-
-	return {
-		dBStockWithExSymbolFound
-	};
-}
-
-const processNewAsset = async (mySQLPool: mysql.Pool, symbol: string): Promise<void> => {
-	const externalStock: IStock = await extAPIDataProviderStock.getStockProfile(symbol);
-
-	if (!externalStock)
-	{
-		throw new Error("Nothing found for symbol");
-	}
-	else
-	{
-		await DBHandlerStock.createStock(mySQLPool, externalStock);
-	}
-};
 
 
 export default (mySQLPool: mysql.Pool): express.Router =>
@@ -136,7 +76,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					}
 					catch (error)
 					{
-						res.status(HTTPStatus.BAD_REQUEST).json({ message: error });
+						res.status(HTTPStatus.BAD_REQUEST).json({ message: error.message });
 
 						return
 					}
@@ -214,7 +154,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		/**
 		* @desc Create stock
 		* @route POST /api/stock/create
-		* @param symbol {string}
+		* @param isin {string}
 		*/
 		"/create",
 		async (req: express.Request, res: express.Response) =>
@@ -234,31 +174,18 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				const dBAsset: IStock[] = await DBHandlerStock.getStockBySymbol(mySQLPool, symbol);
-
-				if (dBAsset.length > 0)
-				{
-					res.status(HTTPStatus.BAD_REQUEST).json({
-						message: "Stock already exists"
-					});
-
-					return;
-				}
-
 				try
 				{
-					await processNewAsset(mySQLPool, symbol);
+					await createNewAsset(mySQLPool, symbol);
+
+					res.status(HTTPStatus.CREATED).json({ message: "✅ Created stock" });
 				}
 				catch (error)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).json({ message: error });
+					res.status(HTTPStatus.BAD_REQUEST).json({ message: error.message });
 
 					return;
 				}
-
-				res.status(HTTPStatus.CREATED).json({
-					message: "✅ Created stock"
-				});
 			}
 			catch (error: Error | any)
 			{
