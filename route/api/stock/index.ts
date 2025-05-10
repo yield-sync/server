@@ -108,8 +108,6 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		"/search/:query",
 		async (req: express.Request, res: express.Response) =>
 		{
-			const timestamp = new Date();
-
 			let response: {
 				stocks: IStock[]
 			} = {
