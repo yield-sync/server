@@ -3,6 +3,9 @@ import extAPIDataProviderStock from "../../../external-api/data-provider-stock";
 import DBHandlerStock from "../../../db-handler/stock";
 
 
+const ERROR_STOCK_PROFILE_EXTERNALLY_NOT_FOUND: string = "⚠️ Nothing returned from external source for symbol";
+
+
 export const refreshAsset = async (mySQLPool: mysql.Pool, isin: string): Promise<{
 	dBStockWithExSymbolFound: boolean
 }> => {
@@ -10,7 +13,7 @@ export const refreshAsset = async (mySQLPool: mysql.Pool, isin: string): Promise
 
 	if (!externalStock)
 	{
-		throw new Error("Nothing returned from external source");
+		throw new Error(ERROR_STOCK_PROFILE_EXTERNALLY_NOT_FOUND);
 	}
 
 	let dBStockWithExSymbolFound = false;
@@ -64,7 +67,7 @@ export const createNewAsset = async (mySQLPool: mysql.Pool, symbol: string) => {
 
 	if (!externalStock)
 	{
-		throw new Error("Nothing found for symbol");
+		throw new Error(ERROR_STOCK_PROFILE_EXTERNALLY_NOT_FOUND);
 	}
 	else
 	{

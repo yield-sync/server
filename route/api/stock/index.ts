@@ -205,6 +205,57 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		}
 	).post(
 		/**
+		* @desc Create stock
+		* @route POST /api/stock/create
+		* @param symbol {string}
+		*/
+		"/create-by-symbol",
+		async (req: express.Request, res: express.Response) =>
+		{
+			try
+			{
+				const { symbol, } = req.body.load;
+
+				if (!symbol)
+				{
+					res.status(HTTPStatus.BAD_REQUEST).json({
+						message: "❌ Invalid Symbol"
+					});
+
+					return;
+				}
+
+				try
+				{
+					await createNewAsset(mySQLPool, symbol);
+
+					res.status(HTTPStatus.CREATED).json({ message: "✅ Created stock" });
+				}
+				catch (error)
+				{
+					res.status(HTTPStatus.BAD_REQUEST).json({ message: error.message });
+
+					return;
+				}
+			}
+			catch (error: Error | any)
+			{
+				if (error instanceof Error)
+				{
+					res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
+						message: `${INTERNAL_SERVER_ERROR}: ${error.message}`,
+					});
+
+					return;
+				}
+
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
+					message: `${INTERNAL_SERVER_ERROR}: Unknown error`,
+				});
+			}
+		}
+	).post(
+		/**
 		* @route POST /api/stock/delete
 		* @desc Delete assset
 		* @access authorized:admin

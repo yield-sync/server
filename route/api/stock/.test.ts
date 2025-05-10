@@ -522,6 +522,25 @@ describe("Request: POST", () => {
 				expect(createRes.body.message).toBe("❌ Invalid ISIN");
 			});
 
+			it("Should fail to create a stock if invalid ISIN passed (ticker not found)..", async () => {
+				(extAPIDataProviderStock.getStockTickerFromISIN as jest.Mock).mockResolvedValue("AAPL");
+
+				(extAPIDataProviderStock.getStockProfile as jest.Mock).mockResolvedValue(null);
+
+				const createRes = await request(app).post("/api/stock/create").set(
+					"authorization",
+					`Bearer ${token}`
+				).send({
+					load: {
+						isin: CONSTANTS.STOCKS.APPLE.ISIN
+					}
+				});
+
+				expect(createRes.statusCode).toBe(HTTPStatus.BAD_REQUEST);
+
+				expect(createRes.body.message).toBe("⚠️ Nothing returned from external source for symbol");
+			});
+
 			it("Should fail to create a stock if already found in the database..", async () => {
 				(extAPIDataProviderStock.getStockTickerFromISIN as jest.Mock).mockResolvedValue("AAPL");
 
@@ -577,6 +596,102 @@ describe("Request: POST", () => {
 				).send({
 					load: {
 						isin: CONSTANTS.STOCKS.APPLE.ISIN
+					}
+				});
+
+				expect(createRes.statusCode).toBe(HTTPStatus.CREATED);
+
+				expect(createRes.body.message).toBe("✅ Created stock");
+			});
+		});
+	});
+
+	describe("POST /api/stock/create-by-symbol", () => {
+		describe("Failure Cases", () => {
+			it("Should fail to create a stock if invalid no symbol passed..", async () => {
+				(extAPIDataProviderStock.getStockTickerFromISIN as jest.Mock).mockResolvedValue(null);
+
+				const createRes = await request(app).post("/api/stock/create-by-symbol").set(
+					"authorization",
+					`Bearer ${token}`
+				).send({
+					load: {
+					}
+				});
+
+				expect(createRes.statusCode).toBe(HTTPStatus.BAD_REQUEST);
+
+				expect(createRes.body.message).toBe("❌ Invalid Symbol");
+			});
+
+			it("Should fail to create a stock if already found in the database..", async () => {
+				(extAPIDataProviderStock.getStockProfile as jest.Mock).mockResolvedValue({
+					isin: CONSTANTS.STOCKS.APPLE.ISIN,
+					symbol: CONSTANTS.STOCKS.APPLE.SYMBOL,
+					name: CONSTANTS.STOCKS.APPLE.NAME,
+					exchange: CONSTANTS.STOCKS.APPLE.EXCHANGE,
+					sector: CONSTANTS.STOCKS.APPLE.SECTOR,
+					industry: CONSTANTS.STOCKS.APPLE.INDUSTRY,
+				} as IStock);
+
+				await insertStock(
+					CONSTANTS.STOCKS.APPLE.SYMBOL,
+					CONSTANTS.STOCKS.APPLE.NAME,
+					CONSTANTS.STOCKS.APPLE.EXCHANGE,
+					CONSTANTS.STOCKS.APPLE.ISIN,
+					CONSTANTS.STOCKS.APPLE.SECTOR,
+					CONSTANTS.STOCKS.APPLE.INDUSTRY,
+				);
+
+				const createRes = await request(app).post("/api/stock/create-by-symbol").set(
+					"authorization",
+					`Bearer ${token}`
+				).send({
+					load: {
+						symbol: CONSTANTS.STOCKS.APPLE.SYMBOL
+					}
+				});
+
+				expect(createRes.statusCode).toBe(HTTPStatus.BAD_REQUEST);
+
+				expect(createRes.body.message).toBe("Stock already exists");
+			});
+
+			it("Should fail to create a stock if invalid ISIN passed (ticker not found)..", async () => {
+				(extAPIDataProviderStock.getStockProfile as jest.Mock).mockResolvedValue(null);
+
+				const createRes = await request(app).post("/api/stock/create-by-symbol").set(
+					"authorization",
+					`Bearer ${token}`
+				).send({
+					load: {
+						symbol: CONSTANTS.STOCKS.APPLE.SYMBOL
+					}
+				});
+
+				expect(createRes.statusCode).toBe(HTTPStatus.BAD_REQUEST);
+
+				expect(createRes.body.message).toBe("⚠️ Nothing returned from external source for symbol");
+			});
+		});
+
+		describe("Success Cases", () => {
+			it("Should create a stock if it doesnt exist already..", async () => {
+				(extAPIDataProviderStock.getStockProfile as jest.Mock).mockResolvedValue({
+					isin: CONSTANTS.STOCKS.APPLE.ISIN,
+					symbol: CONSTANTS.STOCKS.APPLE.SYMBOL,
+					name: CONSTANTS.STOCKS.APPLE.NAME,
+					exchange: CONSTANTS.STOCKS.APPLE.EXCHANGE,
+					sector: CONSTANTS.STOCKS.APPLE.SECTOR,
+					industry: CONSTANTS.STOCKS.APPLE.INDUSTRY,
+				} as IStock);
+
+				const createRes = await request(app).post("/api/stock/create-by-symbol").set(
+					"authorization",
+					`Bearer ${token}`
+				).send({
+					load: {
+						symbol: CONSTANTS.STOCKS.APPLE.SYMBOL
 					}
 				});
 
