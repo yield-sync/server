@@ -41,9 +41,9 @@ declare global
 	};
 
 	type StockSearchQuery = {
-		processedUnknownStock: boolean,
-		refreshRequired: boolean,
+		UpdateStockPerformed: boolean,
 		stock: IStock,
+		dBStockWithExSymbolFound: boolean,
 	}
 
 	type StockDelete = Load & {
@@ -163,6 +163,7 @@ declare global
 		exchange: string;
 		sector: string;
 		industry: string;
+		updated_on: string;
 	}
 
 	interface IUser extends

@@ -176,9 +176,13 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				}
 
 				// Check how many portfolios the user already has
-				const [existing] = await mySQLPool.promise().query(
+				const [
+					existing,
+				] = await mySQLPool.promise().query(
 					"SELECT COUNT(*) AS count FROM portfolio WHERE user_id = ?;",
-					[req.userDecoded.id]
+					[
+						req.userDecoded.id,
+					]
 				);
 
 				const userPortfolioCount = existing[0]?.count ?? 0;

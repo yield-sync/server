@@ -6,6 +6,7 @@ import routeApiPortfolio from "./index";
 import routeApi from "../index";
 import routeApiUser from "../user/index";
 import config from "../../../config";
+import { HTTPStatus } from "../../../constants";
 import DBBuilder, { dBDrop } from "../../../sql/db-builder";
 
 
@@ -61,14 +62,14 @@ beforeEach(async () =>
 			email: EMAIL,
 			password: PASSWORD
 		}
-	}).expect(201);
+	}).expect(HTTPStatus.CREATED);
 
 	const resLogin = await request(app).post("/api/user/login").send({
 		load: {
 			email: EMAIL,
 			password: PASSWORD
 		}
-	}).expect(200);
+	}).expect(HTTPStatus.OK);
 
 	token = (JSON.parse(resLogin.text)).token;
 
@@ -107,7 +108,7 @@ describe("Request: POST (1/2)", () =>
 					load: {
 						name: undefined
 					}
-				}).expect(400);
+				}).expect(HTTPStatus.BAD_REQUEST);
 
 				expect(RES.text).toBe("No portfolio name provided");
 
@@ -135,7 +136,7 @@ describe("Request: POST (1/2)", () =>
 					}
 				});
 
-				expect(RES_PORTFOLIO_CREATE.statusCode).toBe(201);
+				expect(RES_PORTFOLIO_CREATE.statusCode).toBe(HTTPStatus.CREATED);
 
 				const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio;");
 
@@ -174,11 +175,11 @@ describe("Request: GET", () =>
 					}
 				});
 
-				expect(RES_PORTFOLIO_CREATE.statusCode).toBe(201);
+				expect(RES_PORTFOLIO_CREATE.statusCode).toBe(HTTPStatus.CREATED);
 
 				const RES_PORTFOLIO = await request(app).get("/api/portfolio").set('authorization', `Bearer ${token}`).send();
 
-				expect(RES_PORTFOLIO.statusCode).toBe(200);
+				expect(RES_PORTFOLIO.statusCode).toBe(HTTPStatus.OK);
 
 				let portfolio = RES_PORTFOLIO.body.portfolios;
 
@@ -212,7 +213,7 @@ describe("Request: POST (2/2)", () =>
 					}
 				});
 
-				expect(RES_PORTFOLIO_CREATE.statusCode).toBe(201);
+				expect(RES_PORTFOLIO_CREATE.statusCode).toBe(HTTPStatus.CREATED);
 
 				const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio;");
 
@@ -238,7 +239,7 @@ describe("Request: POST (2/2)", () =>
 						id: undefined,
 						name: undefined
 					}
-				}).expect(400);
+				}).expect(HTTPStatus.BAD_REQUEST);
 
 				await request(app).post("/api/portfolio/update").set(
 					'authorization',
@@ -248,7 +249,7 @@ describe("Request: POST (2/2)", () =>
 						id: undefined,
 						name: "with name"
 					}
-				}).expect(400);
+				}).expect(HTTPStatus.BAD_REQUEST);
 			});
 
 			it("Should fail if no portfolio name passed..", async () =>
@@ -262,7 +263,7 @@ describe("Request: POST (2/2)", () =>
 					}
 				});
 
-				expect(RES_PORTFOLIO_CREATE.statusCode).toBe(201);
+				expect(RES_PORTFOLIO_CREATE.statusCode).toBe(HTTPStatus.CREATED);
 
 				const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio;");
 
@@ -288,7 +289,7 @@ describe("Request: POST (2/2)", () =>
 						id: results[0].id,
 						name: undefined
 					}
-				}).expect(400);
+				}).expect(HTTPStatus.BAD_REQUEST);
 			});
 		});
 
@@ -305,7 +306,7 @@ describe("Request: POST (2/2)", () =>
 					}
 				});
 
-				expect(RES_PORTFOLIO_CREATE.statusCode).toBe(201);
+				expect(RES_PORTFOLIO_CREATE.statusCode).toBe(HTTPStatus.CREATED);
 
 				const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio;");
 
@@ -335,7 +336,7 @@ describe("Request: POST (2/2)", () =>
 					}
 				});
 
-				expect(RES_PORTFOLIO_UPDATE.statusCode).toBe(201);
+				expect(RES_PORTFOLIO_UPDATE.statusCode).toBe(HTTPStatus.CREATED);
 
 				const [resultsAfter]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio;");
 
@@ -374,7 +375,7 @@ describe("Request: DELETE", () =>
 					}
 				});
 
-				expect(RES_PORTFOLIO_CREATE.statusCode).toBe(201);
+				expect(RES_PORTFOLIO_CREATE.statusCode).toBe(HTTPStatus.CREATED);
 
 				const RES_PORTFOLIO = await request(app).get("/api/portfolio").set(
 					'authorization',
@@ -410,7 +411,7 @@ describe("Request: DELETE", () =>
 					`Bearer ${token}`
 				).send();
 
-				expect(RES_PORTFOLIO_DELETE.statusCode).toBe(201);
+				expect(RES_PORTFOLIO_DELETE.statusCode).toBe(HTTPStatus.CREATED);
 
 				const [resultsAfter]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio;");
 

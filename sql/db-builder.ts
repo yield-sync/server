@@ -89,6 +89,7 @@ const queries: string[] = [
 			exchange VARCHAR(10) NOT NULL CHECK (exchange IN (${sQLStockExchanges})),
 			name VARCHAR(255) NOT NULL,
 			symbol VARCHAR(12) NOT NULL UNIQUE,
+			updated_on TIMESTAMP NULL DEFAULT NULL,
 
 			FOREIGN KEY (sector) REFERENCES sector(sector) ON DELETE CASCADE,
 			FOREIGN KEY (industry) REFERENCES industry(industry) ON DELETE CASCADE
