@@ -25,35 +25,45 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				if (!stock_isin)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send({ message: "❓ No stock_isin received" });
+					res.status(HTTPStatus.BAD_REQUEST).send({
+						message: "❓ No stock_isin received",
+					});
 
 					return;
 				}
 
 				if (!portfolio_id)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send({ message: "❓ No portfolio_id received" });
+					res.status(HTTPStatus.BAD_REQUEST).send({
+						message: "❓ No portfolio_id received",
+					});
 
 					return;
 				}
 
 				if (!percent_allocation && percent_allocation != 0)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send({ message: "❓ No percent_allocation received" });
+					res.status(HTTPStatus.BAD_REQUEST).send({
+						message: "❓ No percent_allocation received",
+					});
 
 					return;
 				}
 
 				if (percent_allocation < 0 || percent_allocation > 10_000)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send({ message: "❌ Invalid percent_allocation" });
+					res.status(HTTPStatus.BAD_REQUEST).send({
+						message: "❌ Invalid percent_allocation",
+					});
 
 					return;
 				}
 
 				if (!balance && balance != 0)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send({ message: "❓ No balance received" });
+					res.status(HTTPStatus.BAD_REQUEST).send({
+						message: "❓ No balance received",
+					});
 
 					return;
 				}
@@ -73,22 +83,30 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				if (!Array.isArray(portfolios))
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send({ message: "Expected result is not Array" });
+					res.status(HTTPStatus.BAD_REQUEST).send({
+						message: "Expected result is not Array",
+					});
 
 					return;
 				}
 
 				if (portfolios.length == 0)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send({ message: "❌ Invalid portfolio_id" });
+					res.status(HTTPStatus.BAD_REQUEST).send({
+						message: "❌ Invalid portfolio_id",
+					});
 
 					return;
 				}
 
 				// Check how many portfolios the user already has
-				const [existing] = await mySQLPool.promise().query(
+				const [
+					existing,
+				] = await mySQLPool.promise().query(
 					"SELECT COUNT(*) AS count FROM portfolio_asset WHERE portfolio_id = ?;",
-					[portfolio_id]
+					[
+						portfolio_id,
+					]
 				);
 
 				const userPortfolioAssetCount = existing[0]?.count ?? 0;
@@ -119,7 +137,9 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					]
 				);
 
-				res.status(HTTPStatus.CREATED).send({ message: "Portfolio asset created" });
+				res.status(HTTPStatus.CREATED).send({
+					message: "Portfolio asset created",
+				});
 
 				return;
 
@@ -153,27 +173,33 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		{
 			const { id, } = req.params;
 
-			const { balance, percent_allocation }: PortfolioAssetUpdate = req.body.load;
+			const { balance, percent_allocation, }: PortfolioAssetUpdate = req.body.load;
 
 			try
 			{
 				if (!balance && balance != 0)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send({ message: "❓ No balance received" });
+					res.status(HTTPStatus.BAD_REQUEST).send({
+						message: "❓ No balance received",
+					});
 
 					return;
 				}
 
 				if (!percent_allocation && percent_allocation != 0)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send({ message: "❓ No percent_allocation received" });
+					res.status(HTTPStatus.BAD_REQUEST).send({
+						message: "❓ No percent_allocation received",
+					});
 
 					return;
 				}
 
 				if (percent_allocation < 0 || percent_allocation > 10_000)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send({ message: "❌ Invalid percent_allocation" });
+					res.status(HTTPStatus.BAD_REQUEST).send({
+						message: "❌ Invalid percent_allocation",
+					});
 
 					return;
 				}
@@ -188,7 +214,9 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					]
 				);
 
-				res.status(HTTPStatus.CREATED).send({ message: "Portfolio asset updated" });
+				res.status(HTTPStatus.CREATED).send({
+					message: "Portfolio asset updated",
+				});
 
 				return;
 
@@ -218,7 +246,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		userToken.userTokenDecode(mySQLPool),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const { id } = req.params;
+			const { id, } = req.params;
 
 			try
 			{
@@ -230,20 +258,24 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				] = await mySQLPool.promise().query(
 					"SELECT * FROM portfolio_asset WHERE id = ?;",
 					[
-						id
+						id,
 					]
 				);
 
 				if (!Array.isArray(portfolio_assets))
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send({ message: "Expected result is not Array" });
+					res.status(HTTPStatus.BAD_REQUEST).send({
+						message: "Expected result is not Array",
+					});
 
 					return;
 				}
 
 				if (portfolio_assets.length == 0)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send({ message: "❌ Invalid portfolio_asset id" });
+					res.status(HTTPStatus.BAD_REQUEST).send({
+						message: "❌ Invalid portfolio_asset id",
+					});
 
 					return;
 				}
@@ -263,7 +295,9 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				if (!Array.isArray(portfolios))
 				{
-					res.status(HTTPStatus.BAD_REQUEST).send({ message: "Expected result is not Array" });
+					res.status(HTTPStatus.BAD_REQUEST).send({
+						message: "Expected result is not Array",
+					});
 
 					return;
 				}
@@ -271,7 +305,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				if (portfolios.length == 0)
 				{
 					res.status(HTTPStatus.BAD_REQUEST).send({
-						message: "❌ No portfolio found for portfolio_asset id (Possibly not your portfolio_asset)"
+						message: "❌ No portfolio found for portfolio_asset id (Possibly not your portfolio_asset)",
 					});
 
 					return;
@@ -284,7 +318,9 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					]
 				);
 
-				res.status(HTTPStatus.OK).send({ message: "Deleted portfolio_asset" });
+				res.status(HTTPStatus.OK).send({
+					message: "Deleted portfolio_asset",
+				});
 			}
 			catch (error: Error | any)
 			{

@@ -23,13 +23,15 @@ export default {
 			stocks,
 		] = await mySQLPool.promise().query<IStock[]>(
 			"DELETE FROM stock WHERE isin = ?;",
-			[isin,]
+			[
+				isin,
+			]
 		);
 
 		return stocks;
 	},
 
-	getStock: async (mySQLPool: mysql.Pool, isin: string): Promise<IStock[]> =>
+	getStockByIsin: async (mySQLPool: mysql.Pool, isin: string): Promise<IStock[]> =>
 	{
 		let [
 			stocks,
@@ -64,7 +66,7 @@ export default {
 		] = await mySQLPool.promise().query<IStock[]>(
 			"SELECT * FROM stock WHERE symbol LIKE ?;",
 			[
-				`%${symbol}%`,
+				`${symbol}%`,
 			]
 		);
 

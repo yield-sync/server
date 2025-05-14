@@ -22,10 +22,10 @@ let token: string;
 
 jest.mock("axios");
 jest.mock("../../../external-api/data-provider-stock", () => ({
-	getStockTickerFromISIN: jest.fn(),
-	queryForStock: jest.fn(),
-	getStockProfile: jest.fn(),
+	getStockProfileByIsin: jest.fn(),
+	getStockProfileBySymbol: jest.fn(),
 	queryForStockByIsin: jest.fn(),
+	queryForStockBySymbol: jest.fn(),
 }));
 
 
@@ -177,7 +177,7 @@ describe("Request: GET", () => {
 					}
 				});
 
-				expect(extAPIDataProviderStock.queryForStock).not.toHaveBeenCalled();
+				expect(extAPIDataProviderStock.queryForStockBySymbol).not.toHaveBeenCalled();
 			});
 		});
 
@@ -212,7 +212,7 @@ describe("Request: GET", () => {
 				);
 
 				// Mock the external API response
-				(extAPIDataProviderStock.getStockProfile as jest.Mock).mockResolvedValue({
+				(extAPIDataProviderStock.getStockProfileByIsin as jest.Mock).mockResolvedValue({
 					symbol: CONSTANTS.STOCKS.APPLE.SYMBOL,
 					name: CONSTANTS.STOCKS.APPLE.NAME,
 					exchange: CONSTANTS.STOCKS.APPLE.EXCHANGE,
@@ -230,7 +230,7 @@ describe("Request: GET", () => {
 
 				expect(res.body.UpdateStockPerformed).toBeTruthy();
 
-				expect(extAPIDataProviderStock.getStockProfile).toHaveBeenCalledTimes(1);
+				expect(extAPIDataProviderStock.getStockProfileByIsin).toHaveBeenCalledTimes(1);
 			});
 
 			it("Should update stock name and symbol if ISIN found already in DB..", async () => {
@@ -247,7 +247,7 @@ describe("Request: GET", () => {
 				);
 
 				// Mock the external API response
-				(extAPIDataProviderStock.getStockProfile as jest.Mock).mockResolvedValueOnce({
+				(extAPIDataProviderStock.getStockProfileByIsin as jest.Mock).mockResolvedValueOnce({
 					symbol: CONSTANTS.STOCKS.APPLE.SYMBOL,
 					name: CONSTANTS.STOCKS.APPLE.NAME,
 					exchange: CONSTANTS.STOCKS.APPLE.EXCHANGE,
@@ -265,7 +265,7 @@ describe("Request: GET", () => {
 
 				expect(readRes.body.dBStockWithExSymbolFound).toBe(false);
 
-				expect(extAPIDataProviderStock.getStockProfile).toHaveBeenCalledTimes(1);
+				expect(extAPIDataProviderStock.getStockProfileByIsin).toHaveBeenCalledTimes(1);
 
 				const [updatedStock] = await mySQLPool.promise().query<IStock>(
 					"SELECT * FROM stock WHERE isin = ?;",
@@ -303,7 +303,7 @@ describe("Request: GET", () => {
 				);
 
 				// Mock the external API response
-				(extAPIDataProviderStock.getStockProfile as jest.Mock).mockResolvedValue({
+				(extAPIDataProviderStock.getStockProfileByIsin as jest.Mock).mockResolvedValue({
 					isin: CONSTANTS.STOCKS.APPLE.ISIN,
 					symbol: CONSTANTS.STOCKS.BANANA.SYMBOL,
 					name: CONSTANTS.STOCKS.BANANA.NAME,
@@ -328,7 +328,7 @@ describe("Request: GET", () => {
 
 				expect(response.status).toBe(HTTPStatus.OK);
 
-				expect(extAPIDataProviderStock.getStockProfile).toHaveBeenCalledTimes(1);
+				expect(extAPIDataProviderStock.getStockProfileByIsin).toHaveBeenCalledTimes(1);
 
 				expect(extAPIDataProviderStock.queryForStockByIsin).toHaveBeenCalledTimes(1);
 
@@ -377,7 +377,7 @@ describe("Request: GET", () => {
 				);
 
 				// Mock the external API response
-				(extAPIDataProviderStock.getStockProfile as jest.Mock).mockResolvedValue({
+				(extAPIDataProviderStock.getStockProfileByIsin as jest.Mock).mockResolvedValue({
 					isin: CONSTANTS.STOCKS.APPLE.ISIN,
 					symbol: CONSTANTS.STOCKS.BANANA.SYMBOL,
 					name: CONSTANTS.STOCKS.BANANA.NAME,
@@ -408,7 +408,7 @@ describe("Request: GET", () => {
 					200
 				);
 
-				expect(extAPIDataProviderStock.getStockProfile).toHaveBeenCalledTimes(1);
+				expect(extAPIDataProviderStock.getStockProfileByIsin).toHaveBeenCalledTimes(1);
 
 				expect(extAPIDataProviderStock.queryForStockByIsin).toHaveBeenCalledTimes(1);
 
@@ -497,7 +497,7 @@ describe("Request: GET", () => {
 				]
 			});
 
-			expect(extAPIDataProviderStock.queryForStock).not.toHaveBeenCalled();
+			expect(extAPIDataProviderStock.queryForStockBySymbol).not.toHaveBeenCalled();
 		});
 	});
 });
@@ -506,7 +506,7 @@ describe("Request: POST", () => {
 	describe("POST /api/stock/create", () => {
 		describe("Failure Cases", () => {
 			it("Should fail to create a stock if invalid ISIN passed (ticker not found)..", async () => {
-				(extAPIDataProviderStock.getStockTickerFromISIN as jest.Mock).mockResolvedValue(null);
+				(extAPIDataProviderStock.getStockProfileByIsin as jest.Mock).mockResolvedValue(null);
 
 				const createRes = await request(app).post("/api/stock/create").set(
 					"authorization",
@@ -519,13 +519,11 @@ describe("Request: POST", () => {
 
 				expect(createRes.statusCode).toBe(HTTPStatus.BAD_REQUEST);
 
-				expect(createRes.body.message).toBe("❌ Invalid ISIN");
+				expect(createRes.body.message).toBe("⚠️ Nothing returned from external source for symbol");
 			});
 
 			it("Should fail to create a stock if invalid ISIN passed (ticker not found)..", async () => {
-				(extAPIDataProviderStock.getStockTickerFromISIN as jest.Mock).mockResolvedValue("AAPL");
-
-				(extAPIDataProviderStock.getStockProfile as jest.Mock).mockResolvedValue(null);
+				(extAPIDataProviderStock.getStockProfileByIsin as jest.Mock).mockResolvedValue(null);
 
 				const createRes = await request(app).post("/api/stock/create").set(
 					"authorization",
@@ -542,9 +540,7 @@ describe("Request: POST", () => {
 			});
 
 			it("Should fail to create a stock if already found in the database..", async () => {
-				(extAPIDataProviderStock.getStockTickerFromISIN as jest.Mock).mockResolvedValue("AAPL");
-
-				(extAPIDataProviderStock.getStockProfile as jest.Mock).mockResolvedValue({
+				(extAPIDataProviderStock.getStockProfileByIsin as jest.Mock).mockResolvedValue({
 					isin: CONSTANTS.STOCKS.APPLE.ISIN,
 					symbol: CONSTANTS.STOCKS.APPLE.SYMBOL,
 					name: CONSTANTS.STOCKS.APPLE.NAME,
@@ -579,9 +575,7 @@ describe("Request: POST", () => {
 
 		describe("Success Cases", () => {
 			it("Should create a stock if it doesnt exist already..", async () => {
-				(extAPIDataProviderStock.getStockTickerFromISIN as jest.Mock).mockResolvedValue("AAPL");
-
-				(extAPIDataProviderStock.getStockProfile as jest.Mock).mockResolvedValue({
+				(extAPIDataProviderStock.getStockProfileByIsin as jest.Mock).mockResolvedValue({
 					isin: CONSTANTS.STOCKS.APPLE.ISIN,
 					symbol: CONSTANTS.STOCKS.APPLE.SYMBOL,
 					name: CONSTANTS.STOCKS.APPLE.NAME,
@@ -609,8 +603,6 @@ describe("Request: POST", () => {
 	describe("POST /api/stock/create-by-symbol", () => {
 		describe("Failure Cases", () => {
 			it("Should fail to create a stock if invalid no symbol passed..", async () => {
-				(extAPIDataProviderStock.getStockTickerFromISIN as jest.Mock).mockResolvedValue(null);
-
 				const createRes = await request(app).post("/api/stock/create-by-symbol").set(
 					"authorization",
 					`Bearer ${token}`
@@ -625,7 +617,7 @@ describe("Request: POST", () => {
 			});
 
 			it("Should fail to create a stock if already found in the database..", async () => {
-				(extAPIDataProviderStock.getStockProfile as jest.Mock).mockResolvedValue({
+				(extAPIDataProviderStock.getStockProfileByIsin as jest.Mock).mockResolvedValue({
 					isin: CONSTANTS.STOCKS.APPLE.ISIN,
 					symbol: CONSTANTS.STOCKS.APPLE.SYMBOL,
 					name: CONSTANTS.STOCKS.APPLE.NAME,
@@ -656,28 +648,11 @@ describe("Request: POST", () => {
 
 				expect(createRes.body.message).toBe("Stock already exists");
 			});
-
-			it("Should fail to create a stock if invalid ISIN passed (ticker not found)..", async () => {
-				(extAPIDataProviderStock.getStockProfile as jest.Mock).mockResolvedValue(null);
-
-				const createRes = await request(app).post("/api/stock/create-by-symbol").set(
-					"authorization",
-					`Bearer ${token}`
-				).send({
-					load: {
-						symbol: CONSTANTS.STOCKS.APPLE.SYMBOL
-					}
-				});
-
-				expect(createRes.statusCode).toBe(HTTPStatus.BAD_REQUEST);
-
-				expect(createRes.body.message).toBe("⚠️ Nothing returned from external source for symbol");
-			});
 		});
 
 		describe("Success Cases", () => {
 			it("Should create a stock if it doesnt exist already..", async () => {
-				(extAPIDataProviderStock.getStockProfile as jest.Mock).mockResolvedValue({
+				(extAPIDataProviderStock.getStockProfileBySymbol as jest.Mock).mockResolvedValue({
 					isin: CONSTANTS.STOCKS.APPLE.ISIN,
 					symbol: CONSTANTS.STOCKS.APPLE.SYMBOL,
 					name: CONSTANTS.STOCKS.APPLE.NAME,

@@ -15,7 +15,8 @@ export class ExternalRequestError extends
 {}
 
 
-const getStockTickerFromISIN = async (isin: string): Promise<string|null> => {
+const _getStockTickerFromIsin = async (isin: string): Promise<string|null> => 
+{
 	// First get the symbol by the isin
 	const openfigiResponse = await axios.post(
 		"https://api.openfigi.com/v3/mapping",
@@ -23,13 +24,13 @@ const getStockTickerFromISIN = async (isin: string): Promise<string|null> => {
 			{
 				"idType": "ID_ISIN",
 				"idValue": isin,
-				"exchCode": "US"
-			}
+				"exchCode": "US",
+			},
 		],
 		{
 			headers: {
-			"Content-Type": "application/json",
-			"X-OPENFIGI-APIKEY": config.api.openfigi.key,
+				"Content-Type": "application/json",
+				"X-OPENFIGI-APIKEY": config.api.openfigi.key,
 			},
 		}
 	);
@@ -49,70 +50,99 @@ const getStockTickerFromISIN = async (isin: string): Promise<string|null> => {
 
 
 export default {
-	getStockTickerFromISIN,
-
-	getStockProfile: async (isin: string): Promise<IStock | null> =>
+	getStockProfileByIsin: async (isin: string): Promise<IStock | null> =>
+	{
+		try
 		{
-			try
+			const symbol = await _getStockTickerFromIsin(isin);
+
+			if (!symbol) return null;
+
+			const response = await axios.get(
+				`${uRL}/stable/profile?symbol=${symbol}&apikey=${key}`
+			);
+
+			if (response.data.length == 0)
 			{
-				const symbol = await getStockTickerFromISIN(isin)
-
-				if (!symbol) return null
-
-				const response = await axios.get(
-					`${uRL}/stable/profile?symbol=${symbol}&apikey=${key}`
-				);
-
-				if (response.data.length == 0)
-				{
-					return null;
-				}
-
-				return {
-					isin: response.data[0].isin,
-					symbol: response.data[0].symbol,
-					name: response.data[0].companyName,
-					exchange: response.data[0].exchange.toLowerCase(),
-					sector: response.data[0].sector,
-					industry: response.data[0].industry,
-				} as IStock;
-			}
-			catch (error)
-			{
-				console.warn("Error fetching external API: " + error);
-
 				return null;
 			}
-		},
 
-	queryForStock: async (ticker: string): Promise<any[]> =>
+			return {
+				isin: response.data[0].isin,
+				symbol: response.data[0].symbol,
+				name: response.data[0].companyName,
+				exchange: response.data[0].exchange.toLowerCase(),
+				sector: response.data[0].sector,
+				industry: response.data[0].industry,
+			} as IStock;
+		}
+		catch (error)
 		{
-			try
+			console.warn("Error fetching external API: " + error);
+
+			return null;
+		}
+	},
+
+	getStockProfileBySymbol: async (symbol: string): Promise<IStock | null> =>
+	{
+		try
+		{
+			const response = await axios.get(
+				`${uRL}/stable/profile?symbol=${symbol}&apikey=${key}`
+			);
+
+			if (response.data.length == 0)
 			{
-				const response = await axios.get(
-					`${uRL}/stable/search-symbol?query=${ticker}&apikey=${key}`
+				return null;
+			}
+
+			return {
+				isin: response.data[0].isin,
+				symbol: response.data[0].symbol,
+				name: response.data[0].companyName,
+				exchange: response.data[0].exchange.toLowerCase(),
+				sector: response.data[0].sector,
+				industry: response.data[0].industry,
+			} as IStock;
+		}
+		catch (error)
+		{
+			console.warn("Error fetching external API: " + error);
+
+			return null;
+		}
+	},
+
+	queryForStockBySymbol: async (symbol: string): Promise<any[]> =>
+	{
+		try
+		{
+			const response = await axios.get(
+				`${uRL}/stable/search-symbol?query=${symbol}&apikey=${key}`
+			);
+
+			let stocks: any[] = [
+			];
+
+			for (let i = 0; i < response.data.length; i++)
+			{
+				stocks.push(
+					{
+						name: response.data[i].name,
+						symbol: response.data[i].symbol,
+						exchange: response.data[i].exchange,
+					} as any
 				);
-
-				let stocks: any[] = [];
-
-				for (let i = 0; i < response.data.length; i++)
-				{
-					stocks.push(
-						{
-							name: response.data[i].name,
-							symbol: response.data[i].symbol,
-							exchange: response.data[i].exchange,
-						} as any
-					);
-				}
-
-				return stocks;
 			}
-			catch (error)
-			{
-				throw new ExternalRequestError("Error fetching external API: " + error);
-			}
-		},
+
+			return stocks;
+		}
+		catch (error)
+		{
+			throw new ExternalRequestError("Error fetching external API: " + error);
+		}
+	},
 
 	queryForStockByIsin: async (isin: string): Promise<IStock | null> =>
 	{

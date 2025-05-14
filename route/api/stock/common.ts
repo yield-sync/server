@@ -6,10 +6,9 @@ import DBHandlerStock from "../../../db-handler/stock";
 const ERROR_STOCK_PROFILE_EXTERNALLY_NOT_FOUND: string = "⚠️ Nothing returned from external source for symbol";
 
 
-export const refreshAsset = async (mySQLPool: mysql.Pool, isin: string): Promise<{
-	dBStockWithExSymbolFound: boolean
-}> => {
-	let externalStock: IStock = await extAPIDataProviderStock.getStockProfile(isin);
+export const refreshAsset = async (mySQLPool: mysql.Pool, isin: string): Promise<{dBStockWithExSymbolFound: boolean}> =>
+{
+	let externalStock: IStock = await extAPIDataProviderStock.getStockProfileByIsin(isin);
 
 	if (!externalStock)
 	{
@@ -51,11 +50,33 @@ export const refreshAsset = async (mySQLPool: mysql.Pool, isin: string): Promise
 	}
 
 	return {
-		dBStockWithExSymbolFound
+		dBStockWithExSymbolFound,
 	};
-}
+};
 
-export const createNewAsset = async (mySQLPool: mysql.Pool, symbol: string) => {
+export const createNewAssetByIsin = async (mySQLPool: mysql.Pool, isin: string): Promise<IStock> =>
+{
+	const dBAsset: IStock[] = await DBHandlerStock.getStockByIsin(mySQLPool, isin);
+
+	if (dBAsset.length > 0)
+	{
+		throw new Error("Stock already exists");
+	}
+
+	const externalStock: IStock = await extAPIDataProviderStock.getStockProfileByIsin(isin);
+
+	if (!externalStock)
+	{
+		throw new Error(ERROR_STOCK_PROFILE_EXTERNALLY_NOT_FOUND);
+	}
+
+	await DBHandlerStock.createStock(mySQLPool, externalStock);
+
+	return externalStock;
+};
+
+export const createNewAssetBySymbol = async (mySQLPool: mysql.Pool, symbol: string): Promise<IStock> =>
+{
 	const dBAsset: IStock[] = await DBHandlerStock.getStockBySymbol(mySQLPool, symbol);
 
 	if (dBAsset.length > 0)
@@ -63,14 +84,14 @@ export const createNewAsset = async (mySQLPool: mysql.Pool, symbol: string) => {
 		throw new Error("Stock already exists");
 	}
 
-	const externalStock: IStock = await extAPIDataProviderStock.getStockProfile(symbol);
+	const externalStock: IStock = await extAPIDataProviderStock.getStockProfileBySymbol(symbol);
 
 	if (!externalStock)
 	{
 		throw new Error(ERROR_STOCK_PROFILE_EXTERNALLY_NOT_FOUND);
 	}
-	else
-	{
-		await DBHandlerStock.createStock(mySQLPool, externalStock);
-	}
+
+	await DBHandlerStock.createStock(mySQLPool, externalStock);
+
+	return externalStock;
 };

@@ -1,13 +1,12 @@
 import express from "express";
 import mysql from "mysql2";
 
-import { createNewAsset, refreshAsset } from "./common";
+import { createNewAssetByIsin, createNewAssetBySymbol, refreshAsset } from "./common";
 import { loadRequired } from "../../../middleware/load";
 import userToken from "../../../middleware/user-token";
 import { INTERNAL_SERVER_ERROR, HTTPStatus } from "../../../constants";
 import DBHandlerStock from "../../../db-handler/stock";
 import { sanitizeSymbolQuery } from "../../../util/sanitizer";
-import extAPIDataProviderStock from "../../../external-api/data-provider-stock";
 
 
 const ONE_WEEK_IN_MINUTES: number = 10080;
@@ -43,19 +42,19 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				const dBAsset: IStock[] = await DBHandlerStock.getStock(mySQLPool, isin);
+				const dBAsset: IStock[] = await DBHandlerStock.getStockByIsin(mySQLPool, isin);
 
 				if (dBAsset.length > 0)
 				{
 					response.UpdateStockPerformed = (
 						new Date()).getTime() - (new Date(dBAsset[0].updated_on)
-					).getTime() >= ONE_WEEK_IN_MS
+					).getTime() >= ONE_WEEK_IN_MS;
 
 					if (!response.UpdateStockPerformed)
 					{
 						res.status(HTTPStatus.OK).json({
 							...response,
-							stock: (await DBHandlerStock.getStock(mySQLPool, isin))[0]
+							stock: (await DBHandlerStock.getStockByIsin(mySQLPool, isin))[0],
 						});
 
 						return;
@@ -63,26 +62,30 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 					try
 					{
-						const { dBStockWithExSymbolFound } = await refreshAsset(mySQLPool, dBAsset[0].isin);
+						const { dBStockWithExSymbolFound, } = await refreshAsset(mySQLPool, dBAsset[0].isin);
 
 						res.status(HTTPStatus.OK).json({
 							...response,
 							UpdateStockPerformed: true,
 							dBStockWithExSymbolFound,
-							stock: (await DBHandlerStock.getStock(mySQLPool, isin))[0]
+							stock: (await DBHandlerStock.getStockByIsin(mySQLPool, isin))[0],
 						});
 
 						return;
 					}
 					catch (error)
 					{
-						res.status(HTTPStatus.BAD_REQUEST).json({ message: error.message });
+						res.status(HTTPStatus.BAD_REQUEST).json({
+							message: error.message,
+						});
 
-						return
+						return;
 					}
 				}
 
-				res.status(HTTPStatus.OK).json({ ...response, stock: dBAsset[0] });
+				res.status(HTTPStatus.OK).json({
+					...response, stock: dBAsset[0],
+				});
 			}
 			catch (error: Error | any)
 			{
@@ -161,26 +164,20 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			{
 				const { isin, } = req.body.load;
 
-				const symbol = await extAPIDataProviderStock.getStockTickerFromISIN(isin);
-
-				if (!symbol)
-				{
-					res.status(HTTPStatus.BAD_REQUEST).json({
-						message: "❌ Invalid ISIN"
-					});
-
-					return;
-				}
-
 				try
 				{
-					await createNewAsset(mySQLPool, symbol);
+					const createdStock = await createNewAssetByIsin(mySQLPool, isin);
 
-					res.status(HTTPStatus.CREATED).json({ message: "✅ Created stock" });
+					res.status(HTTPStatus.CREATED).json({
+						message: "✅ Created stock",
+						createdStock,
+					});
 				}
 				catch (error)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).json({ message: error.message });
+					res.status(HTTPStatus.BAD_REQUEST).json({
+						message: error.message,
+					});
 
 					return;
 				}
@@ -217,7 +214,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				if (!symbol)
 				{
 					res.status(HTTPStatus.BAD_REQUEST).json({
-						message: "❌ Invalid Symbol"
+						message: "❌ Invalid Symbol",
 					});
 
 					return;
@@ -225,13 +222,18 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				try
 				{
-					await createNewAsset(mySQLPool, symbol);
+					const createdStock = await createNewAssetBySymbol(mySQLPool, symbol);
 
-					res.status(HTTPStatus.CREATED).json({ message: "✅ Created stock" });
+					res.status(HTTPStatus.CREATED).json({
+						message: "✅ Created stock",
+						createdStock,
+					});
 				}
 				catch (error)
 				{
-					res.status(HTTPStatus.BAD_REQUEST).json({ message: error.message });
+					res.status(HTTPStatus.BAD_REQUEST).json({
+						message: error.message,
+					});
 
 					return;
 				}
@@ -274,7 +276,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				}
 
 				// Ensure stock exists
-				const existingStock = await DBHandlerStock.getStock(mySQLPool, stock_isin);
+				const existingStock = await DBHandlerStock.getStockByIsin(mySQLPool, stock_isin);
 
 				if ((existingStock as any[]).length === 0)
 				{
