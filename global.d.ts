@@ -12,13 +12,12 @@ declare global
 
 
 	type CryptocurrencyCreate = Load & {
-		coingecko_id: string;
-		name?: string;
-		symbol?: string;
+		id: string;
+		name: string;
+		symbol: string;
 	};
 
 	type CryptocurrencyUpdate = Load & {
-		coingecko_id: string;
 		name?: string;
 		symbol?: string;
 	};
@@ -32,23 +31,6 @@ declare global
 		thumb: string,
 		large: string,
 	}
-
-	type StockCreate = Load & {
-		exchange: string;
-		isin: string;
-		name?: string;
-		symbol?: string;
-	};
-
-	type StockSearchQuery = {
-		UpdateStockPerformed: boolean,
-		stock: IStock,
-		dBStockWithExSymbolFound: boolean,
-	}
-
-	type StockDelete = Load & {
-		stock_isin: string,
-	};
 
 	type PortfolioAssetCreate = Load & {
 		portfolio_id: string,
@@ -125,8 +107,7 @@ declare global
 		RowDataPacket,
 		OkPacket
 	{
-		id: number;
-		coingecko_id: string;
+		id: string;
 		name: string;
 		symbol: string;
 	}
@@ -151,19 +132,6 @@ declare global
 		stock_isin: string;
 		percent_allocation: number;
 		created: number;
-	}
-
-	interface IStock extends
-		RowDataPacket,
-		OkPacket
-	{
-		isin: string;
-		name: string;
-		symbol: string;
-		exchange: string;
-		sector: string;
-		industry: string;
-		updated_on: string;
 	}
 
 	interface IUser extends
@@ -200,6 +168,19 @@ declare global
 		name: string;
 		pin: string;
 		created: Date;
+	}
+
+	interface IStock extends
+		RowDataPacket,
+		OkPacket
+	{
+		isin: string;
+		name: string;
+		symbol: string;
+		exchange: string;
+		sector: string;
+		industry: string;
+		updated_on: string;
 	}
 
 	declare namespace Express {

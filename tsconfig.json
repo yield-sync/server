@@ -21,6 +21,7 @@
     "sql/**/*.ts",
     "global.d.ts",
     "middleware/*.ts",
+    "types/**"
   ],
   "exclude": [
     "dist",

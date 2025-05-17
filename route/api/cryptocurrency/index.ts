@@ -187,7 +187,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 						for (let ii = 0; ii < cryptocurrencyCoingeckoIds.length; ii++)
 						{
-							if (coingeckoCoin.id == cryptocurrencyCoingeckoIds[ii].coingecko_id)
+							if (coingeckoCoin.id == cryptocurrencyCoingeckoIds[ii].id)
 							{
 								missingInDatabase = false;
 							}
@@ -250,7 +250,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		{
 			const { id, } = req.params;
 
-			const { coingecko_id, name, symbol, }: CryptocurrencyUpdate = req.body.load;
+			const { name, symbol, }: CryptocurrencyUpdate = req.body.load;
 
 			try
 			{
@@ -275,7 +275,6 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				await mySQLPool.promise().query(
 					"UPDATE cryptocurrency SET coingecko_id = ?, name = ?, symbol = ? WHERE id = ?;",
 					[
-						coingecko_id ?? existingAsset[0].coingecko_id,
 						name ?? existingAsset[0].name,
 						symbol ?? existingAsset[0].symbol,
 						id,

@@ -24,8 +24,7 @@ const queries: string[] = [
 	// cryptocurrency
 	`
 		CREATE TABLE cryptocurrency (
-			id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-			coingecko_id VARCHAR(50) NOT NULL UNIQUE,
+			id VARCHAR(12) NOT NULL UNIQUE PRIMARY KEY,
 			symbol VARCHAR(50) NOT NULL,
 			name VARCHAR(100) NOT NULL
 		);
