@@ -136,14 +136,14 @@ describe("Table: cryptocurrency", () =>
 {
 	describe("Expected Failure", () =>
 	{
-		it("Should fail when inserting cryptocurrency without coingecko_id..", async () =>
+		it("Should fail when inserting cryptocurrency without id..", async () =>
 		{
 			await expect(
 				testMySQLPool.promise().query(
 					"INSERT INTO cryptocurrency (symbol, name) VALUES (?, ?);",
 					["ETH", "Ethereum"]
 				)
-			).rejects.toThrow("Field 'coingecko_id' doesn't have a default value");
+			).rejects.toThrow("Field 'id' doesn't have a default value");
 		});
 	});
 
@@ -152,13 +152,13 @@ describe("Table: cryptocurrency", () =>
 		it("Should allow inserting a cryptocurrency with platform..", async () =>
 		{
 			await testMySQLPool.promise().query(
-				"INSERT INTO cryptocurrency (coingecko_id, symbol, name) VALUES (?, ?, ?);",
+				"INSERT INTO cryptocurrency (id, symbol, name) VALUES (?, ?, ?);",
 				["ethereum", "ETH", "Ethereum"]
 			);
 
 			await expect(
 				testMySQLPool.promise().query(
-					"INSERT INTO cryptocurrency_platform (cryptocurrency_id, platform, address) VALUES (LAST_INSERT_ID(), ?, ?);",
+					"INSERT INTO cryptocurrency_platform (cryptocurrency_id, platform, address) VALUES ('ethereum', ?, ?);",
 					["ethereum", "0x123"]
 				)
 			).resolves.not.toThrow();
@@ -166,23 +166,23 @@ describe("Table: cryptocurrency", () =>
 
 		it("Should allow inserting cryptocurrency with same address on different platforms..", async () => {
 			await testMySQLPool.promise().query(
-				"INSERT INTO cryptocurrency (coingecko_id, symbol, name) VALUES (?, ?, ?);",
+				"INSERT INTO cryptocurrency (id, symbol, name) VALUES (?, ?, ?);",
 				["usdc", "USDC", "USD Coin"]
 			);
 
 			await testMySQLPool.promise().query(
-				"INSERT INTO cryptocurrency_platform (cryptocurrency_id, platform, address) VALUES (LAST_INSERT_ID(), ?, ?);",
+				"INSERT INTO cryptocurrency_platform (cryptocurrency_id, platform, address) VALUES ('usdc', ?, ?);",
 				["ethereum", "0x123"]
 			);
 
 			await testMySQLPool.promise().query(
-				"INSERT INTO cryptocurrency (coingecko_id, symbol, name) VALUES (?, ?, ?);",
+				"INSERT INTO cryptocurrency (id, symbol, name) VALUES (?, ?, ?);",
 				["usdc-base", "USDC", "USD Coin Base"]
 			);
 
 			await expect(
 				testMySQLPool.promise().query(
-					"INSERT INTO cryptocurrency_platform (cryptocurrency_id, platform, address) VALUES (LAST_INSERT_ID(), ?, ?);",
+					"INSERT INTO cryptocurrency_platform (cryptocurrency_id, platform, address) VALUES ('usdc-base', ?, ?);",
 					["base", "0x123"]
 				)
 			).resolves.not.toThrow();
@@ -191,16 +191,16 @@ describe("Table: cryptocurrency", () =>
 
 	describe("Expected Failure Part 2", () =>
 	{
-		it("Should fail when inserting duplicate coingecko_id..", async () =>
+		it("Should fail when inserting duplicate id..", async () =>
 		{
 			await testMySQLPool.promise().query(
-				"INSERT INTO cryptocurrency (coingecko_id, symbol, name) VALUES (?, ?, ?);",
+				"INSERT INTO cryptocurrency (id, symbol, name) VALUES (?, ?, ?);",
 				["ethereum", "ETH", "Ethereum"]
 			);
 
 			await expect(
 				testMySQLPool.promise().query(
-					"INSERT INTO cryptocurrency (coingecko_id, symbol, name) VALUES (?, ?, ?);",
+					"INSERT INTO cryptocurrency (id, symbol, name) VALUES (?, ?, ?);",
 					["ethereum", "ETH2", "Ethereum 2"]
 				)
 			).rejects.toThrow(/Duplicate entry/);
@@ -272,8 +272,8 @@ describe("Table: portfolio_asset", () => {
 
 		// Create a cryptocurrency
 		await testMySQLPool.promise().query(
-			"INSERT INTO cryptocurrency (symbol, name, coingecko_id) VALUES (?, ?, ?);",
-			["ETH", `Ethereum`, `eth`]
+			"INSERT INTO cryptocurrency (id, symbol, name) VALUES (?, ?, ?);",
+			["ethereum", "ETH", "Ethereum",]
 		);
 
 		const [cryptocurrencyRow]: any = await testMySQLPool.promise().query(
@@ -415,7 +415,7 @@ describe("Table: portfolio_asset", () => {
 					`,
 					[portfolioId, cryptocurrencyIdEthereum]
 				)
-			).rejects.toThrow("Duplicate entry '1-1' for key 'unique_portfolio_cryptocurrency'");
+			).rejects.toThrow("Duplicate entry '1-ethereum' for key 'unique_portfolio_cryptocurrency'");
 		});
 
 		it("Should fail to update an existing stock_isin to another stock_isin that is already within the portfolio..",async () => {

@@ -24,7 +24,7 @@ const queries: string[] = [
 	// cryptocurrency
 	`
 		CREATE TABLE cryptocurrency (
-			id VARCHAR(12) NOT NULL UNIQUE PRIMARY KEY,
+			id VARCHAR(255) NOT NULL UNIQUE PRIMARY KEY,
 			symbol VARCHAR(50) NOT NULL,
 			name VARCHAR(100) NOT NULL
 		);
@@ -98,7 +98,7 @@ const queries: string[] = [
 	`
 		CREATE TABLE cryptocurrency_platform (
 			id INT PRIMARY KEY AUTO_INCREMENT,
-			cryptocurrency_id INT NOT NULL,
+			cryptocurrency_id VARCHAR(255) NOT NULL,
 			platform VARCHAR(50) NOT NULL,
 			address VARCHAR(100) NOT NULL,
 			FOREIGN KEY (cryptocurrency_id) REFERENCES cryptocurrency(id)
@@ -120,7 +120,7 @@ const queries: string[] = [
 		CREATE TABLE portfolio_asset (
 			id INT NOT NULL AUTO_INCREMENT,
 			portfolio_id INT NOT NULL,
-			cryptocurrency_id INT,
+			cryptocurrency_id VARCHAR(255),
 			stock_isin VARCHAR(12),
 			percent_allocation DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (percent_allocation BETWEEN 0.00 AND 100.00),
 			balance DECIMAL(20,8) NOT NULL DEFAULT 0 CHECK (balance >= 0),

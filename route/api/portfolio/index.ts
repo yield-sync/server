@@ -116,7 +116,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 							s.industry,
 							c.symbol AS cryptocurrency_symbol,
 							c.name AS cryptocurrency_name,
-							c.coingecko_id
+							c.id
 						FROM
 							portfolio_asset pa
 						LEFT JOIN
