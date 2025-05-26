@@ -8,7 +8,7 @@ type StockCreate = Load & {
 };
 
 type StockSearchQuery = {
-	UpdateStockPerformed: boolean,
+	refreshed: boolean,
 	stock: IStock,
 	dBStockWithExSymbolFound: boolean,
 }

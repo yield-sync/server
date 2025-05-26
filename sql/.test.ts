@@ -55,8 +55,7 @@ describe("Database Initialization", () =>
 				"portfolio",
 				"portfolio_asset",
 				"user",
-				"profile_cryptocurrency",
-				"profile_stock",
+				"query_cryptocurrency",
 				"stock",
 				"verification"
 			])
@@ -206,10 +205,6 @@ describe("Table: cryptocurrency", () =>
 			).rejects.toThrow(/Duplicate entry/);
 		});
 	});
-});
-
-describe("Table: profile_stock", () => {
-	// TODO: Add tests for checking length of query and compliance to constraints
 });
 
 describe("Table: portfolio_asset", () => {

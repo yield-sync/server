@@ -159,7 +159,7 @@ describe("Request: GET", () => {
 					}
 				}).expect(HTTPStatus.BAD_REQUEST);
 
-				expect(RES.body.message).toBe("❓ No stock_isin received");
+				expect(RES.body.message).toBe("❓ No stock_isin or cryptocurrency_id received");
 
 				const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio_asset;");
 

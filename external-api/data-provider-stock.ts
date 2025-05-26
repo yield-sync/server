@@ -6,16 +6,13 @@ import config from "../config";
 const { uRL, key, } = config.api.financialModelingPrep;
 
 
-export class NothingFoundError extends
+// Classes
+class ExternalRequestError extends
 	Error
 {}
 
-export class ExternalRequestError extends
-	Error
-{}
 
-
-const _getStockTickerFromIsin = async (isin: string): Promise<string|null> => 
+const _getStockTickerFromIsin = async (isin: string): Promise<string|null> =>
 {
 	// First get the symbol by the isin
 	const openfigiResponse = await axios.post(
@@ -35,17 +32,22 @@ const _getStockTickerFromIsin = async (isin: string): Promise<string|null> =>
 		}
 	);
 
-	if ("error" in openfigiResponse.data)
+	if (openfigiResponse.status != 200)
 	{
 		return null;
 	}
 
-	if (!("ticker" in openfigiResponse.data))
+	if (openfigiResponse?.data[0]?.warning)
+	{
+		return null
+	}
+
+	if (!("ticker" in openfigiResponse.data[0].data[0]))
 	{
 		return null;
 	}
 
-	return openfigiResponse.data.ticker;
+	return openfigiResponse.data[0].data[0].ticker;
 };
 
 
@@ -56,7 +58,7 @@ export default {
 		{
 			const symbol = await _getStockTickerFromIsin(isin);
 
-			if (!symbol) return null;
+			if (!symbol) throw new Error("Invalid ISIN passed");
 
 			const response = await axios.get(
 				`${uRL}/stable/profile?symbol=${symbol}&apikey=${key}`
@@ -64,7 +66,7 @@ export default {
 
 			if (response.data.length == 0)
 			{
-				return null;
+				throw new Error("Nothing found from external source");
 			}
 
 			return {
@@ -78,9 +80,7 @@ export default {
 		}
 		catch (error)
 		{
-			console.warn("Error fetching external API: " + error);
-
-			return null;
+			throw new ExternalRequestError("[getStockProfileByIsin] Error fetching from external API: " + error);
 		}
 	},
 
@@ -108,9 +108,7 @@ export default {
 		}
 		catch (error)
 		{
-			console.warn("Error fetching external API: " + error);
-
-			return null;
+			throw new ExternalRequestError("[getStockProfileBySymbol] Error fetching from external API: " + error);
 		}
 	},
 
@@ -140,37 +138,7 @@ export default {
 		}
 		catch (error)
 		{
-			throw new ExternalRequestError("Error fetching external API: " + error);
-		}
-	},
-
-	queryForStockByIsin: async (isin: string): Promise<IStock | null> =>
-	{
-		try
-		{
-			const response = await axios.get(
-				`${uRL}/stable/search-isin?isin=${isin}&apikey=${key}`
-			);
-
-			if (response.data.length == 0)
-			{
-				return null;
-			}
-
-			const response1 = await axios.get(
-				`${uRL}/api/v3/read/${response.data[0].symbol}?apikey=${key}`
-			);
-
-			return {
-				symbol: response.data[0].symbol,
-				name: response.data[0].name,
-				exchange: response1.data[0].exchangeShortName.toLowerCase(),
-				isin: response.data[0].isin,
-			} as IStock;
-		}
-		catch (error)
-		{
-			throw new ExternalRequestError("Error fetching external API: " + error);
+			throw new ExternalRequestError("[queryForStockBySymbol] Error fetching from external API: " + error);
 		}
 	},
 };
