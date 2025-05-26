@@ -1,82 +1,18 @@
 import express from "express";
 import mysql from "mysql2";
 
+import RouteFunctionsCryptocurrency from "./RouteFunctionsCryptocurrency";
 import { INTERNAL_SERVER_ERROR, HTTPStatus } from "../../../constants";
-import extAPIDataProviderCryptocurrency from "../../../external-api/data-provider-cryptocurrency";
 import { loadRequired } from "../../../middleware/load";
 import userToken from "../../../middleware/user-token";
 import { sanitizeQuery, sanitizeSymbolQuery } from "../../../util/sanitizer";
-import DBHandlerCrypto from "../../../db-handler/cryptocurrency";
-
-
-const ONE_DAY_IN_MINUTES: number = 1440;
-const ONE_DAY_IN_MS: number = ONE_DAY_IN_MINUTES * 60 * 1000;
-const ONE_WEEK_IN_MINUTES: number = 10080;
-const ONE_WEEK_IN_MS: number = ONE_WEEK_IN_MINUTES * 60 * 1000;
 
 
 export default (mySQLPool: mysql.Pool): express.Router =>
 {
-	return express.Router().get(
-		/**
-		* @route GET /api/cryptocurrency/
-		* @desc Get all cryptocurrencies
-		*/
-		"/read/:id",
-		async (req: express.Request, res: express.Response) =>
-		{
-			let response: any = {
-				UpdateStockPerformed: false,
-				cryptocurrency: null,
-				dBStockWithExSymbolFound: false,
-			};
+	const routeHandlerCryptocurrency: RouteFunctionsCryptocurrency = new RouteFunctionsCryptocurrency(mySQLPool);
 
-			try
-			{
-				const { id, } = req.params;
-
-				const cleanedId = sanitizeSymbolQuery(id);
-
-				if (cleanedId == "ID")
-				{
-					res.status(HTTPStatus.BAD_REQUEST).send("❌ Invalid id passed");
-
-					return;
-				}
-
-				const dBAsset: ICryptocurrency[] = await DBHandlerCrypto.getCryptocurrencyById(mySQLPool, cleanedId);
-
-				if (dBAsset.length > 0)
-				{
-					res.status(HTTPStatus.OK).json({
-						...response,
-						cryptocurrency: (await DBHandlerCrypto.getCryptocurrencyById(mySQLPool, id))[0],
-					});
-
-					return;
-				}
-
-				res.status(HTTPStatus.OK).json({
-					...response,
-				});
-			}
-			catch (error: Error | any)
-			{
-				if (error instanceof Error)
-				{
-					res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
-						message: `${INTERNAL_SERVER_ERROR}: ${error.message}`,
-					});
-
-					return;
-				}
-
-				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
-					message: `${INTERNAL_SERVER_ERROR}: Unknown error`,
-				});
-			}
-		}
-	).delete(
+	return express.Router().delete(
 		/**
 		* @route DELETE /api/cryptocurrency/:cryptoid
 		*/
@@ -114,140 +50,34 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		}
 	).get(
 		/**
-		* @route POST /api/cryptocurrency/search/:query
+		* @route GET /api/cryptocurrency/
+		* @desc Get all cryptocurrencies
 		*/
-		"/search/:query",
-		userToken.userTokenDecode(mySQLPool),
+		"/read/:id",
 		async (req: express.Request, res: express.Response) =>
 		{
-			const now = new Date();
-
-			let resJSON: {
-				externalRequestRequired: boolean,
-				cryptocurrencies: ICryptocurrency[]
-				externalAPIResults: CoingeckoCoin[]
-			} = {
-				externalRequestRequired: false,
-				cryptocurrencies: [
-				],
-				externalAPIResults: [
-				],
+			let response: any = {
+				cryptocurrency: null,
+				dBStockWithExSymbolFound: false,
 			};
-
-			let cryptocurrencies: ICryptocurrency[] = [
-			];
 
 			try
 			{
-				const query: string = sanitizeQuery(req.params.query);
+				const { id, } = req.params;
 
-				[
-					cryptocurrencies,
-				] = await mySQLPool.promise().query<ICryptocurrency[]>(
-					"SELECT * FROM cryptocurrency WHERE symbol = ? OR name LIKE ? LIMIT 10;",
-					[
-						query,
-						`%${query}%`,
-					]
-				);
+				const cleanedId = sanitizeSymbolQuery(id);
 
-				const [
-					queryCryptocurrency,
-				]: [
-					any[],
-					FieldPacket[]
-				] = await mySQLPool.promise().query(
-					"SELECT last_updated FROM profile_cryptocurrency WHERE query = ?;",
-					[
-						query,
-					]
-				);
-
-				const lastExternalReqTimestamp = queryCryptocurrency.length > 0 ? new Date(
-					queryCryptocurrency[0].last_updated
-				) : null;
-
-				resJSON.externalRequestRequired = !lastExternalReqTimestamp || (
-					now.getTime() - lastExternalReqTimestamp.getTime()
-				) >= ONE_DAY_IN_MS;
-
-				if (resJSON.externalRequestRequired)
+				if (cleanedId == "ID")
 				{
-					await mySQLPool.promise().query(
-						`
-							INSERT INTO
-								profile_cryptocurrency (query, last_updated)
-							VALUES
-								(?, ?)
-							ON DUPLICATE KEY UPDATE
-								last_updated = ?
-							;
-						`,
-						[
-							query,
-							now,
-							now,
-						]
-					);
+					res.status(HTTPStatus.BAD_REQUEST).send("❌ Invalid id passed");
 
-					resJSON.externalAPIResults = await extAPIDataProviderCryptocurrency.queryForCryptocurrency(query);
-
-					const [
-						cryptocurrencyCoingeckoIds,
-					]: [
-						ICryptocurrency[],
-						FieldPacket[]
-					] = await mySQLPool.promise().query<ICryptocurrency[]>(
-						"SELECT id FROM cryptocurrency WHERE symbol = ? OR name LIKE ?;",
-						[
-							query,
-							`${query}%`,
-						]
-					);
-
-					for (let i = 0; i < resJSON.externalAPIResults.length; i++)
-					{
-						const coingeckoCoin = resJSON.externalAPIResults[i];
-
-						let missingInDatabase = true;
-
-						for (let ii = 0; ii < cryptocurrencyCoingeckoIds.length; ii++)
-						{
-							if (coingeckoCoin.id == cryptocurrencyCoingeckoIds[ii].id)
-							{
-								missingInDatabase = false;
-							}
-						}
-
-						if (!missingInDatabase)
-						{
-							continue;
-						}
-
-						await mySQLPool.promise().query(
-							"INSERT INTO cryptocurrency (symbol, name, id) VALUES (?, ?, ?);",
-							[
-								coingeckoCoin.symbol,
-								coingeckoCoin.name,
-								coingeckoCoin.id,
-							]
-						);
-					}
-
-					[
-						cryptocurrencies,
-					] = await mySQLPool.promise().query<ICryptocurrency[]>(
-						"SELECT * FROM cryptocurrency WHERE symbol = ? OR name LIKE ? LIMIT 10;",
-						[
-							query,
-							`%${query}%`,
-						]
-					);
+					return;
 				}
 
-				resJSON.cryptocurrencies = cryptocurrencies;
-
-				res.status(HTTPStatus.OK).json(resJSON);
+				res.status(HTTPStatus.OK).json({
+					...response,
+					cryptocurrency: await routeHandlerCryptocurrency.readCryptocurrencyById(id),
+				});
 			}
 			catch (error: Error | any)
 			{
@@ -265,49 +95,130 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				});
 			}
 		}
-	).put(
+	).get(
 		/**
-		* @route PUT /api/cryptocurrency/update/:id
+		* @desc Make internal search
+		* @route GET /api/cryptocurrency/search/:query
 		*/
-		"/update/:id",
-		userToken.userTokenDecodeAdmin(mySQLPool),
-		loadRequired(),
+		"/search/:query",
 		async (req: express.Request, res: express.Response) =>
 		{
-			const { id, } = req.params;
-
-			const { name, symbol, }: CryptocurrencyUpdate = req.body.load;
+			let response: {
+				cryptocurrencies: ICryptocurrency[]
+			} = {
+				cryptocurrencies: [
+				],
+			};
 
 			try
 			{
-				const [
-					existingAsset,
-				]: [
-					RowDataPacket[],
-					FieldPacket[]
-				] = await mySQLPool.promise().query(
-					"SELECT * FROM cryptocurrency WHERE id = ?;",
-					[
-						id,
-					]
-				);
+				const { query, } = req.params;
 
-				if (existingAsset.length === 0)
+				let searchResults = await routeHandlerCryptocurrency.searchCryptocurrencyByLikeSymbol(
+					sanitizeQuery(query)
+				)
+
+				res.status(HTTPStatus.OK).json({
+					...response,
+					cryptocurrencies: searchResults.results,
+				});
+			}
+			catch (error: Error | any)
+			{
+				if (error instanceof Error)
 				{
-					res.status(HTTPStatus.NOT_FOUND).send("Asset not found");
+					res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
+						message: `${INTERNAL_SERVER_ERROR}: ${error.message}`,
+					});
+
 					return;
 				}
 
-				await mySQLPool.promise().query(
-					"UPDATE cryptocurrency SET name = ?, symbol = ? WHERE id = ?;",
-					[
-						name ?? existingAsset[0].name,
-						symbol ?? existingAsset[0].symbol,
-						id,
-					]
-				);
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
+					message: `${INTERNAL_SERVER_ERROR}: Unknown error`,
+				});
+			}
+		}
+	).post(
+		/**
+		* @desc Create cryptocurrency
+		* @notice EXTERNAL source utilized
+		* @route POST /api/cryptocurrency/create
+		* @param coingeckoId {string} Id from coingecko that ties to the cryptocurrency
+		*/
+		"/create",
+		loadRequired(),
+		async (req: express.Request, res: express.Response) =>
+		{
+			try
+			{
+				if (!req.body.load?.id)
+				{
+					res.status(HTTPStatus.BAD_REQUEST).json({
+						message: "No id provided"
+					});
 
-				res.status(HTTPStatus.OK).send("Updated cryptocurrency");
+					return;
+				}
+
+				const { id, } = req.body.load;
+
+				await routeHandlerCryptocurrency.createNewAssetById(id)
+
+				res.status(HTTPStatus.CREATED).json({
+					message: "Created cryptocurrency with provided id"
+				});
+			}
+			catch (error: Error | any)
+			{
+				if (error instanceof Error)
+				{
+					res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
+						message: `${INTERNAL_SERVER_ERROR}: ${error.message}`,
+					});
+
+					return;
+				}
+
+				res.status(HTTPStatus.INTERNAL_SERVER_ERROR).json({
+					message: `${INTERNAL_SERVER_ERROR}: Unknown error`,
+				});
+			}
+		}
+	).post(
+		/**
+		* @desc Make internal & external search
+		* @access authorized:user
+		* @notice EXTERNAL source utilized periodically
+		* @route POST /api/cryptocurrency/search
+		*/
+		"/search",
+		userToken.userTokenDecode(mySQLPool),
+		loadRequired(),
+		async (req: express.Request, res: express.Response) =>
+		{
+			if (!req.body.load?.query)
+			{
+				res.status(HTTPStatus.BAD_REQUEST).json({
+					message: "No query provided"
+				});
+
+				return;
+			}
+
+			const { query, } = req.body.load;
+
+			try
+			{
+				let searchResults = await routeHandlerCryptocurrency.searchCryptocurrencyByLikeSymbol(
+					sanitizeQuery(query),
+					true
+				)
+
+				res.status(HTTPStatus.OK).json({
+					externalRequestMade: searchResults.updatedDB,
+					cryptocurrencies: searchResults.results,
+				});
 			}
 			catch (error: Error | any)
 			{

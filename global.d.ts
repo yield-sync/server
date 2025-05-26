@@ -3,6 +3,9 @@ import { FieldPacket, OkPacket, RowDataPacket } from "mysql2";
 
 declare global
 {
+	const ONE_WEEK_IN_MINUTES: number = 10080;
+	const ONE_WEEK_IN_MS: number = ONE_WEEK_IN_MINUTES * 60 * 100
+
 	// Wrappers
 	type FieldPacket = FieldPacket;
 	type RowDataPacket = RowDataPacket;
@@ -10,99 +13,9 @@ declare global
 	// Types
 	type Load = object;
 
-
-	type CryptocurrencyCreate = Load & {
-		id: string;
-		name: string;
-		symbol: string;
-	};
-
-	type CryptocurrencyUpdate = Load & {
-		name?: string;
-		symbol?: string;
-	};
-
-	type CoingeckoCoin = {
-		id: string,
-		name: string,
-		symbol: string,
-		api_symbol: string,
-		market_cap_rank: number,
-		thumb: string,
-		large: string,
-	}
-
-	type PortfolioAssetCreate = Load & {
-		portfolio_id: string,
-		stock_isin: string,
-		percent_allocation: number,
-		balance: number;
-	};
-
-	type PortfolioAssetCreateByQuery = Load & {
-		portfolio_id: string,
-		query: string,
-		crypto?: boolean;
-	};
-
-	type PortfolioAssetUpdate = Load & {
-		id: string;
-		balance: number;
-		percent_allocation: number;
-	};
-
-	type PortfolioCreate = Load & {
-		name: string,
-	};
-
-	type PortfolioUpdate = Load & {
-		id: string,
-		name: string,
-	};
-
-	type UserCreate = Load & {
-		email: string,
-		password: string,
-	};
-
-	type UserLogin = Load & {
-		email: string,
-		password: string,
-	};
-
-	type UserPasswordUpdate = Load & {
-		email: string,
-		password: string,
-		passwordNew: string,
-	};
-
-	type UserRecoverPassword = Load & {
-		pin: string,
-		passwordNew: string,
-	};
-
-	type UserSendRecoveryEmail = Load & {
-		email: string,
-	};
-
-	type UserVerify = Load & {
-		pin: string,
-	};
-
 	type MySQLQueryResult = [QueryResult, FieldPacket[]];
 
 	// Interfaces
-	interface ICrypto extends
-		RowDataPacket,
-		OkPacket
-	{
-		id: number;
-		name: string;
-		symbol: string;
-		network: string;
-		isin?: string;
-	}
-
 	interface ICryptocurrency extends
 		RowDataPacket,
 		OkPacket
@@ -146,18 +59,6 @@ declare global
 		created: Date;
 	}
 
-	interface IVerification extends
-		RowDataPacket,
-		OkPacket
-	{
-		id: number;
-		user_id: number;
-		attempts: number;
-		name: string;
-		pin: string;
-		created: Date;
-	}
-
 	interface IRecovery extends
 		RowDataPacket,
 		OkPacket
@@ -180,8 +81,31 @@ declare global
 		exchange: string;
 		sector: string;
 		industry: string;
-		updated_on: string;
+		refreshed_on: string;
 	}
+
+	// Interfaces
+	interface IQueryCryptocurrency extends
+		RowDataPacket,
+		OkPacket
+	{
+		id: number;
+		query: string;
+		last_updated: Date;
+	}
+
+	interface IVerification extends
+		RowDataPacket,
+		OkPacket
+	{
+		id: number;
+		user_id: number;
+		attempts: number;
+		name: string;
+		pin: string;
+		created: Date;
+	}
+
 
 	declare namespace Express {
 		export interface Request {

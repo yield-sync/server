@@ -19,14 +19,26 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		loadRequired(),
 		async (req: express.Request, res: express.Response) =>
 		{
-			const { balance, percent_allocation, portfolio_id, stock_isin, }: PortfolioAssetCreate = req.body.load;
+			const { balance, percent_allocation, portfolio_id, }: PortfolioAssetCreate = req.body.load;
+
+			const stock_isin = req.body.load.stock_isin ?? undefined;
+			const cryptocurrency_id = req.body.load.cryptocurrency_id ?? undefined;
 
 			try
 			{
-				if (!stock_isin)
+				if (!stock_isin && !cryptocurrency_id)
 				{
 					res.status(HTTPStatus.BAD_REQUEST).send({
-						message: "❓ No stock_isin received",
+						message: "❓ No stock_isin or cryptocurrency_id received",
+					});
+
+					return;
+				}
+
+				if (stock_isin && cryptocurrency_id)
+				{
+					res.status(HTTPStatus.BAD_REQUEST).send({
+						message: "❓ Both stock_isin AND cryptocurrency_id received",
 					});
 
 					return;
@@ -120,22 +132,45 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				// Insert into portfolio_asset
-				await mySQLPool.promise().query(
-					`
-						INSERT INTO portfolio_asset
-							(portfolio_id, stock_isin, percent_allocation, balance)
-						VALUES
-							(?, ?, ?, ?)
-						;
-					`,
-					[
-						portfolio_id,
-						stock_isin,
-						percent_allocation,
-						balance,
-					]
-				);
+				if (stock_isin)
+				{
+					// Insert into portfolio_asset
+					await mySQLPool.promise().query(
+						`
+							INSERT INTO portfolio_asset
+								(portfolio_id, stock_isin, percent_allocation, balance)
+							VALUES
+								(?, ?, ?, ?)
+							;
+						`,
+						[
+							portfolio_id,
+							stock_isin,
+							percent_allocation,
+							balance,
+						]
+					);
+				}
+
+				if (cryptocurrency_id)
+				{
+					// Insert into portfolio_asset
+					await mySQLPool.promise().query(
+						`
+							INSERT INTO portfolio_asset
+								(portfolio_id, cryptocurrency_id, percent_allocation, balance)
+							VALUES
+								(?, ?, ?, ?)
+							;
+						`,
+						[
+							portfolio_id,
+							cryptocurrency_id,
+							percent_allocation,
+							balance,
+						]
+					);
+				}
 
 				res.status(HTTPStatus.CREATED).send({
 					message: "Portfolio asset created",

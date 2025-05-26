@@ -52,9 +52,9 @@ export default {
 	* @returns A trimmed, uppercase string with only alphanumeric characters and periods
 	* @throws {TypeError} If input is not a string
 	*/
-	sanitizeEmail: (input: unknown): string => 
+	sanitizeEmail: (input: unknown): string =>
 	{
-		if (typeof input !== "string") 
+		if (typeof input !== "string")
 		{
 			throw new TypeError("Input must be a string");
 		}
@@ -64,7 +64,7 @@ export default {
 
 		// Validate the email format
 		const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-		if (!emailRegex.test(trimmed)) 
+		if (!emailRegex.test(trimmed))
 		{
 			throw new Error("Invalid email format");
 		}
@@ -73,7 +73,7 @@ export default {
 	},
 	sanitizeQuery,
 	sanitizeSymbolQuery,
-	sanitizePin: (input: unknown): string => 
+	sanitizePin: (input: unknown): string =>
 	{
 		if (typeof input !== "string")
 		{
@@ -90,7 +90,7 @@ export default {
 		// Keep only letters (A-Z, a-z) and numbers (0-9)
 		const sanitized = trimmed.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
 
-		if (sanitized.length !== 6) 
+		if (sanitized.length !== 6)
 		{
 			throw new Error("PIN must be exactly 6 alphanumeric characters");
 		}
