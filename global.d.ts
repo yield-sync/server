@@ -76,11 +76,29 @@ declare global
 		OkPacket
 	{
 		isin: string;
-		name: string;
 		symbol: string;
+
 		exchange: string;
-		sector: string;
+
 		industry: string;
+		name: string;
+		sector: string;
+
+		address: string;
+		ceo: string;
+		city: string;
+		country: string;
+		description: string;
+		fullTimeEmployees: string;
+		ipoDate: string;
+		isEtf: string;
+		phone: string;
+		state: string;
+		website: string;
+		zip: string;
+
+		description: string;
+
 		refreshed_on: string;
 	}
 

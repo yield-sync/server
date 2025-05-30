@@ -72,10 +72,25 @@ export default {
 			return {
 				isin: response.data[0].isin,
 				symbol: response.data[0].symbol,
-				name: response.data[0].companyName,
+
 				exchange: response.data[0].exchange.toLowerCase(),
-				sector: response.data[0].sector,
+
 				industry: response.data[0].industry,
+				name: response.data[0].companyName,
+				sector: response.data[0].sector,
+
+				address: response.data[0].address,
+				ceo: response.data[0].ceo,
+				city: response.data[0].city,
+				country: response.data[0].country,
+				description: response.data[0].description,
+				fullTimeEmployees: response.data[0].fullTimeEmployees,
+				ipoDate: response.data[0].ipoDate,
+				isEtf: response.data[0].isEtf,
+				phone: response.data[0].phone,
+				state: response.data[0].state,
+				website: response.data[0].website,
+				zip: response.data[0].zip,
 			} as IStock;
 		}
 		catch (error)
@@ -100,10 +115,25 @@ export default {
 			return {
 				isin: response.data[0].isin,
 				symbol: response.data[0].symbol,
-				name: response.data[0].companyName,
+
 				exchange: response.data[0].exchange.toLowerCase(),
-				sector: response.data[0].sector,
+
 				industry: response.data[0].industry,
+				name: response.data[0].companyName,
+				sector: response.data[0].sector,
+
+				address: response.data[0].address,
+				ceo: response.data[0].ceo,
+				city: response.data[0].city,
+				country: response.data[0].country,
+				description: response.data[0].description,
+				fullTimeEmployees: response.data[0].fullTimeEmployees,
+				ipoDate: response.data[0].ipoDate,
+				isEtf: response.data[0].isEtf,
+				phone: response.data[0].phone,
+				state: response.data[0].state,
+				website: response.data[0].website,
+				zip: response.data[0].zip,
 			} as IStock;
 		}
 		catch (error)

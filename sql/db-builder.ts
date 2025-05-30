@@ -73,11 +73,29 @@ const queries: string[] = [
 	`
 		CREATE TABLE stock (
 			isin VARCHAR(12) NOT NULL UNIQUE PRIMARY KEY,
-			sector VARCHAR(255) NOT NULL,
-			industry VARCHAR(255) NOT NULL,
-			exchange VARCHAR(10) NOT NULL CHECK (exchange IN (${sQLStockExchanges})),
-			name VARCHAR(255) NOT NULL,
+
 			symbol VARCHAR(12) NOT NULL UNIQUE,
+
+			exchange VARCHAR(10) NOT NULL CHECK (exchange IN (${sQLStockExchanges})),
+
+			industry VARCHAR(255) NOT NULL,
+			name VARCHAR(255) NOT NULL,
+			sector VARCHAR(255) NOT NULL,
+
+			address VARCHAR(255) NULL DEFAULT NULL,
+			ceo VARCHAR(255) NULL DEFAULT NULL,
+			city VARCHAR(255) NULL DEFAULT NULL,
+			country VARCHAR(255) NULL DEFAULT NULL,
+			full_time_employees VARCHAR(255) NULL DEFAULT NULL,
+			ipo_date VARCHAR(255) NULL DEFAULT NULL,
+			is_etf VARCHAR(255) NULL DEFAULT NULL,
+			phone VARCHAR(255) NULL DEFAULT NULL,
+			state VARCHAR(255) NULL DEFAULT NULL,
+			website VARCHAR(255) NULL DEFAULT NULL,
+			zip VARCHAR(255) NULL DEFAULT NULL,
+
+			description TEXT,
+
 			refreshed_on TIMESTAMP NULL DEFAULT NULL,
 
 			FOREIGN KEY (sector) REFERENCES sector(sector) ON DELETE CASCADE,

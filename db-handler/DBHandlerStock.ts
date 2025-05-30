@@ -15,14 +15,51 @@ export default class DBHandlerStock
 	public createStock = async (stock: IStock) =>
 	{
 		await this.mySQLPool.promise().query(
-			"INSERT INTO stock (symbol, name, exchange, isin, sector, industry, refreshed_on) VALUES (?, ?, ?, ?, ?, ?, ?);",
+			`
+				INSERT INTO
+					stock
+				(
+					isin,
+					symbol,
+					exchange,
+					industry,
+					name,
+					sector,
+					address,
+					ceo,
+					city,
+					country,
+					description,
+					full_time_employees,
+					ipo_date,
+					is_etf,
+					phone,
+					state,
+					website,
+					zip,
+					refreshed_on
+				) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+			`,
 			[
-				stock.symbol,
-				stock.name,
-				stock.exchange.toLowerCase(),
+
 				stock.isin,
-				stock.sector,
+				stock.symbol,
+				stock.exchange.toLowerCase(),
 				stock.industry,
+				stock.name,
+				stock.sector,
+				stock.address,
+				stock.ceo,
+				stock.city,
+				stock.country,
+				stock.description,
+				stock.fullTimeEmployees,
+				stock.ipoDate,
+				stock.isEtf,
+				stock.phone,
+				stock.state,
+				stock.website,
+				stock.zip,
 				new Date(),
 			]
 		);
@@ -87,13 +124,46 @@ export default class DBHandlerStock
 	public updateStock = async (stock: IStock) =>
 	{
 		await this.mySQLPool.promise().query(
-			"UPDATE stock SET name = ?, symbol = ?, exchange = ?, sector = ?, industry = ? WHERE isin = ?;",
+			`UPDATE
+				stock
+			SET
+				symbol = ?,
+				exchange = ?,
+				industry = ?,
+				name = ?,
+				sector = ?,
+				address = ?,
+				ceo = ?,
+				city = ?,
+				country = ?,
+				full_time_employees = ?,
+				ipo_date = ?,
+				is_etf = ?,
+				phone = ?,
+				state = ?,
+				website = ?,
+				zip = ?
+			WHERE
+				isin = ?
+			;
+			`,
 			[
-				stock.name,
 				stock.symbol,
 				stock.exchange.toLowerCase(),
-				stock.sector,
 				stock.industry,
+				stock.name,
+				stock.sector,
+				stock.address,
+				stock.ceo,
+				stock.city,
+				stock.country,
+				stock.fullTimeEmployees,
+				stock.ipoDate,
+				stock.isEtf,
+				stock.phone,
+				stock.state,
+				stock.website,
+				stock.zip,
 				stock.isin,
 			]
 		);
