@@ -34,11 +34,12 @@ export default class DBHandlerStock
 					ipo_date,
 					is_etf,
 					phone,
+					price_on_refresh,
 					state,
 					website,
 					zip,
 					refreshed_on
-				) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+				) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 			`,
 			[
 
@@ -57,6 +58,7 @@ export default class DBHandlerStock
 				stock.ipoDate,
 				stock.isEtf,
 				stock.phone,
+				stock.price_on_refresh,
 				stock.state,
 				stock.website,
 				stock.zip,
@@ -140,6 +142,7 @@ export default class DBHandlerStock
 				ipo_date = ?,
 				is_etf = ?,
 				phone = ?,
+				price_on_refresh = ?,
 				state = ?,
 				website = ?,
 				zip = ?
@@ -161,6 +164,7 @@ export default class DBHandlerStock
 				stock.ipoDate,
 				stock.isEtf,
 				stock.phone,
+				stock.price_on_refresh,
 				stock.state,
 				stock.website,
 				stock.zip,

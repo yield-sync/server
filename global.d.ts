@@ -93,6 +93,7 @@ declare global
 		ipoDate: string;
 		isEtf: string;
 		phone: string;
+		price_on_refresh: number;
 		state: string;
 		website: string;
 		zip: string;
