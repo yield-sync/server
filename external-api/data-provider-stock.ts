@@ -116,13 +116,10 @@ export default {
 			return {
 				isin: response.data[0].isin,
 				symbol: response.data[0].symbol,
-
 				exchange: response.data[0].exchange.toLowerCase(),
-
 				industry: response.data[0].industry,
 				name: response.data[0].companyName,
 				sector: response.data[0].sector,
-
 				address: response.data[0].address,
 				ceo: response.data[0].ceo,
 				city: response.data[0].city,
