@@ -17,6 +17,7 @@ import rateLimiter from "./rate-limiter";
 import routeApi from "./route/api";
 import routeApiCryptocurrency from "./route/api/cryptocurrency";
 import routeApiPortfolio from "./route/api/portfolio";
+import routeApiPortfolioAllocationSector from "./route/api/portfolio-allocation-sector";
 import routeApiPortfolioAsset from "./route/api/portfolio-asset";
 import routeApiStock from "./route/api/stock";
 import routeApiUser from "./route/api/user";
@@ -85,6 +86,9 @@ http.createServer(
 	).use(
 		"/api/portfolio",
 		routeApiPortfolio(MYSQL_POOL)
+	).use(
+		"/api/portfolio-allocation-sector",
+		routeApiPortfolioAllocationSector(MYSQL_POOL)
 	).use(
 		"/api/portfolio-asset",
 		routeApiPortfolioAsset(MYSQL_POOL)

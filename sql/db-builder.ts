@@ -145,6 +145,22 @@ const queries: string[] = [
 			UNIQUE KEY unique_portfolio_stock (portfolio_id, stock_isin)
 		);
 	`,
+	// portfolio_allocation_sector
+	`
+		CREATE TABLE portfolio_allocation_sector (
+			id INT NOT NULL AUTO_INCREMENT,
+			portfolio_id INT NOT NULL,
+			sector VARCHAR(255) NOT NULL,
+			percent_allocation DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (percent_allocation BETWEEN 0.00 AND 100.00),
+
+			PRIMARY KEY (id),
+
+			FOREIGN KEY (portfolio_id) REFERENCES portfolio(id) ON DELETE CASCADE,
+			FOREIGN KEY (sector) REFERENCES sector(sector) ON DELETE CASCADE,
+
+			UNIQUE KEY unique_portfolio_stock (portfolio_id, sector)
+		);
+	`,
 	// recovery
 	`
 		CREATE TABLE recovery (
