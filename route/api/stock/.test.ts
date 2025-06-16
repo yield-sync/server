@@ -19,6 +19,22 @@ import DBBuilder, { dBDrop } from "../../../sql/db-builder";
 let app: express.Express;
 let mySQLPool: mysql.Pool;
 let token: string;
+let optionalStockValues = {
+	"address": null,
+	"ceo": null,
+	"city": null,
+	"country": null,
+	"description": null,
+	"full_time_employees": null,
+	"ipo_date": null,
+	"is_etf": null,
+	"phone": null,
+	"price_on_refresh": "0.000000",
+	"state": null,
+	"website": null,
+	"zip": null,
+};
+
 
 jest.mock("axios");
 jest.mock("../../../external-api/data-provider-stock", () => ({
@@ -145,6 +161,7 @@ describe("Request: GET", () => {
 					refreshed: false,
 					dBStockWithExSymbolFound: false,
 					stock: {
+						...optionalStockValues,
 						symbol: CONSTANTS.STOCKS.APPLE.SYMBOL,
 						name: CONSTANTS.STOCKS.APPLE.NAME,
 						exchange: CONSTANTS.STOCKS.APPLE.EXCHANGE,
@@ -191,6 +208,7 @@ describe("Request: GET", () => {
 
 				// Mock the external API response
 				(extAPIDataProviderStock.getStockProfileByIsin as jest.Mock).mockResolvedValue({
+					...optionalStockValues,
 					symbol: CONSTANTS.STOCKS.APPLE.SYMBOL,
 					name: CONSTANTS.STOCKS.APPLE.NAME,
 					exchange: CONSTANTS.STOCKS.APPLE.EXCHANGE,
@@ -226,6 +244,7 @@ describe("Request: GET", () => {
 
 				// Mock the external API response
 				(extAPIDataProviderStock.getStockProfileByIsin as jest.Mock).mockResolvedValueOnce({
+					...optionalStockValues,
 					symbol: CONSTANTS.STOCKS.APPLE.SYMBOL,
 					name: CONSTANTS.STOCKS.APPLE.NAME,
 					exchange: CONSTANTS.STOCKS.APPLE.EXCHANGE,
@@ -282,6 +301,7 @@ describe("Request: GET", () => {
 
 				// Mock the external API response
 				(extAPIDataProviderStock.getStockProfileByIsin as jest.Mock).mockResolvedValueOnce({
+					...optionalStockValues,
 					isin: CONSTANTS.STOCKS.APPLE.ISIN,
 					symbol: CONSTANTS.STOCKS.BANANA.SYMBOL,
 					name: CONSTANTS.STOCKS.BANANA.NAME,
@@ -289,6 +309,7 @@ describe("Request: GET", () => {
 					sector: CONSTANTS.STOCKS.APPLE.SECTOR,
 					industry: CONSTANTS.STOCKS.APPLE.INDUSTRY,
 				}).mockResolvedValueOnce({
+					...optionalStockValues,
 					isin: CONSTANTS.STOCKS.BANANA.ISIN,
 					symbol: CONSTANTS.STOCKS.APPLE.SYMBOL,
 					name: CONSTANTS.STOCKS.APPLE.NAME,
@@ -356,6 +377,7 @@ describe("Request: GET", () => {
 
 				// Mock the external API response
 				(extAPIDataProviderStock.getStockProfileByIsin as jest.Mock).mockResolvedValueOnce({
+					...optionalStockValues,
 					isin: CONSTANTS.STOCKS.APPLE.ISIN,
 					symbol: CONSTANTS.STOCKS.BANANA.SYMBOL,
 					name: CONSTANTS.STOCKS.BANANA.NAME,
@@ -363,6 +385,7 @@ describe("Request: GET", () => {
 					sector: CONSTANTS.STOCKS.BANANA.SECTOR,
 					industry: CONSTANTS.STOCKS.BANANA.INDUSTRY,
 				}).mockResolvedValueOnce({
+					...optionalStockValues,
 					isin: CONSTANTS.STOCKS.BANANA.ISIN,
 					symbol: oranceIncSymbol,
 					name: oranceIncName,
@@ -445,6 +468,7 @@ describe("Request: GET", () => {
 			expect(res.body).toEqual({
 				stocks: [
 					{
+						...optionalStockValues,
 						symbol: CONSTANTS.STOCKS.APPLE.SYMBOL.substring(0, 2),
 						name: "Fake Company Name",
 						exchange: CONSTANTS.STOCKS.APPLE.EXCHANGE,
@@ -454,6 +478,7 @@ describe("Request: GET", () => {
 						refreshed_on: expect.any(String),
 					},
 					{
+						...optionalStockValues,
 						symbol: CONSTANTS.STOCKS.APPLE.SYMBOL,
 						name: CONSTANTS.STOCKS.APPLE.NAME,
 						exchange: CONSTANTS.STOCKS.APPLE.EXCHANGE,
@@ -544,13 +569,14 @@ describe("Request: POST", () => {
 		describe("Success Cases", () => {
 			it("Should create a stock if it doesnt exist already..", async () => {
 				(extAPIDataProviderStock.getStockProfileByIsin as jest.Mock).mockResolvedValue({
+					...optionalStockValues,
 					isin: CONSTANTS.STOCKS.APPLE.ISIN,
 					symbol: CONSTANTS.STOCKS.APPLE.SYMBOL,
 					name: CONSTANTS.STOCKS.APPLE.NAME,
 					exchange: CONSTANTS.STOCKS.APPLE.EXCHANGE,
 					sector: CONSTANTS.STOCKS.APPLE.SECTOR,
 					industry: CONSTANTS.STOCKS.APPLE.INDUSTRY,
-				} as IStock);
+				});
 
 				const createRes = await request(app).post("/api/stock/create").set(
 					"authorization",
@@ -621,13 +647,14 @@ describe("Request: POST", () => {
 		describe("Success Cases", () => {
 			it("Should create a stock if it doesnt exist already..", async () => {
 				(extAPIDataProviderStock.getStockProfileBySymbol as jest.Mock).mockResolvedValue({
+					...optionalStockValues,
 					isin: CONSTANTS.STOCKS.APPLE.ISIN,
 					symbol: CONSTANTS.STOCKS.APPLE.SYMBOL,
 					name: CONSTANTS.STOCKS.APPLE.NAME,
 					exchange: CONSTANTS.STOCKS.APPLE.EXCHANGE,
 					sector: CONSTANTS.STOCKS.APPLE.SECTOR,
 					industry: CONSTANTS.STOCKS.APPLE.INDUSTRY,
-				} as IStock);
+				});
 
 				const createRes = await request(app).post("/api/stock/create-by-symbol").set(
 					"authorization",
