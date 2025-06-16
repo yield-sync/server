@@ -17,7 +17,7 @@ const request = require('supertest');
 
 const ASSET_NAME: string = "Asset";
 const ASSET_SYMBOL: string = "A";
-const DB_NAME: string = "mock_db_portfolio_asset";
+const DB_NAME: string = "mock_db_portfolio_allocation_sector";
 const EMAIL: string = "testemail@example.com";
 const PASSWORD: string = "testpassword!";
 const PORTFOLIO_NAME: string = "my-portfolio";
