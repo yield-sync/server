@@ -23,7 +23,7 @@ const queries: string[] = [
 
 	// cryptocurrency
 	`
-		CREATE TABLE cryptocurrency (
+		CREATE TABLE IF NOT EXISTS cryptocurrency (
 			id VARCHAR(255) NOT NULL UNIQUE PRIMARY KEY,
 			symbol VARCHAR(50) NOT NULL,
 			name VARCHAR(100) NOT NULL
@@ -31,13 +31,13 @@ const queries: string[] = [
 	`,
 	// industry
 	`
-		CREATE TABLE industry (
+		CREATE TABLE IF NOT EXISTS industry (
 			industry VARCHAR(255) NOT NULL UNIQUE PRIMARY KEY
 		);
 	`,
 	// query_cryptocurrency
 	`
-		CREATE TABLE query_cryptocurrency (
+		CREATE TABLE IF NOT EXISTS query_cryptocurrency (
 			id INT AUTO_INCREMENT PRIMARY KEY,
 			query VARCHAR(10) NOT NULL,
 			last_updated DATETIME NOT NULL,
@@ -46,13 +46,13 @@ const queries: string[] = [
 	`,
 	// sector
 	`
-		CREATE TABLE sector (
-			sector VARCHAR(255) NOT NULL UNIQUE PRIMARY KEY
+		CREATE TABLE IF NOT EXISTS sector (
+			id VARCHAR(255) NOT NULL UNIQUE PRIMARY KEY
 		);
 	`,
 	// user
 	`
-		CREATE TABLE user (
+		CREATE TABLE IF NOT EXISTS user (
 			id INT NOT NULL AUTO_INCREMENT,
 			email VARCHAR(255) NOT NULL,
 			password VARCHAR(255) NOT NULL,
@@ -71,7 +71,7 @@ const queries: string[] = [
 	*/
 	// stock
 	`
-		CREATE TABLE stock (
+		CREATE TABLE IF NOT EXISTS stock (
 			isin VARCHAR(12) NOT NULL UNIQUE PRIMARY KEY,
 
 			symbol VARCHAR(12) NOT NULL UNIQUE,
@@ -80,7 +80,7 @@ const queries: string[] = [
 
 			industry VARCHAR(255) NOT NULL,
 			name VARCHAR(255) NOT NULL,
-			sector VARCHAR(255) NOT NULL,
+			sector_id VARCHAR(255) NOT NULL,
 
 			address VARCHAR(255) NULL DEFAULT NULL,
 			ceo VARCHAR(255) NULL DEFAULT NULL,
@@ -99,13 +99,13 @@ const queries: string[] = [
 
 			refreshed_on TIMESTAMP NULL DEFAULT NULL,
 
-			FOREIGN KEY (sector) REFERENCES sector(sector) ON DELETE CASCADE,
+			FOREIGN KEY (sector_id) REFERENCES sector(id) ON DELETE CASCADE,
 			FOREIGN KEY (industry) REFERENCES industry(industry) ON DELETE CASCADE
 		);
 	`,
 	// cryptocurrency_platform
 	`
-		CREATE TABLE cryptocurrency_platform (
+		CREATE TABLE IF NOT EXISTS cryptocurrency_platform (
 			id INT PRIMARY KEY AUTO_INCREMENT,
 			cryptocurrency_id VARCHAR(255) NOT NULL,
 			platform VARCHAR(50) NOT NULL,
@@ -115,7 +115,7 @@ const queries: string[] = [
 	`,
 	// portfolio
 	`
-		CREATE TABLE portfolio (
+		CREATE TABLE IF NOT EXISTS portfolio (
 			id INT NOT NULL AUTO_INCREMENT,
 			user_id INT NOT NULL,
 			name VARCHAR(255) NOT NULL,
@@ -126,7 +126,7 @@ const queries: string[] = [
 	`,
 	// portfolio_asset
 	`
-		CREATE TABLE portfolio_asset (
+		CREATE TABLE IF NOT EXISTS portfolio_asset (
 			id INT NOT NULL AUTO_INCREMENT,
 			portfolio_id INT NOT NULL,
 			cryptocurrency_id VARCHAR(255),
@@ -147,23 +147,23 @@ const queries: string[] = [
 	`,
 	// portfolio_allocation_sector
 	`
-		CREATE TABLE portfolio_allocation_sector (
+		CREATE TABLE IF NOT EXISTS portfolio_allocation_sector (
 			id INT NOT NULL AUTO_INCREMENT,
 			portfolio_id INT NOT NULL,
-			sector VARCHAR(255) NOT NULL,
+			sector_id VARCHAR(255) NOT NULL,
 			percent_allocation DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (percent_allocation BETWEEN 0.00 AND 100.00),
 
 			PRIMARY KEY (id),
 
 			FOREIGN KEY (portfolio_id) REFERENCES portfolio(id) ON DELETE CASCADE,
-			FOREIGN KEY (sector) REFERENCES sector(sector) ON DELETE CASCADE,
+			FOREIGN KEY (sector_id) REFERENCES sector(id) ON DELETE CASCADE,
 
-			UNIQUE KEY unique_portfolio_stock (portfolio_id, sector)
+			UNIQUE KEY unique_portfolio_stock (portfolio_id, id)
 		);
 	`,
 	// recovery
 	`
-		CREATE TABLE recovery (
+		CREATE TABLE IF NOT EXISTS recovery (
 			id INT NOT NULL AUTO_INCREMENT,
 			user_id INT NOT NULL UNIQUE,
 			pin CHAR(6) NOT NULL CHECK (CHAR_LENGTH(pin) = 6),
@@ -175,7 +175,7 @@ const queries: string[] = [
 	`,
 	// verification
 	`
-		CREATE TABLE verification (
+		CREATE TABLE IF NOT EXISTS verification (
 			id INT NOT NULL AUTO_INCREMENT,
 			user_id INT NOT NULL UNIQUE,
 			pin CHAR(6) NOT NULL CHECK (CHAR_LENGTH(pin) = 6),
@@ -239,7 +239,7 @@ const queries: string[] = [
 	*/
 	`
 		INSERT INTO sector
-			(sector)
+			(id)
 		VALUES
 			('Basic Materials'),
 			('Cash'),
@@ -443,7 +443,7 @@ export const dBBuilder = async (mySQLPool: mysql.Pool, dBName: string, reset: bo
 		]);
 	}
 
-	await mySQLPool.promise().query("CREATE DATABASE ??;", [
+	await mySQLPool.promise().query("CREATE DATABASE IF NOT EXISTS ??;", [
 		dBName,
 	]);
 
@@ -493,26 +493,6 @@ export async function dBBuilderProduction(overwrite: boolean)
 
 	try
 	{
-		// Check if the database exists
-		const [
-			databases,
-		] = await mySQLPool.promise().query("SHOW DATABASES LIKE ?;", [
-			config.app.database.name,
-		]);
-
-		if (!Array.isArray(databases))
-		{
-			throw new DBBuilderError("\"databases\" value not array");
-		}
-
-		// If the database exists and overwrite is not requested, skip creation
-		if (databases.length > 0 && !overwrite)
-		{
-			console.log(`[info] Database "${config.app.database.name}" already exists. Skipping creation.`);
-
-			return;
-		}
-
 		// Drop and recreate the database if overwrite is requested or if it doesn't exist
 		if (overwrite)
 		{
