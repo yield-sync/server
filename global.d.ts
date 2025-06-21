@@ -82,7 +82,7 @@ declare global
 
 		industry: string;
 		name: string;
-		sector: string;
+		sector_id: string;
 
 		address: string;
 		ceo: string;

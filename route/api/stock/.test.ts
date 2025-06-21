@@ -538,7 +538,7 @@ describe("Request: POST", () => {
 					symbol: CONSTANTS.STOCKS.APPLE.SYMBOL,
 					name: CONSTANTS.STOCKS.APPLE.NAME,
 					exchange: CONSTANTS.STOCKS.APPLE.EXCHANGE,
-					sector: CONSTANTS.STOCKS.APPLE.SECTOR,
+					sector_id: CONSTANTS.STOCKS.APPLE.SECTOR,
 					industry: CONSTANTS.STOCKS.APPLE.INDUSTRY,
 				} as IStock);
 
@@ -616,7 +616,7 @@ describe("Request: POST", () => {
 					symbol: CONSTANTS.STOCKS.APPLE.SYMBOL,
 					name: CONSTANTS.STOCKS.APPLE.NAME,
 					exchange: CONSTANTS.STOCKS.APPLE.EXCHANGE,
-					sector: CONSTANTS.STOCKS.APPLE.SECTOR,
+					sector_id: CONSTANTS.STOCKS.APPLE.SECTOR,
 					industry: CONSTANTS.STOCKS.APPLE.INDUSTRY,
 				} as IStock);
 

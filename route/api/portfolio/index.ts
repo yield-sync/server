@@ -105,27 +105,31 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				] = await mySQLPool.promise().query<IPortfolioAsset[]>(
 					`
 						SELECT
-							pa.id AS portfolio_asset_id,
-							pa.balance,
-							pa.percent_allocation,
-							s.symbol AS stock_symbol,
-							s.name AS stock_name,
-							s.isin,
-							s.exchange,
-							s.sector,
-							s.industry,
-							s.price_on_refresh as stock_price,
-							c.symbol AS cryptocurrency_symbol,
-							c.name AS cryptocurrency_name,
-							c.id
+							-- Portfolio Asset
+							portfolio_asset.id AS portfolio_asset_id,
+							portfolio_asset.balance,
+							portfolio_asset.percent_allocation,
+
+							-- Stock
+							stock.symbol AS stock_symbol,
+							stock.name AS stock_name,
+							stock.isin,
+							stock.exchange,
+							stock.industry,
+							stock.price_on_refresh as stock_price,
+
+							-- Cryptocurrency
+							cryptocurrency.symbol AS cryptocurrency_symbol,
+							cryptocurrency.name AS cryptocurrency_name,
+							cryptocurrency.id
 						FROM
-							portfolio_asset pa
+							portfolio_asset
 						LEFT JOIN
-							stock s ON pa.stock_isin = s.isin
+							stock ON portfolio_asset.stock_isin = stock.isin
 						LEFT JOIN
-							cryptocurrency c ON pa.cryptocurrency_id = c.id
+							cryptocurrency ON portfolio_asset.cryptocurrency_id = cryptocurrency.id
 						WHERE
-							pa.portfolio_id = ?
+							portfolio_asset.portfolio_id = ?
 						;
 					`,
 					[

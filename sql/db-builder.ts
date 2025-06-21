@@ -194,7 +194,7 @@ const queries: string[] = [
 
 	// Before Insert - portfolio_asset
 	`
-		CREATE TRIGGER before_insert_portfolio_asset
+		CREATE TRIGGER IF NOT EXISTS before_insert_portfolio_asset
 		BEFORE INSERT ON portfolio_asset
 		FOR EACH ROW
 		BEGIN
@@ -213,7 +213,7 @@ const queries: string[] = [
 	`,
 	// Before Update - portfolio_asset
 	`
-		CREATE TRIGGER before_update_portfolio_asset
+		CREATE TRIGGER IF NOT EXISTS before_update_portfolio_asset
 		BEFORE UPDATE ON portfolio_asset
 		FOR EACH ROW
 		BEGIN
@@ -238,7 +238,7 @@ const queries: string[] = [
 	* ****************
 	*/
 	`
-		INSERT INTO sector
+		INSERT IGNORE INTO sector
 			(id)
 		VALUES
 			('Basic Materials'),
@@ -260,7 +260,7 @@ const queries: string[] = [
 	`,
 
 	`
-		INSERT INTO industry
+		INSERT IGNORE INTO industry
 			(industry)
 		VALUES
 			('Steel'),
