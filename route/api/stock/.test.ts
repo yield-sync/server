@@ -76,13 +76,13 @@ const insertStock = async (
 	name: string,
 	exchange: string,
 	isin: string,
-	sector: string,
+	sector_id: string,
 	industry: string,
 	updatedOn: Date = new Date()
 ) => {
 	await mySQLPool.promise().query(
-		"INSERT INTO stock (symbol, name, exchange, isin, sector, industry, refreshed_on) VALUES (?, ?, ?, ?, ?, ?, ?);",
-		[symbol, name, exchange, isin, sector, industry, updatedOn]
+		"INSERT INTO stock (symbol, name, exchange, isin, sector_id, industry, refreshed_on) VALUES (?, ?, ?, ?, ?, ?, ?);",
+		[symbol, name, exchange, isin, sector_id, industry, updatedOn]
 	);
 };
 
@@ -166,7 +166,7 @@ describe("Request: GET", () => {
 						name: CONSTANTS.STOCKS.APPLE.NAME,
 						exchange: CONSTANTS.STOCKS.APPLE.EXCHANGE,
 						isin: CONSTANTS.STOCKS.APPLE.ISIN,
-						sector: CONSTANTS.STOCKS.APPLE.SECTOR,
+						sector_id: CONSTANTS.STOCKS.APPLE.SECTOR,
 						industry: CONSTANTS.STOCKS.APPLE.INDUSTRY,
 						refreshed_on: expect.any(String),
 					}
@@ -213,7 +213,7 @@ describe("Request: GET", () => {
 					name: CONSTANTS.STOCKS.APPLE.NAME,
 					exchange: CONSTANTS.STOCKS.APPLE.EXCHANGE,
 					isin: CONSTANTS.STOCKS.APPLE.ISIN,
-					sector: CONSTANTS.STOCKS.APPLE.SECTOR,
+					sector_id: CONSTANTS.STOCKS.APPLE.SECTOR,
 					industry: CONSTANTS.STOCKS.APPLE.INDUSTRY,
 				});
 
@@ -249,7 +249,7 @@ describe("Request: GET", () => {
 					name: CONSTANTS.STOCKS.APPLE.NAME,
 					exchange: CONSTANTS.STOCKS.APPLE.EXCHANGE,
 					isin: CONSTANTS.STOCKS.APPLE.ISIN,
-					sector: CONSTANTS.STOCKS.APPLE.SECTOR,
+					sector_id: CONSTANTS.STOCKS.APPLE.SECTOR,
 					industry: CONSTANTS.STOCKS.APPLE.INDUSTRY,
 				});
 
@@ -275,7 +275,7 @@ describe("Request: GET", () => {
 
 				expect(updatedStock[0].isin).toBe(CONSTANTS.STOCKS.APPLE.ISIN);
 
-				expect(updatedStock[0].sector).toBe(CONSTANTS.STOCKS.APPLE.SECTOR);
+				expect(updatedStock[0].sector_id).toBe(CONSTANTS.STOCKS.APPLE.SECTOR);
 
 				expect(updatedStock[0].industry).toBe(CONSTANTS.STOCKS.APPLE.INDUSTRY);
 
@@ -306,7 +306,7 @@ describe("Request: GET", () => {
 					symbol: CONSTANTS.STOCKS.BANANA.SYMBOL,
 					name: CONSTANTS.STOCKS.BANANA.NAME,
 					exchange: CONSTANTS.STOCKS.APPLE.EXCHANGE,
-					sector: CONSTANTS.STOCKS.APPLE.SECTOR,
+					sector_id: CONSTANTS.STOCKS.APPLE.SECTOR,
 					industry: CONSTANTS.STOCKS.APPLE.INDUSTRY,
 				}).mockResolvedValueOnce({
 					...optionalStockValues,
@@ -314,7 +314,7 @@ describe("Request: GET", () => {
 					symbol: CONSTANTS.STOCKS.APPLE.SYMBOL,
 					name: CONSTANTS.STOCKS.APPLE.NAME,
 					exchange: CONSTANTS.STOCKS.APPLE.EXCHANGE,
-					sector: CONSTANTS.STOCKS.APPLE.SECTOR,
+					sector_id: CONSTANTS.STOCKS.APPLE.SECTOR,
 					industry: CONSTANTS.STOCKS.APPLE.INDUSTRY,
 				});
 
@@ -335,7 +335,7 @@ describe("Request: GET", () => {
 
 				expect(formallyAppleIncStock[0].name).toBe(CONSTANTS.STOCKS.BANANA.NAME);
 
-				expect(formallyAppleIncStock[0].sector).toBe(CONSTANTS.STOCKS.BANANA.SECTOR);
+				expect(formallyAppleIncStock[0].sector_id).toBe(CONSTANTS.STOCKS.BANANA.SECTOR);
 
 				expect(formallyAppleIncStock[0].industry).toBe(CONSTANTS.STOCKS.BANANA.INDUSTRY);
 
@@ -348,7 +348,7 @@ describe("Request: GET", () => {
 
 				expect(formallyBananaIncStock[0].name).toBe(CONSTANTS.STOCKS.APPLE.NAME);
 
-				expect(formallyBananaIncStock[0].sector).toBe(CONSTANTS.STOCKS.APPLE.SECTOR);
+				expect(formallyBananaIncStock[0].sector_id).toBe(CONSTANTS.STOCKS.APPLE.SECTOR);
 
 				expect(formallyBananaIncStock[0].industry).toBe(CONSTANTS.STOCKS.APPLE.INDUSTRY);
 			});
@@ -382,7 +382,7 @@ describe("Request: GET", () => {
 					symbol: CONSTANTS.STOCKS.BANANA.SYMBOL,
 					name: CONSTANTS.STOCKS.BANANA.NAME,
 					exchange: CONSTANTS.STOCKS.BANANA.EXCHANGE,
-					sector: CONSTANTS.STOCKS.BANANA.SECTOR,
+					sector_id: CONSTANTS.STOCKS.BANANA.SECTOR,
 					industry: CONSTANTS.STOCKS.BANANA.INDUSTRY,
 				}).mockResolvedValueOnce({
 					...optionalStockValues,
@@ -390,7 +390,7 @@ describe("Request: GET", () => {
 					symbol: oranceIncSymbol,
 					name: oranceIncName,
 					exchange: CONSTANTS.STOCKS.APPLE.EXCHANGE,
-					sector: CONSTANTS.STOCKS.BANANA.SECTOR,
+					sector_id: CONSTANTS.STOCKS.BANANA.SECTOR,
 					industry: CONSTANTS.STOCKS.BANANA.INDUSTRY,
 				});
 
@@ -414,7 +414,7 @@ describe("Request: GET", () => {
 
 				expect(formallyAppleIncStock[0].name).toBe(CONSTANTS.STOCKS.BANANA.NAME);
 
-				expect(formallyAppleIncStock[0].sector).toBe(CONSTANTS.STOCKS.BANANA.SECTOR);
+				expect(formallyAppleIncStock[0].sector_id).toBe(CONSTANTS.STOCKS.BANANA.SECTOR);
 
 				expect(formallyAppleIncStock[0].industry).toBe(CONSTANTS.STOCKS.BANANA.INDUSTRY);
 
@@ -429,7 +429,7 @@ describe("Request: GET", () => {
 
 				expect(formallyBananaIncStock[0].name).toBe(oranceIncName);
 
-				expect(formallyBananaIncStock[0].sector).toBe(oranceIncSector);
+				expect(formallyBananaIncStock[0].sector_id).toBe(oranceIncSector);
 
 				expect(formallyBananaIncStock[0].industry).toBe(oranceIncIndustry);
 			});
@@ -473,7 +473,7 @@ describe("Request: GET", () => {
 						name: "Fake Company Name",
 						exchange: CONSTANTS.STOCKS.APPLE.EXCHANGE,
 						isin: "FAKE_ISIN",
-						sector: CONSTANTS.STOCKS.APPLE.SECTOR,
+						sector_id: CONSTANTS.STOCKS.APPLE.SECTOR,
 						industry: CONSTANTS.STOCKS.APPLE.INDUSTRY,
 						refreshed_on: expect.any(String),
 					},
@@ -483,7 +483,7 @@ describe("Request: GET", () => {
 						name: CONSTANTS.STOCKS.APPLE.NAME,
 						exchange: CONSTANTS.STOCKS.APPLE.EXCHANGE,
 						isin: CONSTANTS.STOCKS.APPLE.ISIN,
-						sector: CONSTANTS.STOCKS.APPLE.SECTOR,
+						sector_id: CONSTANTS.STOCKS.APPLE.SECTOR,
 						industry: CONSTANTS.STOCKS.APPLE.INDUSTRY,
 						refreshed_on: expect.any(String),
 					},
@@ -574,7 +574,7 @@ describe("Request: POST", () => {
 					symbol: CONSTANTS.STOCKS.APPLE.SYMBOL,
 					name: CONSTANTS.STOCKS.APPLE.NAME,
 					exchange: CONSTANTS.STOCKS.APPLE.EXCHANGE,
-					sector: CONSTANTS.STOCKS.APPLE.SECTOR,
+					sector_id: CONSTANTS.STOCKS.APPLE.SECTOR,
 					industry: CONSTANTS.STOCKS.APPLE.INDUSTRY,
 				});
 
@@ -652,7 +652,7 @@ describe("Request: POST", () => {
 					symbol: CONSTANTS.STOCKS.APPLE.SYMBOL,
 					name: CONSTANTS.STOCKS.APPLE.NAME,
 					exchange: CONSTANTS.STOCKS.APPLE.EXCHANGE,
-					sector: CONSTANTS.STOCKS.APPLE.SECTOR,
+					sector_id: CONSTANTS.STOCKS.APPLE.SECTOR,
 					industry: CONSTANTS.STOCKS.APPLE.INDUSTRY,
 				});
 

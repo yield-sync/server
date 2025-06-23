@@ -158,7 +158,7 @@ const queries: string[] = [
 			FOREIGN KEY (portfolio_id) REFERENCES portfolio(id) ON DELETE CASCADE,
 			FOREIGN KEY (sector_id) REFERENCES sector(id) ON DELETE CASCADE,
 
-			UNIQUE KEY unique_portfolio_stock (portfolio_id, id)
+			UNIQUE KEY unique_portfolio_sector (portfolio_id, sector_id)
 		);
 	`,
 	// recovery

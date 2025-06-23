@@ -109,7 +109,7 @@ beforeEach(async () =>
 	portfolio_id = portfolios[0].id;
 
 	await mySQLPool.promise().query(
-		"INSERT INTO stock (symbol, name, exchange, isin, sector, industry) VALUES (?, ?, ?, ?, ?, ?);",
+		"INSERT INTO stock (symbol, name, exchange, isin, sector_id, industry) VALUES (?, ?, ?, ?, ?, ?);",
 		[
 			ASSET_SYMBOL,
 			ASSET_NAME,
