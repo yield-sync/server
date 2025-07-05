@@ -100,9 +100,9 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				const [
 					portfolioAssets,
 				]: [
-					IPortfolioAsset[],
+					any[],
 					FieldPacket[]
-				] = await mySQLPool.promise().query<IPortfolioAsset[]>(
+				] = await mySQLPool.promise().query<any[]>(
 					`
 						SELECT
 							-- Portfolio Asset
@@ -111,17 +111,21 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 							portfolio_asset.percent_allocation,
 
 							-- Stock
-							stock.symbol AS stock_symbol,
-							stock.name AS stock_name,
 							stock.isin,
 							stock.exchange,
 							stock.industry,
-							stock.price_on_refresh as stock_price,
+							stock.price_on_refresh as price,
 
 							-- Cryptocurrency
-							cryptocurrency.symbol AS cryptocurrency_symbol,
-							cryptocurrency.name AS cryptocurrency_name,
-							cryptocurrency.id
+							cryptocurrency.sector,
+							cryptocurrency.industry,
+							cryptocurrency.id,
+
+							-- Combined name, symbol, sector, industry
+    						COALESCE(stock.name, cryptocurrency.name) AS name,
+    						COALESCE(stock.symbol, cryptocurrency.symbol) AS symbol,
+							COALESCE(stock.sector, cryptocurrency.sector) AS sector,
+							COALESCE(stock.industry, cryptocurrency.industry) AS industry
 						FROM
 							portfolio_asset
 						LEFT JOIN
@@ -136,6 +140,11 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 						portfolioId,
 					]
 				);
+
+				for (let i = 0; i < portfolioAssets.length; i++) {
+					const element = portfolioAssets[i];
+					console.log(element);
+				}
 
 				res.status(HTTPStatus.OK).json({
 					portfolio: portfolios[0],
