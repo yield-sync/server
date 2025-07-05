@@ -121,7 +121,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 							cryptocurrency.industry,
 							cryptocurrency.id,
 
-							-- Combined name, symbol, sector, industry
+							-- Combined name, symbol, sector, & industry
     						COALESCE(stock.name, cryptocurrency.name) AS name,
     						COALESCE(stock.symbol, cryptocurrency.symbol) AS symbol,
 							COALESCE(stock.sector, cryptocurrency.sector) AS sector,
