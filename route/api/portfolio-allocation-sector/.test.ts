@@ -111,7 +111,7 @@ beforeEach(async () => {
 	portfolio_id = portfolios[0].id;
 
 	await mySQLPool.promise().query(
-		"INSERT INTO stock (symbol, name, exchange, isin, sector_id, industry) VALUES (?, ?, ?, ?, ?, ?);",
+		"INSERT INTO stock (symbol, name, exchange, isin, sector, industry) VALUES (?, ?, ?, ?, ?, ?);",
 		[
 			ASSET_SYMBOL,
 			ASSET_NAME,
@@ -161,7 +161,7 @@ describe("Request: GET", () =>
 			it("Should return all sector allocations for a portfolio..", async () =>
 			{
 				await mySQLPool.promise().query(
-					"INSERT INTO portfolio_allocation_sector (portfolio_id, percent_allocation, sector_id) VALUES (?, ?, ?);",
+					"INSERT INTO portfolio_allocation_sector (portfolio_id, percent_allocation, sector) VALUES (?, ?, ?);",
 					[portfolio_id, 30, "technology"]
 				);
 
@@ -171,7 +171,7 @@ describe("Request: GET", () =>
 				).expect(HTTPStatus.OK);
 
 				expect(res.body.portfolio_allocation_sector.length).toBe(1);
-				expect(res.body.portfolio_allocation_sector[0].sector_id).toBe("technology");
+				expect(res.body.portfolio_allocation_sector[0].sector).toBe("technology");
 				expect(Number(res.body.portfolio_allocation_sector[0].percent_allocation)).toBe(30);
 			});
 		});
@@ -186,7 +186,7 @@ describe("Request: POST", () => {
 					load: {
 						portfolio_id,
 						percent_allocation: 0,
-						sector_id: "technology"
+						sector: "technology"
 					}
 				}).expect(401);
 
@@ -211,7 +211,7 @@ describe("Request: POST", () => {
 					}
 				}).expect(HTTPStatus.BAD_REQUEST);
 
-				expect(RES.body.message).toBe("❓ No sector_id received");
+				expect(RES.body.message).toBe("❓ No sector received");
 
 				const [results]: MySQLQueryResult = await mySQLPool.promise().query("SELECT * FROM portfolio_asset;");
 
@@ -232,7 +232,7 @@ describe("Request: POST", () => {
 					load: {
 						portfolio_id,
 						percent_allocation: 0,
-						sector_id: "technology"
+						sector: "technology"
 					}
 				});
 
@@ -248,8 +248,8 @@ describe("Request: POST", () => {
 
 				expect(portfolioAllocationSector.length).toBeGreaterThan(0);
 
-				if (!("sector_id" in portfolioAllocationSector[0])) {
-					throw new Error("Key 'sector_id' not in portfolioAssets");
+				if (!("sector" in portfolioAllocationSector[0])) {
+					throw new Error("Key 'sector' not in portfolioAssets");
 				}
 
 				if (!("portfolio_id" in portfolioAllocationSector[0])) {
@@ -269,7 +269,7 @@ describe("Request: POST", () => {
 describe("Request: PUT", () => {
 	describe("Route: /api/portfolio-allocation-sector/update/:id", () =>
 	{
-		let sector_id: number;
+		let sector: number;
 
 
 		beforeEach(async () => {
@@ -281,7 +281,7 @@ describe("Request: PUT", () => {
 				load: {
 					portfolio_id,
 					percent_allocation: 40,
-					sector_id: "industrials"
+					sector: "industrials"
 				}
 			}).expect(HTTPStatus.CREATED);
 
@@ -295,18 +295,18 @@ describe("Request: PUT", () => {
 				throw new Error("Sector insert failed");
 			}
 
-			sector_id = results[0].id;
+			sector = results[0].id;
 		});
 
 		describe("Expected Failure", () => {
 			it("Should fail without auth token", async () => {
-				await request(app).put(`/api/portfolio-allocation-sector/update/${sector_id}`).send({
+				await request(app).put(`/api/portfolio-allocation-sector/update/${sector}`).send({
 					load: { percent_allocation: 10 }
 				}).expect(HTTPStatus.UNAUTHORIZED);
 			});
 
 			it("Should fail with missing percent_allocation", async () => {
-				const res = await request(app).put(`/api/portfolio-allocation-sector/update/${sector_id}`).set(
+				const res = await request(app).put(`/api/portfolio-allocation-sector/update/${sector}`).set(
 					"authorization",
 					`Bearer ${token}`
 				).send({ load: {} }).expect(HTTPStatus.BAD_REQUEST);
@@ -317,7 +317,7 @@ describe("Request: PUT", () => {
 
 		describe("Expected Success", () => {
 			it("Should update percent_allocation for a given sector", async () => {
-				const res = await request(app).put(`/api/portfolio-allocation-sector/update/${sector_id}`).set(
+				const res = await request(app).put(`/api/portfolio-allocation-sector/update/${sector}`).set(
 					"authorization",
 					`Bearer ${token}`
 				).send({
@@ -330,7 +330,7 @@ describe("Request: PUT", () => {
 
 				const [rows]: MySQLQueryResult = await mySQLPool.promise().query(
 					"SELECT percent_allocation FROM portfolio_allocation_sector WHERE id = ?;",
-					[sector_id]
+					[sector]
 				);
 
 				expect(Number(rows[0].percent_allocation)).toBe(55);

@@ -15,11 +15,13 @@ export default class DBHandlerCryptocurrency
 	public async createCryptocurrency(cryptocurrency: ICryptocurrency)
 	{
 		await this.mySQLPool.promise().query(
-			"INSERT INTO cryptocurrency (id, symbol, name) VALUES (?, ?, ?);",
+			"INSERT INTO cryptocurrency (id, symbol, name, sector, industry) VALUES (?, ?, ?, ?, ?);",
 			[
 				cryptocurrency.id,
 				cryptocurrency.symbol,
 				cryptocurrency.name,
+				cryptocurrency.sector,
+				cryptocurrency.industry,
 			]
 		);
 	};

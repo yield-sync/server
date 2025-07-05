@@ -71,7 +71,7 @@ describe("table: stock", () =>
 		{
 			await expect(
 				testMySQLPool.promise().query(
-					"INSERT INTO stock (symbol, name, isin, sector_id, industry) VALUES (?, ?, ?, ?, ?);",
+					"INSERT INTO stock (symbol, name, isin, sector, industry) VALUES (?, ?, ?, ?, ?);",
 					["AAPL", "Apple Inc.", "US0378331005", "Technology", "Consumer Electronics"]
 				)
 			).rejects.toThrow("Field 'exchange' doesn't have a default value");
@@ -81,7 +81,7 @@ describe("table: stock", () =>
 		{
 			await expect(
 				testMySQLPool.promise().query(
-					"INSERT INTO stock (symbol, name, exchange, isin, sector_id, industry) VALUES (?, ?, ?, ?, ?, ?);",
+					"INSERT INTO stock (symbol, name, exchange, isin, sector, industry) VALUES (?, ?, ?, ?, ?, ?);",
 					["AAPL", "Apple Inc.", "invalid", "US0378331005", "Technology", "Consumer Electronics"]
 				)
 			).rejects.toThrow(/CONSTRAINT `stock.exchange` failed/);
@@ -91,7 +91,7 @@ describe("table: stock", () =>
 		{
 			await expect(
 				testMySQLPool.promise().query(
-					"INSERT INTO stock (symbol, name, exchange, sector_id, industry) VALUES (?, ?, ?, ?, ?);",
+					"INSERT INTO stock (symbol, name, exchange, sector, industry) VALUES (?, ?, ?, ?, ?);",
 					["AAPL", "Apple Inc.", "nasdaq", "Technology", "Consumer Electronics"]
 				)
 			).rejects.toThrow("Field 'isin' doesn't have a default value");
@@ -104,7 +104,7 @@ describe("table: stock", () =>
 		{
 			await expect(
 				testMySQLPool.promise().query(
-					"INSERT INTO stock (symbol, name, exchange, isin, sector_id, industry) VALUES (?, ?, ?, ?, ?, ?);",
+					"INSERT INTO stock (symbol, name, exchange, isin, sector, industry) VALUES (?, ?, ?, ?, ?, ?);",
 					["AAPL", "Apple Inc.", "nasdaq", "US0378331005", "Technology", "Consumer Electronics"]
 				)
 			).resolves.not.toThrow();
@@ -116,14 +116,14 @@ describe("table: stock", () =>
 		it("Should fail when inserting duplicate ISIN..", async () =>
 		{
 			await testMySQLPool.promise().query(
-				"INSERT INTO stock (symbol, name, exchange, isin, sector_id, industry) VALUES (?, ?, ?, ?, ?, ?);",
+				"INSERT INTO stock (symbol, name, exchange, isin, sector, industry) VALUES (?, ?, ?, ?, ?, ?);",
 				["AAPL", "Apple Inc.", "nasdaq", "US0378331005", "Technology", "Consumer Electronics"]
 			)
 
 			// Even though the name and symbol are different, the isin already in use
 			await expect(
 				testMySQLPool.promise().query(
-					"INSERT INTO stock (symbol, name, exchange, isin, sector_id, industry) VALUES (?, ?, ?, ?, ?, ?);",
+					"INSERT INTO stock (symbol, name, exchange, isin, sector, industry) VALUES (?, ?, ?, ?, ?, ?);",
 					["MSFT", "Microsoft Corp.", "nasdaq", "US0378331005", "Technology", "Consumer Electronics"]
 				)
 			).rejects.toThrow(/Duplicate entry/);
@@ -232,7 +232,7 @@ describe("Table: portfolio_asset", () => {
 		await testMySQLPool.promise().query(
 			`
 				INSERT INTO stock
-					(isin, symbol, name, exchange, sector_id, industry)
+					(isin, symbol, name, exchange, sector, industry)
 				VALUES
 					(1, 'AAPL', 'Apple Inc.', 'nasdaq', 'Technology', 'Consumer Electronics')
 				;
@@ -250,7 +250,7 @@ describe("Table: portfolio_asset", () => {
 		await testMySQLPool.promise().query(
 			`
 				INSERT INTO stock
-					(isin, symbol, name, exchange, sector_id, industry)
+					(isin, symbol, name, exchange, sector, industry)
 				VALUES
 					(2, 'MSFT', 'Microsoft Inc.', 'nasdaq', 'Technology', 'Consumer Electronics')
 				;

@@ -23,6 +23,8 @@ declare global
 		id: string;
 		name: string;
 		symbol: string;
+		sector: string;
+		industry: string;
 	}
 
 	interface IPortfolio extends
@@ -82,7 +84,7 @@ declare global
 
 		industry: string;
 		name: string;
-		sector_id: string;
+		sector: string;
 
 		address: string;
 		ceo: string;

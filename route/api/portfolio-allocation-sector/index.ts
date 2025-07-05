@@ -158,10 +158,10 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					return;
 				}
 
-				if (!req.body.load?.sector_id)
+				if (!req.body.load?.sector)
 				{
 					res.status(HTTPStatus.BAD_REQUEST).send({
-						message: "❓ No sector_id received",
+						message: "❓ No sector received",
 					});
 
 					return;
@@ -180,7 +180,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				await mySQLPool.promise().query(
 					`
 						INSERT INTO portfolio_allocation_sector
-							(portfolio_id, percent_allocation, sector_id)
+							(portfolio_id, percent_allocation, sector)
 						VALUES
 							(?, ?, ?)
 						;
@@ -188,7 +188,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					[
 						req.body.load.portfolio_id,
 						req.body.load.percent_allocation,
-						req.body.load.sector_id,
+						req.body.load.sector,
 					]
 				);
 

@@ -19,16 +19,6 @@ const queries: string[] = [
 	* * TABLES NON-DEPENDANT *
 	* ************************
 	*/
-
-
-	// cryptocurrency
-	`
-		CREATE TABLE IF NOT EXISTS cryptocurrency (
-			id VARCHAR(255) NOT NULL UNIQUE PRIMARY KEY,
-			symbol VARCHAR(50) NOT NULL,
-			name VARCHAR(100) NOT NULL
-		);
-	`,
 	// industry
 	`
 		CREATE TABLE IF NOT EXISTS industry (
@@ -69,6 +59,19 @@ const queries: string[] = [
 	* * TABLES DEPENDANT *
 	* ********************
 	*/
+	// cryptocurrency
+	`
+		CREATE TABLE IF NOT EXISTS cryptocurrency (
+			id VARCHAR(255) NOT NULL UNIQUE PRIMARY KEY,
+			symbol VARCHAR(50) NOT NULL,
+			name VARCHAR(100) NOT NULL,
+			industry VARCHAR(255) NOT NULL,
+			sector VARCHAR(255) NOT NULL,
+
+			FOREIGN KEY (industry) REFERENCES industry(industry) ON DELETE CASCADE,
+			FOREIGN KEY (sector) REFERENCES sector(id) ON DELETE CASCADE
+		);
+	`,
 	// stock
 	`
 		CREATE TABLE IF NOT EXISTS stock (
@@ -80,7 +83,7 @@ const queries: string[] = [
 
 			industry VARCHAR(255) NOT NULL,
 			name VARCHAR(255) NOT NULL,
-			sector_id VARCHAR(255) NOT NULL,
+			sector VARCHAR(255) NOT NULL,
 
 			address VARCHAR(255) NULL DEFAULT NULL,
 			ceo VARCHAR(255) NULL DEFAULT NULL,
@@ -99,7 +102,7 @@ const queries: string[] = [
 
 			refreshed_on TIMESTAMP NULL DEFAULT NULL,
 
-			FOREIGN KEY (sector_id) REFERENCES sector(id) ON DELETE CASCADE,
+			FOREIGN KEY (sector) REFERENCES sector(id) ON DELETE CASCADE,
 			FOREIGN KEY (industry) REFERENCES industry(industry) ON DELETE CASCADE
 		);
 	`,
@@ -150,15 +153,15 @@ const queries: string[] = [
 		CREATE TABLE IF NOT EXISTS portfolio_allocation_sector (
 			id INT NOT NULL AUTO_INCREMENT,
 			portfolio_id INT NOT NULL,
-			sector_id VARCHAR(255) NOT NULL,
+			sector VARCHAR(255) NOT NULL,
 			percent_allocation DECIMAL(5,2) NOT NULL DEFAULT 0.00 CHECK (percent_allocation BETWEEN 0.00 AND 100.00),
 
 			PRIMARY KEY (id),
 
 			FOREIGN KEY (portfolio_id) REFERENCES portfolio(id) ON DELETE CASCADE,
-			FOREIGN KEY (sector_id) REFERENCES sector(id) ON DELETE CASCADE,
+			FOREIGN KEY (sector) REFERENCES sector(id) ON DELETE CASCADE,
 
-			UNIQUE KEY unique_portfolio_sector (portfolio_id, sector_id)
+			UNIQUE KEY unique_portfolio_sector (portfolio_id, sector)
 		);
 	`,
 	// recovery
@@ -258,7 +261,6 @@ const queries: string[] = [
 			('Utilities')
 		;
 	`,
-
 	`
 		INSERT IGNORE INTO industry
 			(industry)
@@ -421,10 +423,18 @@ const queries: string[] = [
 			('Regulated Electric'),
 			('Independent Power Producers'),
 			('Diversified Utilities'),
-			('General Utilitie'),
-			('Decentralized Exchange')
+			('General Utilitie')
 		;
 	`,
+	`
+		INSERT IGNORE INTO industry
+			(industry)
+		VALUES
+			('Decentralized Exchange'),
+			('Decentralized Protocol'),
+			('Stablecoin')
+		;
+	`
 ];
 
 

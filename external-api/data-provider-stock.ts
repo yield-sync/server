@@ -77,7 +77,7 @@ export default {
 
 				industry: response.data[0].industry,
 				name: response.data[0].companyName,
-				sector_id: response.data[0].sector,
+				sector: response.data[0].sector,
 
 				address: response.data[0].address,
 				ceo: response.data[0].ceo,
@@ -119,7 +119,7 @@ export default {
 				exchange: response.data[0].exchange.toLowerCase(),
 				industry: response.data[0].industry,
 				name: response.data[0].companyName,
-				sector_id: response.data[0].sector,
+				sector: response.data[0].sector,
 				address: response.data[0].address,
 				ceo: response.data[0].ceo,
 				city: response.data[0].city,

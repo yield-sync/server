@@ -41,6 +41,8 @@ export default class RouteFunctionsCryptocurrency
 						id: cryptoResults[i].id,
 						name: cryptoResults[i].name,
 						symbol: cryptoResults[i].symbol,
+						sector: "Decentralized Protocol",
+						industry: "Decentralized Protocol",
 					} as ICryptocurrency
 				);
 			}
