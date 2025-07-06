@@ -13,14 +13,14 @@ export default class DBHandlerSector
 
 	/**
 	* Retrieves all sectors from the database.
-	* @returns {Promise<any[]>} A promise that resolves to an array of sectors.
+	* @returns {Promise<ISector[]>} A promise that resolves to an array of sectors.
 	* @throws {Error} If the query fails or if the result is not an array.
 	*/
-	public async getSectors(): Promise<any[]>
+	public async getSectors(): Promise<ISector[]>
 	{
 		let [
 			sector,
-		] = await this.mySQLPool.promise().query<any[]>(
+		] = await this.mySQLPool.promise().query<ISector[]>(
 			"SELECT * FROM sector;",
 			[]
 		);
@@ -37,6 +37,6 @@ export default class DBHandlerSector
 		}
 
 		// Convert the result to Sector type if necessary
-		return sector.map((s) => (s.id));
+		return sector;
 	};
 }

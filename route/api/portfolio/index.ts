@@ -1,13 +1,16 @@
 import express from "express";
 import mysql from "mysql2";
 
+import { INTERNAL_SERVER_ERROR, HTTPStatus } from "../../../constants";
+import DBHandlerSector from "../../../db-handler/DBHandlerSector";
 import { loadRequired } from "../../../middleware/load";
 import userToken from "../../../middleware/user-token";
-import { INTERNAL_SERVER_ERROR, HTTPStatus } from "../../../constants";
 
 
 export default (mySQLPool: mysql.Pool): express.Router =>
 {
+	let dBHandlerSector: DBHandlerSector = new DBHandlerSector(mySQLPool);
+
 	return express.Router().get(
 		/**
 		* @route GET /api/portfolio/
@@ -141,13 +144,41 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					]
 				);
 
-				for (let i = 0; i < portfolioAssets.length; i++) {
-					const element = portfolioAssets[i];
-					console.log(element);
+				const sectorAllocations: Record<string, number> = {};
+
+				const sectors: ISector[] = await dBHandlerSector.getSectors();
+
+				// Add up all the percent allocations by sector
+				for (let i = 0; i < sectors.length; i++)
+				{
+					const sector: ISector = sectors[i];
+
+					if (!(sector.sector in sectorAllocations))
+					{
+						sectorAllocations[sector.sector] = 0;
+					}
+
+					for (let ii = 0; ii < portfolioAssets.length; ii++)
+					{
+						const asset = portfolioAssets[ii];
+
+						if (asset.sector === sector.sector)
+						{
+							if (sector.sector in sectorAllocations)
+							{
+								sectorAllocations[sector.sector] += Number(asset.percent_allocation);
+							}
+							else
+							{
+								sectorAllocations[sector.sector] = Number(asset.percent_allocation);
+							}
+						}
+					}
 				}
 
 				res.status(HTTPStatus.OK).json({
 					portfolio: portfolios[0],
+					sectorAllocations,
 					portfolioAssets,
 				});
 			}

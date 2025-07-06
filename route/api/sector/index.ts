@@ -19,13 +19,17 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		/**
 		* @route GET /api/sector/
 		* @desc Get all sectors
-		* @returns {Sector[]}
+		* @returns {ISector[]}
 		* @access User
 		*/
 		"/",
 		async (req: express.Request, res: express.Response) =>
 		{
-			res.status(200).send(await dBHandlerSector.getSectors());
+			const sectors: ISector[] = await dBHandlerSector.getSectors();
+
+			const sectorsOnly = sectors.map((s) => (s.sector));
+
+			res.status(200).send(sectorsOnly);
 		}
 	);
 };

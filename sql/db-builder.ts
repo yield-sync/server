@@ -37,7 +37,7 @@ const queries: string[] = [
 	// sector
 	`
 		CREATE TABLE IF NOT EXISTS sector (
-			id VARCHAR(255) NOT NULL UNIQUE PRIMARY KEY
+			sector VARCHAR(255) NOT NULL UNIQUE PRIMARY KEY
 		);
 	`,
 	// user
@@ -69,7 +69,7 @@ const queries: string[] = [
 			sector VARCHAR(255) NOT NULL,
 
 			FOREIGN KEY (industry) REFERENCES industry(industry) ON DELETE CASCADE,
-			FOREIGN KEY (sector) REFERENCES sector(id) ON DELETE CASCADE
+			FOREIGN KEY (sector) REFERENCES sector(sector) ON DELETE CASCADE
 		);
 	`,
 	// stock
@@ -102,7 +102,7 @@ const queries: string[] = [
 
 			refreshed_on TIMESTAMP NULL DEFAULT NULL,
 
-			FOREIGN KEY (sector) REFERENCES sector(id) ON DELETE CASCADE,
+			FOREIGN KEY (sector) REFERENCES sector(sector) ON DELETE CASCADE,
 			FOREIGN KEY (industry) REFERENCES industry(industry) ON DELETE CASCADE
 		);
 	`,
@@ -159,7 +159,7 @@ const queries: string[] = [
 			PRIMARY KEY (id),
 
 			FOREIGN KEY (portfolio_id) REFERENCES portfolio(id) ON DELETE CASCADE,
-			FOREIGN KEY (sector) REFERENCES sector(id) ON DELETE CASCADE,
+			FOREIGN KEY (sector) REFERENCES sector(sector) ON DELETE CASCADE,
 
 			UNIQUE KEY unique_portfolio_sector (portfolio_id, sector)
 		);
@@ -242,7 +242,7 @@ const queries: string[] = [
 	*/
 	`
 		INSERT IGNORE INTO sector
-			(id)
+			(sector)
 		VALUES
 			('Basic Materials'),
 			('Cash'),
