@@ -115,6 +115,13 @@ declare global
 		last_updated: Date;
 	}
 
+	interface ISector extends
+		RowDataPacket,
+		OkPacket
+	{
+		sector: string;
+	}
+
 	interface IVerification extends
 		RowDataPacket,
 		OkPacket
