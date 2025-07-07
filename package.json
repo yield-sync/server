@@ -22,6 +22,7 @@
   "license": "MIT",
   "dependencies": {
     "@getbrevo/brevo": "^2.2.0",
+    "@polygon.io/client-js": "^7.4.0",
     "@types/mysql": "^2.15.26",
     "@typescript-eslint/eslint-plugin": "^6.7.4",
     "@typescript-eslint/parser": "^6.7.4",
@@ -41,7 +42,8 @@
     "rimraf": "^5.0.5",
     "supertest": "^6.3.3",
     "ts-node": "^10.9.1",
-    "typescript": "^5.2.2"
+    "typescript": "^5.2.2",
+    "ws": "^8.18.3"
   },
   "devDependencies": {
     "@types/body-parser": "^1.19.3",

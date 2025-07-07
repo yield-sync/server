@@ -11,6 +11,7 @@ import http from "http";
 import mysql from "mysql2";
 import path from "path";
 
+import stockPriceFeed from "./stock-price-feed";
 import config from "./config";
 import { INTERNAL_SERVER_ERROR, HTTPStatus } from "./constants";
 import rateLimiter from "./rate-limiter";
@@ -22,7 +23,6 @@ import routeApiPortfolioAsset from "./route/api/portfolio-asset";
 import routeApiSector from "./route/api/sector";
 import routeApiStock from "./route/api/stock";
 import routeApiUser from "./route/api/user";
-
 
 if (
 	!config.app.database.host ||
@@ -51,6 +51,26 @@ const MYSQL_POOL: mysql.Pool = mysql.createPool({
 {
 	console.error("MySQL Create Pool Error:", err);
 });
+
+/*
+* Start the stock price feed
+* This will connect to the Polygon WebSocket API and start receiving stock price updates
+* The stock price feed will run in the background and update the stock prices in the database
+* It will also log the stock price updates to the console
+* This is useful for real-time stock price updates in the application
+* If you want to disable the stock price feed, you can comment out the line below
+* or set the environment variable `DISABLE_STOCK_PRICE_FEED` to `true`
+*/
+if (process.env.DISABLE_STOCK_PRICE_FEED !== "true")
+{
+	stockPriceFeed();
+
+	console.log("🟢 Stock Price Feed Running");
+}
+else
+{
+	console.log("🔴 Stock Price Feed Disabled");
+}
 
 
 http.createServer(
