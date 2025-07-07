@@ -12,7 +12,7 @@ require("dotenv").config();
 * or set the environment variable `DISABLE_STOCK_PRICE_FEED` to `true`
 */
 
-if (process.env.DISABLE_STOCK_PRICE_FEED !== "true")
+if (process.env.API__POLYGON__ENABLE_WEBSOCKET_STOCK_FEED == "true")
 {
 	/**
 	 * @dev
@@ -61,5 +61,5 @@ if (process.env.DISABLE_STOCK_PRICE_FEED !== "true")
 }
 else
 {
-	console.log("🔴 Stock Price Feed Disabled");
+	console.log("🔴 Polygon Websocket Stock Feed Disabled");
 }
