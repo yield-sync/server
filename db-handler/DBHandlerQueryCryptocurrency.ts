@@ -29,7 +29,7 @@ export default class DBHandlerQueryCryptocurrency
 			"UPDATE query_cryptocurrency SET last_updated = ? WHERE query = ?;",
 			[
 				new Date(),
-				query
+				query,
 			]
 		);
 	};

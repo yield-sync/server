@@ -47,7 +47,7 @@ export default class DBHandlerCryptocurrency
 		] = await this.mySQLPool.promise().query<ICryptocurrency[]>(
 			"SELECT * FROM cryptocurrency WHERE id = ?;",
 			[
-				id
+				id,
 			]
 		);
 

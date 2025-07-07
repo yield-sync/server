@@ -39,7 +39,7 @@ const _getStockTickerFromIsin = async (isin: string): Promise<string|null> =>
 
 	if (openfigiResponse?.data[0]?.warning)
 	{
-		return null
+		return null;
 	}
 
 	if (!("ticker" in openfigiResponse.data[0].data[0]))

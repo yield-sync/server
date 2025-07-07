@@ -9,7 +9,7 @@ import { sanitizeQuery, sanitizeSymbolQuery } from "../../../util/sanitizer";
 
 
 const ONE_WEEK_IN_MINUTES: number = 10080;
-const ONE_WEEK_IN_MS: number = ONE_WEEK_IN_MINUTES * 60 * 100
+const ONE_WEEK_IN_MS: number = ONE_WEEK_IN_MINUTES * 60 * 100;
 
 
 export default (mySQLPool: mysql.Pool): express.Router =>
@@ -91,7 +91,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				if (dBStocks.length == 0)
 				{
 					res.status(HTTPStatus.OK).json({
-					...response
+						...response,
 					});
 
 					return;
@@ -172,7 +172,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				res.status(HTTPStatus.ACCEPTED).json({
 					...response,
-					stocks: searchResults
+					stocks: searchResults,
 				});
 			}
 			catch (error: Error | any)

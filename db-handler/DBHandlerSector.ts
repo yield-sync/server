@@ -22,7 +22,8 @@ export default class DBHandlerSector
 			sector,
 		] = await this.mySQLPool.promise().query<ISector[]>(
 			"SELECT * FROM sector;",
-			[]
+			[
+			]
 		);
 
 		if (!Array.isArray(sector))
@@ -33,7 +34,8 @@ export default class DBHandlerSector
 		// If no sectors found, return an empty array
 		if (sector.length === 0)
 		{
-			return [];
+			return [
+			];
 		}
 
 		// Convert the result to Sector type if necessary

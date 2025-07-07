@@ -69,7 +69,7 @@ export default {
 				id: response.data.id,
 				symbol: response.data.symbol,
 				name: response.data.name,
-			} as ICryptocurrency
+			} as ICryptocurrency;
 		}
 		catch (error)
 		{

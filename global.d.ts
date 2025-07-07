@@ -4,7 +4,7 @@ import { FieldPacket, OkPacket, RowDataPacket } from "mysql2";
 declare global
 {
 	const ONE_WEEK_IN_MINUTES: number = 10080;
-	const ONE_WEEK_IN_MS: number = ONE_WEEK_IN_MINUTES * 60 * 100
+	const ONE_WEEK_IN_MS: number = ONE_WEEK_IN_MINUTES * 60 * 100;
 
 	// Wrappers
 	type FieldPacket = FieldPacket;

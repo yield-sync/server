@@ -6,12 +6,13 @@ import DBHandlerQueryCryptocurrency from "../../../db-handler/DBHandlerQueryCryp
 
 
 const ONE_WEEK_IN_MINUTES: number = 10080;
-const ONE_WEEK_IN_MS: number = ONE_WEEK_IN_MINUTES * 60 * 100
+const ONE_WEEK_IN_MS: number = ONE_WEEK_IN_MINUTES * 60 * 100;
 
 
 export default class RouteFunctionsCryptocurrency
 {
 	private _dBHandlerCryptocurrency: DBHandlerCryptocurrency;
+
 	private _dBHandlerQueryCryptocurrency: DBHandlerQueryCryptocurrency;
 
 	public ERROR_STOCK_PROFILE_EXTERNALLY_NOT_FOUND: string = "⚠️ Nothing returned from external source for symbol";
@@ -124,7 +125,7 @@ export default class RouteFunctionsCryptocurrency
 
 		return {
 			updatedDB: updateDBRequired,
-			results: await this._dBHandlerCryptocurrency.getCryptocurrencyByLikeSymbol(query)
+			results: await this._dBHandlerCryptocurrency.getCryptocurrencyByLikeSymbol(query),
 		};
 	};
 }

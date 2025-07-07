@@ -116,7 +116,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				let searchResults = await routeHandlerCryptocurrency.searchCryptocurrencyByLikeSymbol(
 					sanitizeQuery(query)
-				)
+				);
 
 				res.status(HTTPStatus.OK).json({
 					...response,
@@ -155,7 +155,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				if (!req.body.load?.id)
 				{
 					res.status(HTTPStatus.BAD_REQUEST).json({
-						message: "No id provided"
+						message: "No id provided",
 					});
 
 					return;
@@ -163,10 +163,10 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 
 				const { id, } = req.body.load;
 
-				await routeHandlerCryptocurrency.createNewAssetById(id)
+				await routeHandlerCryptocurrency.createNewAssetById(id);
 
 				res.status(HTTPStatus.CREATED).json({
-					message: "Created cryptocurrency with provided id"
+					message: "Created cryptocurrency with provided id",
 				});
 			}
 			catch (error: Error | any)
@@ -200,7 +200,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 			if (!req.body.load?.query)
 			{
 				res.status(HTTPStatus.BAD_REQUEST).json({
-					message: "No query provided"
+					message: "No query provided",
 				});
 
 				return;
@@ -213,7 +213,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				let searchResults = await routeHandlerCryptocurrency.searchCryptocurrencyByLikeSymbol(
 					sanitizeQuery(query),
 					true
-				)
+				);
 
 				res.status(HTTPStatus.OK).json({
 					externalRequestMade: searchResults.updatedDB,

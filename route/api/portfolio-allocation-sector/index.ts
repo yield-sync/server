@@ -74,7 +74,7 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 				}
 
 				const [
-					portfolio_allocation_sector
+					portfolio_allocation_sector,
 				]: [
 					IPortfolio[],
 					FieldPacket[]

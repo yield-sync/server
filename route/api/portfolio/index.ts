@@ -144,7 +144,8 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 					]
 				);
 
-				const sectorAllocations: Record<string, number> = {};
+				const sectorAllocations: Record<string, number> = {
+				};
 
 				const sectors: ISector[] = await dBHandlerSector.getSectors();
 

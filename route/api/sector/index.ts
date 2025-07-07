@@ -27,7 +27,10 @@ export default (mySQLPool: mysql.Pool): express.Router =>
 		{
 			const sectors: ISector[] = await dBHandlerSector.getSectors();
 
-			const sectorsOnly = sectors.map((s) => (s.sector));
+			const sectorsOnly = sectors.map((s) => 
+			{
+				return (s.sector);
+			});
 
 			res.status(200).send(sectorsOnly);
 		}

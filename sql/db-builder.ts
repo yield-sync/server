@@ -434,7 +434,7 @@ const queries: string[] = [
 			('Decentralized Protocol'),
 			('Stablecoin')
 		;
-	`
+	`,
 ];
 
 
