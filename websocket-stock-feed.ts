@@ -1,25 +1,23 @@
+/**
+* @dev This script sets up a WebSocket client to connect to the Polygon.io delayed stock feed.
+*/
 import { websocketClient } from "@polygon.io/client-js";
+import { sys } from "typescript";
 
 require("dotenv").config();
 
-/**
-* @dev Start the stock price feed
-* This will connect to the Polygon WebSocket API and start receiving stock price updates
-* The stock price feed will run in the background and update the stock prices in the database
-* It will also log the stock price updates to the console
-* This is useful for real-time stock price updates in the application
-* If you want to disable the stock price feed, you can comment out the line below
-* or set the environment variable `DISABLE_STOCK_PRICE_FEED` to `true`
-*/
 
-if (process.env.API__POLYGON__ENABLE_WEBSOCKET_STOCK_FEED == "true")
+if (process.env.API__POLYGON__ENABLE_WEBSOCKET_STOCK_FEED !== "true")
 {
-	/**
-	 * @dev
-	 * This example uses polygon client-js library to connect to the  delayed stocks polygon websocket to subscribe to
-	 * minute ohlc values for the ticker AAPL.
-	*/
-
+	console.log("🔴 Polygon Websocket Stock Feed Disabled");
+}
+else if (!process.env.API__POLYGON__KEY)
+{
+	console.error("❌ Polygon Websocket Stock Feed Error: API key not set in environment variables");
+	sys.exit(1);
+}
+else
+{
 	console.log("🟢 Polygon Websocket Stock Feed Running");
 
 	// create a 15-min delay websocket client using the polygon client-js library
@@ -46,7 +44,7 @@ if (process.env.API__POLYGON__ENABLE_WEBSOCKET_STOCK_FEED == "true")
 		// wait until the message saying authentication was successful, then subscribe to a channel
 		if (parsedMessage[0].ev === "status" && parsedMessage[0].status === "auth_success")
 		{
-			console.log("Subscribing to the minute aggregates channel for ticker AAPL..");
+			console.log("Subscribing to the minute aggregates channel for ALL stocks..");
 
 			ws.send(
 				JSON.stringify({
@@ -58,8 +56,4 @@ if (process.env.API__POLYGON__ENABLE_WEBSOCKET_STOCK_FEED == "true")
 
 		console.log("Message received:", parsedMessage);
 	};
-}
-else
-{
-	console.log("🔴 Polygon Websocket Stock Feed Disabled");
 }
