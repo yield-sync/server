@@ -53,6 +53,22 @@ const queries: string[] = [
 			UNIQUE(email)
 		)
 	`,
+	// stock_candles
+	`
+		CREATE TABLE stock_1m_candle (
+			id BIGINT AUTO_INCREMENT PRIMARY KEY,
+			symbol VARCHAR(16) NOT NULL,
+			open DOUBLE NOT NULL,
+			close DOUBLE NOT NULL,
+			high DOUBLE NOT NULL,
+			low DOUBLE NOT NULL,
+			volume BIGINT NOT NULL,
+			avg DOUBLE,
+			start DATETIME NOT NULL,
+			end DATETIME NOT NULL,
+			UNIQUE KEY unique_candle (symbol, start)
+		);
+	`,
 
 	/*
 	* ********************
