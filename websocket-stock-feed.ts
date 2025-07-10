@@ -78,7 +78,21 @@ const webSocketStockFeed = async () =>
 			{
 				if (data.ev === "AM")
 				{
-					// Example fields: { ev: "AM", sym: "AAPL", o: 123, c: 124, h: 125, l: 122, v: 1000, a: 123.5, s: 1620000000, e: 1620000060 }
+					/**
+					* Example fields
+					{
+						ev: "AM",
+						sym: "AAPL",
+						o: 123,
+						c: 124,
+						h: 125,
+						l: 122,
+						v: 1000,
+						a: 123.5,
+						s: 1620000000,
+						e: 1620000060
+					}
+					*/
 					try
 					{
 						await MYSQL_POOL.promise().query(
