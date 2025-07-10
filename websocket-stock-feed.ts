@@ -26,7 +26,7 @@ const webSocketStockFeed = async () =>
 		queueLimit: 0,
 	}).on("connection", (connection) =>
 	{
-		console.log("✅ Server successfully connected to the MySQL Database");
+		console.log("✅ [websocket-stock-feed] Successfully connected to the MySQL Database");
 	}).on("error", (err) =>
 	{
 		console.error("MySQL Create Pool Error:", err);
@@ -76,14 +76,15 @@ const webSocketStockFeed = async () =>
 			// Check for candlestick (minute aggregate) data
 			for (const data of parsedMessage)
 			{
-				if (data.ev === "AM") {
+				if (data.ev === "AM")
+				{
 					// Example fields: { ev: "AM", sym: "AAPL", o: 123, c: 124, h: 125, l: 122, v: 1000, a: 123.5, s: 1620000000, e: 1620000060 }
 					try
 					{
 						await MYSQL_POOL.promise().query(
 							`
 								INSERT INTO
-									stock_1m_candle (symbol, open, close, high, low, volume, avg, start, end)
+									stock_1m_candle (symbol, open, close, high, low, volume, start, end)
 								VALUES
 									(?, ?, ?, ?, ?, ?, ?, FROM_UNIXTIME(?), FROM_UNIXTIME(?))
 								;
@@ -95,10 +96,33 @@ const webSocketStockFeed = async () =>
 								data.h,
 								data.l,
 								data.v,
-								data.a,
 								Math.floor(data.s / 1000),
 								Math.floor(data.e / 1000)
 							]
+						);
+
+						await MYSQL_POOL.promise().query(
+						`
+							DELETE FROM
+								stock_1m_candle
+							WHERE
+								symbol = ?
+							AND id NOT IN (
+								SELECT id FROM (
+									SELECT
+										id
+									FROM
+										stock_1m_candle
+									WHERE
+										symbol = ?
+									ORDER BY
+										start
+									DESC
+									LIMIT ?
+								) AS recent
+							);
+						`,
+						[data.sym, data.sym, 1440]
 						);
 					}
 					catch (err)
@@ -107,14 +131,25 @@ const webSocketStockFeed = async () =>
 					}
 				}
 			}
-
-			console.log("Message received:", parsedMessage);
 		};
 
 		// register a handler to log info if websocket closes
 		ws.onclose = (code, reason) =>
 		{
-			return console.log("Polygon Websocket Stock Feed Connection closed", code, reason);
+			console.log("Polygon Websocket Stock Feed Connection closed", code, reason);
+
+			// Close SQL pool
+			MYSQL_POOL.end((err) =>
+			{
+				if (err)
+				{
+					console.error("Error closing MySQL pool:", err);
+				}
+				else
+				{
+					console.log("MySQL pool closed successfully.");
+				}
+			});
 		};
 	}
 };

@@ -63,7 +63,6 @@ const queries: string[] = [
 			high DOUBLE NOT NULL,
 			low DOUBLE NOT NULL,
 			volume BIGINT NOT NULL,
-			avg DOUBLE,
 			start DATETIME NOT NULL,
 			end DATETIME NOT NULL,
 			UNIQUE KEY unique_candle (symbol, start)
