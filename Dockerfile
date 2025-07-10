@@ -22,7 +22,7 @@ RUN npm install && npm run build
 # Go back to app dir
 WORKDIR /app
 
-# Copy backend files
+# Copy backend files from the local context into the image
 COPY . .
 
 # Install backend dependencies
