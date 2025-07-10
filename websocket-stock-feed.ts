@@ -136,7 +136,7 @@ const webSocketStockFeed = async () =>
 								) AS recent
 							);
 						`,
-						[data.sym, data.sym, 1440]
+						[data.sym, data.sym, 30]
 						);
 					}
 					catch (err)
