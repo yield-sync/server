@@ -43,6 +43,12 @@ async function main(overwrite: boolean)
 		throw new InitializerError("Missing SQL database connection values");
 	}
 
+	if (process.env.SKIP_DB_BUILDER === "1")
+	{
+		console.warn("[warn] Skipping DB Builder");
+		return;
+	}
+
 	await dBBuilderProduction(overwrite);
 }
 
