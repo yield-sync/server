@@ -1,29 +1,32 @@
-# At the top of Dockerfile
+# Use Node.js base image
 FROM node:20
 
-# Go to app dir
+# Set working directory
 WORKDIR /app
 
-# Remove any existing frontend directory to ensure we get the latest version
+# Clean any existing frontend folder
 RUN rm -rf frontend
 
-# This layer will be invalidated if CACHE_BUSTER changes
+# Clone the frontend repo
 RUN git clone https://github.com/yield-sync/frontend.git frontend
 
+# Set working directory to frontend
 WORKDIR /app/frontend
 
-# Pull latest changes (if any)
+# Pull latest changes (just to be sure)
 RUN git pull origin main
 
-# Install npm packages and rebuild if something was pulled
+# Install dependencies and build the frontend
 RUN npm install && npm run build
 
-# Go to app dir
+# Go back to app dir
 WORKDIR /app
 
-# Copy server files
+# Copy backend files
 COPY . .
+
+# Install backend dependencies
 RUN npm install
 
-# Execute "npm run start"
+# Run the server
 CMD ["npm", "start"]
