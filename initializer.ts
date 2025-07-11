@@ -10,7 +10,7 @@ class InitializerError extends
 {}
 
 
-async function main(overwrite: boolean)
+async function main()
 {
 	if (!process.env.NO_CACHE || process.env.NO_CACHE != "1")
 	{
@@ -49,14 +49,14 @@ async function main(overwrite: boolean)
 		return;
 	}
 
-	await dBBuilderProduction(overwrite);
+	await dBBuilderProduction();
 }
 
 if (require.main === module)
 {
 	try
 	{
-		main(process.argv.includes("--overwrite") ? true : false);
+		main();
 	}
 	catch (e)
 	{
