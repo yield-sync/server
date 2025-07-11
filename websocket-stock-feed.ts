@@ -11,6 +11,9 @@ import { sys } from "typescript";
 require("dotenv").config();
 
 
+const BLACK_LISTED_SYMBOLS = new Set<string>(["TpC", "TPC"]);
+
+
 const webSocketStockFeed = async () =>
 {
 
@@ -93,6 +96,11 @@ const webSocketStockFeed = async () =>
 						e: 1620000060
 					}
 					*/
+					if (BLACK_LISTED_SYMBOLS.has(data.sym))
+					{
+						continue;
+					}
+
 					try
 					{
 						await MYSQL_POOL.promise().query(
@@ -100,7 +108,7 @@ const webSocketStockFeed = async () =>
 								INSERT INTO
 									stock_1m_candle (symbol, open, close, high, low, volume, start, end)
 								VALUES
-									(?, ?, ?, ?, ?, ?, ?, FROM_UNIXTIME(?), FROM_UNIXTIME(?))
+									(?, ?, ?, ?, ?, ?, FROM_UNIXTIME(?), FROM_UNIXTIME(?))
 								;
 							`,
 							[
