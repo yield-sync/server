@@ -55,7 +55,7 @@ const queries: string[] = [
 	`,
 	// stock_candles
 	`
-		CREATE TABLE stock_1m_candle (
+		CREATE TABLE IF NOT EXISTS stock_1m_candle (
 			id BIGINT AUTO_INCREMENT PRIMARY KEY,
 			symbol VARCHAR(16) NOT NULL,
 			open DOUBLE NOT NULL,
@@ -483,11 +483,11 @@ export const dBBuilder = async (mySQLPool: mysql.Pool, dBName: string, reset: bo
 };
 
 /**
-* @notice This is the function to build the production SQL DB
+* @notice This is the function to build the SQL DB
 */
-export async function dBBuilderProduction(overwrite: boolean)
+export async function dBBuilderProduction()
 {
-	console.log("[dBBuilderProduction] Initializing production SQL database..");
+	console.log("[db-builder] Initializing SQL database..");
 
 	if (
 		!config.app.database.host ||
@@ -510,7 +510,7 @@ export async function dBBuilderProduction(overwrite: boolean)
 		queueLimit: 0,
 	}).on("connection", (connection) =>
 	{
-		console.log("[info] ✅ Successfully connected to the MySQL Database");
+		console.log("[db-builder] ✅ Successfully connected to the MySQL Database");
 	}).on("error", (err) =>
 	{
 		console.error("[error] MySQL Pool:", err);
@@ -518,20 +518,10 @@ export async function dBBuilderProduction(overwrite: boolean)
 
 	try
 	{
-		// Drop and recreate the database if overwrite is requested or if it doesn't exist
-		if (overwrite)
-		{
-			await mySQLPool.promise().query("DROP DATABASE IF EXISTS ??;", [
-				config.app.database.name,
-			]);
-
-			console.log(`[info] Database "${config.app.database.name}" dropped.`);
-		}
-
 		// Create the database and run the queries
 		await dBBuilder(mySQLPool, config.app.database.name);
 
-		console.log(`[info] Database "${config.app.database.name}" created.`);
+		console.log(`[db-builder] Database "${config.app.database.name}" created.`);
 	}
 	catch (error)
 	{
