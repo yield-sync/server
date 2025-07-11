@@ -3,8 +3,6 @@
 */
 import mysql from "mysql2";
 
-import config from "./config";
-
 import { websocketClient } from "@polygon.io/client-js";
 import { sys } from "typescript";
 
@@ -14,39 +12,23 @@ require("dotenv").config();
 const BLACK_LISTED_SYMBOLS = new Set<string>(["TpC", "TPC"]);
 
 
-const webSocketStockFeed = async () =>
+export default async (mySQLPool: mysql.Pool) =>
 {
-
-	// Create MySQL pool
-	const MYSQL_POOL: mysql.Pool = mysql.createPool({
-		host: config.app.database.host,
-		database: config.app.database.name,
-		password: config.app.database.password,
-		port: Number(config.app.database.port),
-		user: config.app.database.user,
-		waitForConnections: true,
-		connectionLimit: 10,
-		queueLimit: 0,
-	}).on("connection", (connection) =>
-	{
-		console.log("✅ [websocket-stock-feed] Successfully connected to the MySQL Database");
-	}).on("error", (err) =>
-	{
-		console.error("MySQL Create Pool Error:", err);
-	});
-
 	if (process.env.API__POLYGON__ENABLE_WEBSOCKET_STOCK_FEED !== "true")
 	{
-		console.log("🔴 Polygon Websocket Stock Feed Disabled");
+		console.log("🔴 [websocket-stock-feed] Polygon Websocket Stock Feed Disabled");
 	}
 	else if (!process.env.API__POLYGON__KEY)
 	{
-		console.error("❌ Polygon Websocket Stock Feed Error: API key not set in environment variables");
+		console.error(
+			"❌ [websocket-stock-feed] Polygon Websocket Stock Feed Error: API key not set in environment variables"
+		);
+
 		sys.exit(1);
 	}
 	else
 	{
-		console.log("🔵 Polygon Websocket Stock Feed Running");
+		console.log("🔵 [websocket-stock-feed] Polygon Websocket Stock Feed Running");
 
 		// create a 15-min delay websocket client using the polygon client-js library
 		const ws  = websocketClient(process.env.API__POLYGON__KEY, "wss://delayed.polygon.io").stocks();
@@ -54,7 +36,9 @@ const webSocketStockFeed = async () =>
 		// register a handler to log errors
 		ws.onerror = (err) =>
 		{
-			return console.log("Failed to connect", err);
+			console.log("[websocket-stock-feed] Failed to connect", err);
+
+			return;
 		};
 
 		// register a handler when messages are received
@@ -66,7 +50,7 @@ const webSocketStockFeed = async () =>
 			// wait until the message saying authentication was successful, then subscribe to a channel
 			if (parsedMessage[0].ev === "status" && parsedMessage[0].status === "auth_success")
 			{
-				console.log("Subscribing to the minute aggregates channel for ALL stocks..");
+				console.log("[websocket-stock-feed] Subscribing to the minute aggregates channel for ALL stocks..");
 
 				ws.send(
 					JSON.stringify({
@@ -103,7 +87,7 @@ const webSocketStockFeed = async () =>
 
 					try
 					{
-						await MYSQL_POOL.promise().query(
+						await mySQLPool.promise().query(
 							`
 								INSERT INTO
 									stock_1m_candle (symbol, open, close, high, low, volume, start, end)
@@ -123,7 +107,7 @@ const webSocketStockFeed = async () =>
 							]
 						);
 
-						await MYSQL_POOL.promise().query(
+						await mySQLPool.promise().query(
 						`
 							DELETE FROM
 								stock_1m_candle
@@ -149,7 +133,7 @@ const webSocketStockFeed = async () =>
 					}
 					catch (err)
 					{
-						console.error("DB insert error:", err);
+						console.error("[websocket-stock-feed] DB insert error:", err);
 					}
 				}
 			}
@@ -158,22 +142,20 @@ const webSocketStockFeed = async () =>
 		// register a handler to log info if websocket closes
 		ws.onclose = (code, reason) =>
 		{
-			console.log("Polygon Websocket Stock Feed Connection closed", code, reason);
+			console.log("[websocket-stock-feed] Polygon Websocket Stock Feed Connection closed", code, reason);
 
 			// Close SQL pool
-			MYSQL_POOL.end((err) =>
+			mySQLPool.end((err) =>
 			{
 				if (err)
 				{
-					console.error("Error closing MySQL pool:", err);
+					console.error("[websocket-stock-feed] Error closing MySQL pool:", err);
 				}
 				else
 				{
-					console.log("MySQL pool closed successfully.");
+					console.log("[websocket-stock-feed] MySQL pool closed successfully.");
 				}
 			});
 		};
 	}
 };
-
-webSocketStockFeed();

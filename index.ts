@@ -1,5 +1,3 @@
-import "./websocket-stock-feed";
-
 import bodyParser from "body-parser";
 import history from "connect-history-api-fallback";
 import cors from "cors";
@@ -11,6 +9,7 @@ import path from "path";
 
 import config from "./config";
 import rateLimiter from "./rate-limiter";
+import webSocketStockFeed from "./websocket-stock-feed";
 import routeApi from "./route/api";
 import routeApiCryptocurrency from "./route/api/cryptocurrency";
 import routeApiPortfolio from "./route/api/portfolio";
@@ -56,6 +55,11 @@ const MYSQL_POOL: mysql.Pool = mysql.createPool({
 	console.error("MySQL Create Pool Error:", err);
 });
 
+webSocketStockFeed(MYSQL_POOL).then(() => {}).catch((err) =>
+{
+	console.error("❌ WebSocket Stock Feed Error:", err);
+	process.exit(1);
+});
 
 http.createServer(
 	express().use(
